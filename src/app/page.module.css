@@ -1,0 +1,424 @@
+.appContainer {
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  position: relative;
+  overflow-x: hidden;
+  max-width: 100vw;
+  box-sizing: border-box;
+}
+
+/* Header & Mobile Top Bar */
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.mobileTopBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.mobileLogo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 800;
+  font-size: 1.1rem;
+  color: var(--color-text-primary);
+}
+
+.logoIcon {
+  color: var(--color-primary);
+}
+
+.mobileCartBtn {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: white;
+  border: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-primary);
+  cursor: pointer;
+  box-shadow: var(--shadow-soft);
+}
+
+.cartBadge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background-color: var(--color-primary);
+  color: white;
+  font-size: 0.7rem;
+  font-weight: 800;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid white;
+}
+
+/* Location, Search & Profile Row */
+.topControls {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.locationBlock {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--color-text-secondary);
+}
+
+.locationText {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.searchWrapper {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  border-radius: var(--radius-full);
+  gap: 12px;
+  width: 100%;
+}
+
+.searchInput {
+  border: none;
+  background: transparent;
+  width: 100%;
+  font-size: 0.9rem;
+  font-family: var(--font-body);
+  outline: none;
+}
+
+.desktopProfileBlock {
+  display: none;
+}
+
+/* Hero Section */
+.heroSection {
+  margin-bottom: 32px;
+}
+
+.promoCard {
+  background: linear-gradient(135deg, #fdf6ec 0%, #fff 100%);
+  border-radius: var(--radius-xl);
+  padding: 30px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--shadow-soft);
+  display: flex;
+  flex-direction: column;
+}
+
+.promoContent {
+  position: relative;
+  z-index: 2;
+  margin-bottom: 200px; /* Space for image below on mobile */
+}
+
+.promoContent h2 {
+  font-size: 2rem;
+  line-height: 1.1;
+  color: var(--color-text-primary);
+  margin-bottom: 12px;
+}
+
+.highlight {
+  color: var(--color-primary);
+}
+
+.promoContent p {
+  font-size: 0.9rem;
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+  margin-bottom: 20px;
+}
+
+.orderNowBtn {
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: var(--radius-full);
+  font-weight: 700;
+  font-size: 0.95rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(242, 106, 29, 0.4);
+}
+
+.promoImageWrapper {
+  position: absolute;
+  bottom: -20px;
+  right: -20px;
+  width: 250px;
+  height: 250px;
+  z-index: 1;
+}
+
+.promoImageWrapper img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.dealFloatingCard {
+  display: none; /* Hide floating card on mobile usually, or position it differently */
+}
+
+/* Categories */
+.categoriesSection {
+  margin-bottom: 32px;
+}
+
+.sectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.sectionHeader h3 {
+  font-size: 1.2rem;
+  color: var(--color-text-primary);
+}
+
+.viewAllBtn {
+  background: transparent;
+  border: none;
+  color: var(--color-text-secondary);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+}
+
+.categoriesList {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+}
+
+.catCard {
+  min-width: 100px;
+  padding: 16px 12px;
+  border-radius: var(--radius-lg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.catIconBox {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: var(--color-bg-base);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.activeCat .catIconBox {
+  background: rgba(242, 106, 29, 0.1);
+}
+
+.catTitle {
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--color-text-primary);
+}
+
+.catCount {
+  font-size: 0.7rem;
+  color: var(--color-text-tertiary);
+}
+
+/* Popular List */
+.popularSection {
+  margin-bottom: 32px;
+}
+
+.popularList {
+  display: flex;
+  gap: 20px;
+  overflow-x: auto;
+  padding-bottom: 16px;
+}
+
+/* Desktop Responsiveness */
+@media (min-width: 769px) {
+  .appContainer {
+    padding: 32px 40px;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  .header {
+    margin-bottom: 40px;
+  }
+  
+  .mobileTopBar {
+    display: none;
+  }
+
+  .topControls {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .searchWrapper {
+    max-width: 600px;
+    margin: 0 40px;
+  }
+
+  .desktopProfileBlock {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+  }
+
+  .desktopCartBtn {
+    position: relative;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: white;
+    border: 1px solid var(--color-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-text-primary);
+    cursor: pointer;
+    box-shadow: var(--shadow-soft);
+  }
+
+  .profileUser {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+  }
+
+  .avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #e1e4e8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    color: var(--color-text-primary);
+  }
+
+  .userName {
+    font-weight: 600;
+    font-size: 0.95rem;
+  }
+
+  /* Hero Desktop */
+  .promoCard {
+    flex-direction: row;
+    align-items: center;
+    padding: 0;
+  }
+
+  .promoContent {
+    margin-bottom: 0;
+    padding: 60px 40px;
+    max-width: 50%;
+  }
+
+  .promoContent h2 {
+    font-size: 3rem;
+  }
+
+  .promoContent p {
+    font-size: 1.1rem;
+    margin-bottom: 30px;
+  }
+
+  .promoImageWrapper {
+    position: relative;
+    bottom: auto;
+    right: auto;
+    width: 50%;
+    height: 400px;
+  }
+
+  .dealFloatingCard {
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+    top: 50%;
+    right: 40px;
+    transform: translateY(-50%);
+    background: white;
+    padding: 24px;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-medium);
+    width: 200px;
+  }
+
+  .dealTag {
+    color: var(--color-primary);
+    font-size: 0.8rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-bottom: 8px;
+  }
+
+  .dealFloatingCard h3 {
+    font-size: 1.8rem;
+    color: var(--color-text-primary);
+    margin-bottom: 4px;
+  }
+
+  .dealFloatingCard p {
+    font-size: 0.9rem;
+    color: var(--color-text-secondary);
+    margin-bottom: 16px;
+  }
+
+  .dealBtn {
+    background: transparent;
+    color: var(--color-primary);
+    border: none;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    padding: 0;
+  }
+
+  .popularList {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    overflow-x: visible;
+  }
+}
