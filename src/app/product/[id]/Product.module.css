@@ -3,7 +3,7 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background-color: #000;
+  background-color: var(--color-background);
   max-width: 600px;
   margin: 0 auto;
   overflow: hidden;
@@ -26,12 +26,23 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.05);
-  color: white;
+  border: none;
+  background: rgba(255, 255, 255, 0.95);
+  color: var(--color-text-primary);
   cursor: pointer;
   padding: 0;
   backdrop-filter: blur(10px);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.actionBtn:hover {
+  transform: scale(1.1);
+}
+
+.actionBtnActive {
+  color: var(--color-primary);
+  background: white;
 }
 
 .imageHero {
@@ -41,7 +52,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: radial-gradient(circle at center, rgba(255, 140, 0, 0.2) 0%, transparent 70%);
+  background: radial-gradient(circle at center, rgba(239, 68, 68, 0.08) 0%, transparent 70%);
 }
 
 .imageHero img {
@@ -54,29 +65,35 @@
 
 .detailsSheet {
   flex: 1;
-  background: rgba(25, 25, 30, 0.6);
+  background: white;
   border-top-left-radius: 40px;
   border-top-right-radius: 40px;
   padding: 30px 24px;
   display: flex;
   flex-direction: column;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
   position: relative;
   z-index: 5;
   margin-top: -30px;
-  padding-bottom: 120px; /* Space for sticky footer */
+  padding-bottom: 120px;
+  box-shadow: 0 -10px 40px rgba(0,0,0,0.05);
 }
 
 .badge {
-  font-size: 0.75rem;
-  background-color: rgba(239, 68, 68, 0.2);
-  color: #ef4444;
-  padding: 4px 10px;
-  border-radius: var(--radius-sm);
+  font-size: 0.7rem;
+  background: linear-gradient(135deg, #FF6B6B 0%, #FF8E53 100%);
+  color: white;
+  padding: 6px 12px;
+  border-radius: var(--radius-full);
   width: fit-content;
   text-transform: uppercase;
-  font-weight: 600;
+  font-weight: 800;
   margin-bottom: 12px;
+  letter-spacing: 1px;
+  box-shadow: 0 4px 10px rgba(255, 107, 107, 0.3);
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .headerRow {
@@ -93,13 +110,14 @@
 }
 
 .ratingBtn {
-  background: rgba(255,255,255,0.05);
+  background: rgba(0,0,0,0.05);
   border-radius: 8px;
   width: 32px;
   height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
+  color: var(--color-text-secondary);
 }
 
 .ratingRow {
@@ -170,13 +188,13 @@
 }
 
 .sizeBtn {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.03);
+  border: 1px solid rgba(0, 0, 0, 0.05);
   color: var(--color-text-secondary);
   padding: 8px 16px;
   border-radius: var(--radius-full);
   font-size: 0.85rem;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   transition: all var(--transition-fast);
 }
@@ -220,10 +238,10 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: rgba(0, 0, 0, 0.1);
   transition: .3s;
   border-radius: 34px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .slider:before {
@@ -256,38 +274,100 @@ input:checked + .slider:before {
   right: 0;
   padding: 20px 24px;
   padding-bottom: calc(20px + env(safe-area-inset-bottom));
-  background: rgba(16, 16, 20, 0.8);
+  background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
   display: flex;
   gap: 20px;
   z-index: 100;
   max-width: 600px;
   margin: 0 auto;
+  box-shadow: 0 -5px 20px rgba(0,0,0,0.03);
+}
+
+.toastOverlay {
+  position: fixed;
+  top: 20px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  z-index: 9999;
+  animation: slideDown 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes slideDown {
+  from { transform: translateY(-100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.toastContent {
+  background: white;
+  border-radius: var(--radius-full);
+  padding: 12px 16px 12px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  width: 90%;
+  max-width: 400px;
+  justify-content: space-between;
+}
+
+.toastText {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-text-primary);
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.toastText svg {
+  color: #10b981; /* green success */
+}
+
+.toastBtn {
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: var(--radius-full);
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.toastBtn:hover {
+  transform: scale(1.05);
 }
 
 .quantityControl {
   display: flex;
   align-items: center;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(0, 0, 0, 0.03);
   border-radius: var(--radius-full);
   padding: 4px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .qBtn {
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.05);
+  background: white;
   border: none;
-  color: white;
+  color: var(--color-text-primary);
   font-size: 1.2rem;
+  font-weight: 500;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
 }
 
 .qValue {

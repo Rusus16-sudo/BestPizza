@@ -1,0 +1,177 @@
+.container {
+  min-height: 100vh;
+  background-color: var(--color-background);
+  padding: 20px;
+  max-width: 800px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 0 0 0;
+}
+
+.backBtn {
+  background: white;
+  border: 1px solid var(--color-border);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--color-text-primary);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  transition: all 0.2s;
+}
+
+.backBtn:hover {
+  transform: translateX(-2px);
+}
+
+.header h1 {
+  font-size: 1.8rem;
+  font-weight: 800;
+  margin: 0;
+  color: var(--color-text-primary);
+}
+
+.subtitle {
+  color: var(--color-text-secondary);
+  font-size: 1rem;
+  margin-top: 4px;
+}
+
+.offersList {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.offerCard {
+  border-radius: var(--radius-xl);
+  padding: 24px;
+  color: white;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s;
+}
+
+.offerCard:hover {
+  transform: translateY(-4px);
+}
+
+.offerCard::before {
+  content: '';
+  position: absolute;
+  top: -20px;
+  right: -20px;
+  width: 100px;
+  height: 100px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 50%;
+}
+
+.offerCard::after {
+  content: '';
+  position: absolute;
+  bottom: -40px;
+  left: 20px;
+  width: 150px;
+  height: 150px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+}
+
+.offerTitle {
+  font-size: 1.4rem;
+  font-weight: 800;
+  margin: 0 0 8px 0;
+  position: relative;
+  z-index: 2;
+}
+
+.offerDesc {
+  font-size: 0.95rem;
+  opacity: 0.9;
+  margin: 0 0 20px 0;
+  line-height: 1.4;
+  position: relative;
+  z-index: 2;
+}
+
+.offerBottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+  z-index: 2;
+}
+
+.codeBox {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.codeLabel {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  opacity: 0.8;
+  font-weight: 600;
+}
+
+.codeValue {
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px dashed rgba(255, 255, 255, 0.6);
+  padding: 8px 16px;
+  border-radius: var(--radius-md);
+  font-family: monospace;
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+}
+
+.copyBtn {
+  background: white;
+  color: #333;
+  border: none;
+  border-radius: var(--radius-full);
+  padding: 10px 20px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.copyBtn:hover {
+  transform: scale(1.05);
+}
+
+.copyBtn.copied {
+  background: #10b981;
+  color: white;
+}
+
+.expiry {
+  font-size: 0.8rem;
+  opacity: 0.8;
+  margin-top: 16px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  position: relative;
+  z-index: 2;
+}

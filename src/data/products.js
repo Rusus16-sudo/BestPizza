@@ -112,6 +112,33 @@ export const products = [
     reviews: 34,
     description: 'Thé glacé maison infusé au citron et à la menthe fraîche.',
     customizations: []
+  },
+  {
+    id: 9,
+    title: 'Double Smash Burger',
+    category: 'Burgers',
+    price: 6000,
+    isSpicy: false,
+    image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&q=80&w=400',
+    rating: 4.8,
+    reviews: 142,
+    description: 'Deux steaks hachés pur boeuf caramélisés, double cheddar affiné, cornichons, oignons fondants et notre sauce secrète Foodora.',
+    customizations: [
+      { id: 'bacon', label: 'Bacon Fumé', price: 1000 },
+      { id: 'extra_steak', label: 'Steak Supplémentaire', price: 1500 }
+    ]
+  },
+  {
+    id: 10,
+    title: 'Tiramisu Maison',
+    category: 'Desserts',
+    price: 3500,
+    isSpicy: false,
+    image: 'https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?auto=format&fit=crop&q=80&w=400',
+    rating: 4.9,
+    reviews: 89,
+    description: 'Le véritable Tiramisu italien avec mascarpone frais, biscuit cuillère imbibé de café expresso et cacao amer.',
+    customizations: []
   }
 ];
 
