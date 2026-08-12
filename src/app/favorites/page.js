@@ -1,16 +1,61 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { createClient } from '@/utils/supabase/client'
+import { products as mockProducts } from '@/data/products'
 import styles from './Favorites.module.css'
 import ProductCard from '@/components/ProductCard'
-import { products } from '@/data/products'
 
 export default function FavoritesPage() {
   const router = useRouter()
+  const [favoriteProducts, setFavoriteProducts] = useState([])
+  const [loading, setLoading] = useState(true)
 
-  // Mocking favorites by selecting some products
-  const favoriteProductIds = [1, 3, 9] // Margherita, 4 Fromages, Double Smash Burger
-  const favoriteProducts = products.filter(p => favoriteProductIds.includes(p.id))
+  useEffect(() => {
+    const fetchFavorites = async () => {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      
+      let favIds = []
+      
+      if (user) {
+        const { data: favData } = await supabase.from('favorites').select('product_id').eq('user_id', user.id)
+        if (favData) {
+          favIds = favData.map(f => f.product_id)
+        }
+      } else {
+        favIds = JSON.parse(localStorage.getItem('favorites') || '[]')
+      }
+      
+      if (favIds.length === 0) {
+        setFavoriteProducts([])
+        setLoading(false)
+        return
+      }
+
+      // Separate UUIDs (real DB products) and mock IDs (from data/products.js)
+      const uuidFavs = favIds.filter(id => String(id).length > 10)
+      const mockFavs = favIds.filter(id => String(id).length <= 10)
+
+      let dbProducts = []
+      if (uuidFavs.length > 0) {
+        const { data } = await supabase.from('products').select('*').in('id', uuidFavs)
+        if (data) dbProducts = data
+      }
+
+      // Merge with mock products
+      let localProducts = []
+      if (mockFavs.length > 0) {
+        const { products: mockProductsList } = await import('@/data/products')
+        localProducts = mockProductsList.filter(p => mockFavs.includes(p.id) || mockFavs.includes(String(p.id)))
+      }
+      
+      setFavoriteProducts([...dbProducts, ...localProducts])
+      setLoading(false)
+    }
+    fetchFavorites()
+  }, [])
 
   return (
     <div className={styles.container}>
@@ -23,7 +68,9 @@ export default function FavoritesPage() {
         <h1>Mes Favoris</h1>
       </header>
 
-      {favoriteProducts.length === 0 ? (
+      {loading ? (
+        <div style={{ textAlign: 'center', marginTop: '40px' }}>Chargement...</div>
+      ) : favoriteProducts.length === 0 ? (
         <div className={styles.emptyState}>
           <svg className={styles.emptyIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
@@ -41,6 +88,8 @@ export default function FavoritesPage() {
               image={item.image}
               isSpicy={item.isSpicy}
               rating={item.rating || "4.5"}
+              category={item.category}
+              prepTime={item.prep_time || "25-35 min"}
             />
           ))}
         </div>

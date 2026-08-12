@@ -111,3 +111,28 @@
 .chevron {
   color: var(--color-text-tertiary);
 }
+
+.logoutBtn {
+  width: 100%;
+  padding: 16px;
+  background-color: white;
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 20px;
+  font-weight: 700;
+  font-size: 1.05rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 10px rgba(239, 68, 68, 0.05);
+}
+
+.logoutBtn:hover {
+  background-color: #ef4444;
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(239, 68, 68, 0.25);
+}

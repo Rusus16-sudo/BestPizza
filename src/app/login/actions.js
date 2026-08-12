@@ -11,10 +11,23 @@ export async function login(formData) {
     password: formData.get('password'),
   }
 
-  const { error } = await supabase.auth.signInWithPassword(data)
+  const { data: authData, error } = await supabase.auth.signInWithPassword(data)
 
   if (error) {
     return { error: "Identifiants invalides ou compte introuvable." }
+  }
+
+  if (authData?.user) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', authData.user.id)
+      .single()
+
+    if (profile?.role === 'cuisinier') {
+      revalidatePath('/kitchen', 'layout')
+      redirect('/kitchen')
+    }
   }
 
   revalidatePath('/', 'layout')

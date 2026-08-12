@@ -16,8 +16,7 @@ export const viewport = {
   themeColor: "#ff5a5f",
 };
 
-import Sidebar from '@/components/Sidebar';
-import BottomNav from '@/components/BottomNav';
+import LayoutWrapper from '@/components/LayoutWrapper';
 
 export default function RootLayout({ children }) {
   return (
@@ -34,15 +33,9 @@ export default function RootLayout({ children }) {
       </head>
       <body>
         <CartProvider>
-          <div className="layout-wrapper">
-            <aside className="layout-sidebar">
-              <Sidebar />
-            </aside>
-            <main className="layout-content">
-              {children}
-            </main>
-          </div>
-          <BottomNav />
+          <LayoutWrapper>
+            {children}
+          </LayoutWrapper>
         </CartProvider>
       </body>
     </html>

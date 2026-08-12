@@ -7,9 +7,8 @@ import { useCart } from '@/context/CartContext'
 import styles from './page.module.css'
 import CategoryPill from '@/components/CategoryPill'
 import ProductCard from '@/components/ProductCard'
-import { products } from '@/data/products'
 
-export default function HomeClient({ user }) {
+export default function HomeClient({ user, products, latestOffer }) {
   const router = useRouter()
   const { totalItems } = useCart()
   const [activeCategory, setActiveCategory] = useState('Pizza')
@@ -40,32 +39,23 @@ export default function HomeClient({ user }) {
     }
   }, [])
 
-  const categories = [
-    { 
-      id: 'Pizza', 
-      icon: <img src="/margherita.png" alt="Pizza" style={{width: '40px', height: '40px'}}/>, 
-      label: 'Pizza',
-      count: '32 Restaurants'
-    },
-    { 
-      id: 'Burgers', 
-      icon: <img src="/margherita.png" alt="Burgers" style={{width: '40px', height: '40px', opacity: 0.5}}/>, 
-      label: 'Burgers',
-      count: '28 Restaurants'
-    },
-    { 
-      id: 'Desserts', 
-      icon: <img src="/margherita.png" alt="Desserts" style={{width: '40px', height: '40px', opacity: 0.5}}/>, 
-      label: 'Desserts',
-      count: '18 Restaurants'
-    },
-    { 
-      id: 'Drinks', 
-      icon: <img src="/margherita.png" alt="Boissons" style={{width: '40px', height: '40px', opacity: 0.5}}/>, 
-      label: 'Boissons',
-      count: '16 Restaurants'
-    }
+  const categoryConfigs = [
+    { id: 'Pizza', label: 'Pizza', fallback: '/margherita.png', aliases: ['Pizza', 'Pizzas'] },
+    { id: 'Burgers', label: 'Burgers', fallback: '/margherita.png', aliases: ['Burger', 'Burgers'] },
+    { id: 'Desserts', label: 'Desserts', fallback: '/margherita.png', aliases: ['Dessert', 'Desserts'] },
+    { id: 'Drinks', label: 'Boissons', fallback: '/margherita.png', aliases: ['Drink', 'Drinks', 'Boissons'] }
   ]
+
+  const categories = categoryConfigs.map(cat => {
+    const catProducts = products.filter(p => cat.aliases.includes(p.category))
+    const iconImage = catProducts.length > 0 && catProducts[0].image ? catProducts[0].image : cat.fallback
+    return {
+      id: cat.id,
+      label: cat.label,
+      icon: <img src={iconImage} alt={cat.label} style={{width: '40px', height: '40px', borderRadius: '8px', objectFit: 'cover'}}/>,
+      count: `${catProducts.length} Plats`
+    }
+  })
 
   return (
     <div className={styles.appContainer}>
@@ -153,7 +143,6 @@ export default function HomeClient({ user }) {
                 {user ? user.email.charAt(0).toUpperCase() : 'J'}
               </div>
               <span className={styles.userName}>{user ? user.email.split('@')[0] : 'Se connecter'}</span>
-              <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" strokeWidth="2" fill="none"><polyline points="6 9 12 15 18 9"></polyline></svg>
             </div>
           </div>
         </div>
@@ -175,17 +164,19 @@ export default function HomeClient({ user }) {
           </div>
           <div className={styles.promoImageWrapper}>
             <img src="/margherita.png" alt="Delicious Food" />
-            <div className={`${styles.dealFloatingCard} soft-surface`}>
-              <div className={styles.dealTag}>
-                <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M8.5 14.5A2.5 2.5 0 0011 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 11-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 002.5 2.5z"></path>
-                </svg>
-                PROMO
+            {latestOffer && (
+              <div className={`${styles.dealFloatingCard} soft-surface`}>
+                <div className={styles.dealTag}>
+                  <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M8.5 14.5A2.5 2.5 0 0011 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 11-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 002.5 2.5z"></path>
+                  </svg>
+                  PROMO
+                </div>
+                <h3>-{latestOffer.discount_percentage}%</h3>
+                <p>{latestOffer.target_type === 'all' ? 'sur tout' : latestOffer.target_type === 'category' ? `sur ${latestOffer.target_value}` : 'sur ce produit'}</p>
+                <button className={styles.dealBtn} onClick={() => router.push('/offers')}>Code: {latestOffer.code} <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" strokeWidth="2" fill="none"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></button>
               </div>
-              <h3>-30%</h3>
-              <p>sur tout</p>
-              <button className={styles.dealBtn} onClick={() => router.push('/product/1')}>Commander <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" strokeWidth="2" fill="none"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></button>
-            </div>
+            )}
           </div>
         </div>
       </section>
@@ -223,14 +214,13 @@ export default function HomeClient({ user }) {
         <div className={`${styles.popularList} no-scrollbar`}>
           {products
             .filter(item => {
-              const matchesCategory = item.category === activeCategory || activeCategory === 'Pizza';
               const categoryMap = {
-                'Pizza': 'Pizza',
-                'Burgers': 'Burgers',
-                'Desserts': 'Desserts',
-                'Drinks': 'Drinks'
+                'Pizza': ['Pizza', 'Pizzas'],
+                'Burgers': ['Burger', 'Burgers'],
+                'Desserts': ['Dessert', 'Desserts'],
+                'Drinks': ['Drink', 'Drinks', 'Boissons']
               };
-              const actualMatchesCat = item.category === categoryMap[activeCategory];
+              const actualMatchesCat = categoryMap[activeCategory]?.includes(item.category) || false;
               
               const matchesSearch = item.title.toLowerCase().includes(searchQuery.toLowerCase());
               return actualMatchesCat && matchesSearch;
@@ -242,8 +232,35 @@ export default function HomeClient({ user }) {
               title={item.title}
               price={item.price}
               image={item.image}
+              category={item.category}
               isSpicy={item.isSpicy}
               rating={item.rating || "4.5"}
+              prepTime={item.prep_time || "25-35 min"}
+            />
+          ))}
+        </div>
+      </section>
+
+      {/* Tous nos plats */}
+      <section className={styles.popularSection} style={{ marginTop: '24px' }}>
+        <div className={styles.sectionHeader}>
+          <h3>Tous nos plats</h3>
+        </div>
+        
+        <div className={`${styles.popularList} no-scrollbar`}>
+          {products
+            .filter(item => item.title.toLowerCase().includes(searchQuery.toLowerCase()))
+            .map(item => (
+            <ProductCard 
+              key={`all-${item.id}`}
+              id={item.id}
+              title={item.title}
+              price={item.price}
+              image={item.image}
+              category={item.category}
+              isSpicy={item.isSpicy}
+              rating={item.rating || "4.5"}
+              prepTime={item.prep_time || "25-35 min"}
             />
           ))}
         </div>

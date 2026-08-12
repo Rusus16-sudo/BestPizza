@@ -1,13 +1,33 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { createClient } from '@/utils/supabase/client'
 import styles from './Offers.module.css'
-import { offers } from '@/data/offers'
 
 export default function OffersPage() {
   const router = useRouter()
   const [copiedId, setCopiedId] = useState(null)
+  const [offers, setOffers] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchOffers = async () => {
+      const supabase = createClient()
+      const { data, error } = await supabase
+        .from('offers')
+        .select('*')
+        .order('created_at', { ascending: false })
+      
+      if (!error && data) {
+        const now = new Date();
+        const activeOffers = data.filter(o => !o.valid_until || new Date(o.valid_until) >= now);
+        setOffers(activeOffers)
+      }
+      setLoading(false)
+    }
+    fetchOffers()
+  }, [])
 
   const handleCopy = (offer) => {
     navigator.clipboard.writeText(offer.code)
@@ -32,11 +52,14 @@ export default function OffersPage() {
       </header>
 
       <div className={styles.offersList}>
-        {offers.map(offer => (
+        {loading ? (
+          <p>Chargement des offres...</p>
+        ) : offers.length === 0 ? (
+          <p>Aucune offre disponible pour le moment.</p>
+        ) : offers.map(offer => (
           <div 
             key={offer.id} 
-            className={styles.offerCard}
-            style={{ background: offer.color }}
+            className={`${styles.offerCard} ${styles['offerTheme' + offer.theme]}`}
           >
             <h2 className={styles.offerTitle}>{offer.title}</h2>
             <p className={styles.offerDesc}>{offer.description}</p>
@@ -74,7 +97,7 @@ export default function OffersPage() {
                 <circle cx="12" cy="12" r="10"></circle>
                 <polyline points="12 6 12 12 16 14"></polyline>
               </svg>
-              {offer.expiry}
+              {offer.valid_until ? `Jusqu'au ${new Date(offer.valid_until).toLocaleDateString('fr-FR')}` : 'Valable actuellement'}
             </div>
           </div>
         ))}

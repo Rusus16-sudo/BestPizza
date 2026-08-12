@@ -1,15 +1,33 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { products } from '@/data/products'
+import { useState, useEffect } from 'react'
+import { createClient } from '@/utils/supabase/client'
+import { products as mockProducts } from '@/data/products'
 import ProductCard from '@/components/ProductCard'
 import styles from './Menu.module.css'
 
 export default function MenuPage() {
   const router = useRouter()
+  const [productsList, setProductsList] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      const supabase = createClient()
+      const { data } = await supabase.from('products').select('*')
+      if (data && data.length > 0) {
+        setProductsList(data)
+      } else {
+        setProductsList(mockProducts)
+      }
+      setLoading(false)
+    }
+    fetchProducts()
+  }, [])
 
   // Group products by category
-  const groupedProducts = products.reduce((acc, product) => {
+  const groupedProducts = productsList.reduce((acc, product) => {
     if (!acc[product.category]) {
       acc[product.category] = []
     }
@@ -29,7 +47,10 @@ export default function MenuPage() {
       </header>
 
       <div className={styles.menuContent}>
-        {Object.entries(groupedProducts).map(([category, items]) => (
+        {loading ? (
+          <div style={{ textAlign: 'center', marginTop: '40px' }}>Chargement du menu...</div>
+        ) : (
+          Object.entries(groupedProducts).map(([category, items]) => (
           <div key={category} className={styles.categorySection}>
             <h2 className={styles.categoryTitle}>{category}</h2>
             <div className={styles.productsGrid}>
@@ -46,7 +67,7 @@ export default function MenuPage() {
               ))}
             </div>
           </div>
-        ))}
+        )))}
       </div>
     </div>
   )

@@ -387,23 +387,37 @@
     align-items: center;
     gap: 12px;
     cursor: pointer;
+    background: white;
+    padding: 6px 16px 6px 6px;
+    border-radius: 30px;
+    border: 1px solid var(--color-border);
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  }
+
+  .profileUser:hover {
+    box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+    transform: translateY(-1px);
+    border-color: #d1d5db;
   }
 
   .avatar {
-    width: 40px;
-    height: 40px;
+    width: 36px;
+    height: 36px;
     border-radius: 50%;
-    background: #e1e4e8;
+    background: linear-gradient(135deg, var(--color-primary), #f97316);
     display: flex;
     align-items: center;
     justify-content: center;
     font-weight: 700;
-    color: var(--color-text-primary);
+    color: white;
+    box-shadow: 0 2px 6px rgba(239, 68, 68, 0.4);
   }
 
   .userName {
-    font-weight: 600;
+    font-weight: 700;
     font-size: 0.95rem;
+    color: var(--color-text-primary);
   }
 
   /* Hero Desktop */

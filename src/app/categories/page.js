@@ -1,16 +1,33 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { createClient } from '@/utils/supabase/client'
+import { products as mockProducts } from '@/data/products'
 import styles from './Categories.module.css'
 import ProductCard from '@/components/ProductCard'
-import { products } from '@/data/products'
 
 export default function CategoriesPage() {
   const router = useRouter()
+  const [productsList, setProductsList] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      const supabase = createClient()
+      const { data } = await supabase.from('products').select('*')
+      if (data && data.length > 0) {
+        setProductsList(data)
+      } else {
+        setProductsList(mockProducts)
+      }
+      setLoading(false)
+    }
+    fetchProducts()
+  }, [])
   
   // Extract unique categories from products
-  const uniqueCategories = [...new Set(products.map(p => p.category))]
+  const uniqueCategories = [...new Set(productsList.map(p => p.category))]
   const [activeTab, setActiveTab] = useState('All')
 
   const handleTabClick = (category) => {
@@ -63,9 +80,12 @@ export default function CategoriesPage() {
       </nav>
 
       {/* Render sections for each category */}
-      {categoriesToRender.map(category => {
-        const categoryProducts = products.filter(p => p.category === category)
-        return (
+      {loading ? (
+        <div style={{ textAlign: 'center', marginTop: '40px' }}>Chargement...</div>
+      ) : (
+        categoriesToRender.map(category => {
+          const categoryProducts = productsList.filter(p => p.category === category)
+          return (
           <section key={category} id={`category-${category}`} className={styles.categorySection}>
             <div className={styles.categoryHeader}>
               <h2>{category}</h2>
@@ -87,7 +107,7 @@ export default function CategoriesPage() {
             </div>
           </section>
         )
-      })}
+      }))}
     </div>
   )
 }

@@ -90,6 +90,10 @@
   border-radius: 50%;
 }
 
+.offerThemeorange { background: linear-gradient(135deg, #ff8a00 0%, #e52e71 100%); }
+.offerThemeblue { background: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%); }
+.offerThemepurple { background: linear-gradient(135deg, #8E2DE2 0%, #4A00E0 100%); }
+
 .offerTitle {
   font-size: 1.4rem;
   font-weight: 800;

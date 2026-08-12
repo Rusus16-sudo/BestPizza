@@ -1,6 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
+import { createClient } from '@/utils/supabase/client'
 import styles from './Settings.module.css'
 
 export default function SettingsPage() {
@@ -71,7 +72,12 @@ export default function SettingsPage() {
       <div className={styles.settingsSection}>
         <div className={styles.settingsGrid}>
           {settingsOptions.map(option => (
-            <div key={option.id} className={styles.settingItem} onClick={() => alert(`${option.title} n'est pas encore implémenté.`)}>
+            <div key={option.id} className={styles.settingItem} onClick={() => {
+              if (option.id === 'addresses') router.push('/profile')
+              else if (option.id === 'orders') router.push('/orders')
+              else if (option.id === 'help') router.push('/help')
+              else if (option.id === 'notifications') router.push('/notifications')
+            }}>
               <div className={styles.iconBox}>
                 {option.icon}
               </div>
@@ -84,6 +90,24 @@ export default function SettingsPage() {
               </svg>
             </div>
           ))}
+        </div>
+        
+        <div style={{ marginTop: '32px' }}>
+          <button 
+            className={styles.logoutBtn}
+            onClick={async () => {
+              const supabase = createClient()
+              await supabase.auth.signOut()
+              router.push('/login')
+            }}
+          >
+            <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+              <polyline points="16 17 21 12 16 7"></polyline>
+              <line x1="21" y1="12" x2="9" y2="12"></line>
+            </svg>
+            Se déconnecter
+          </button>
         </div>
       </div>
     </div>
