@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { createClient } from '@/utils/supabase/client'
 import toast from 'react-hot-toast'
 import TrackingMap from '@/components/TrackingMap'
+import SkeletonList from '@/components/SkeletonList'
 import styles from './Delivery.module.css'
 
 export default function DeliveryPage() {
@@ -152,7 +153,9 @@ export default function DeliveryPage() {
         </h2>
         
         {loading ? (
-          <div className={styles.loading}>Chargement des commandes...</div>
+          <div style={{ padding: '20px' }}>
+            <SkeletonList count={5} />
+          </div>
         ) : orders.length === 0 ? (
           <div className={styles.emptyState}>
             <svg viewBox="0 0 24 24" width="48" height="48" stroke="currentColor" strokeWidth="1" fill="none">

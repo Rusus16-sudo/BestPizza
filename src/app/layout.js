@@ -14,6 +14,10 @@ export const metadata = {
 
 export const viewport = {
   themeColor: "#ff5a5f",
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 };
 
 import LayoutWrapper from '@/components/LayoutWrapper';

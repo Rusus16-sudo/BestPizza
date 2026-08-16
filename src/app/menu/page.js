@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react'
 import { createClient } from '@/utils/supabase/client'
 import { products as mockProducts } from '@/data/products'
 import ProductCard from '@/components/ProductCard'
+import SkeletonCard from '@/components/SkeletonCard'
 import styles from './Menu.module.css'
 
 export default function MenuPage() {
@@ -48,7 +49,14 @@ export default function MenuPage() {
 
       <div className={styles.menuContent}>
         {loading ? (
-          <div style={{ textAlign: 'center', marginTop: '40px' }}>Chargement du menu...</div>
+          <div className={styles.productsGrid}>
+            <SkeletonCard />
+            <SkeletonCard />
+            <SkeletonCard />
+            <SkeletonCard />
+            <SkeletonCard />
+            <SkeletonCard />
+          </div>
         ) : (
           Object.entries(groupedProducts).map(([category, items]) => (
           <div key={category} className={styles.categorySection}>

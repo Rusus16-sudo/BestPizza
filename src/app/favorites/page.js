@@ -6,6 +6,7 @@ import { createClient } from '@/utils/supabase/client'
 import { products as mockProducts } from '@/data/products'
 import styles from './Favorites.module.css'
 import ProductCard from '@/components/ProductCard'
+import SkeletonCard from '@/components/SkeletonCard'
 
 export default function FavoritesPage() {
   const router = useRouter()
@@ -69,7 +70,11 @@ export default function FavoritesPage() {
       </header>
 
       {loading ? (
-        <div style={{ textAlign: 'center', marginTop: '40px' }}>Chargement...</div>
+        <div className={styles.productsGrid}>
+          <SkeletonCard />
+          <SkeletonCard />
+          <SkeletonCard />
+        </div>
       ) : favoriteProducts.length === 0 ? (
         <div className={styles.emptyState}>
           <svg className={styles.emptyIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

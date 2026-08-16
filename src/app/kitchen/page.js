@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/utils/supabase/client'
 import toast from 'react-hot-toast'
+import SkeletonList from '@/components/SkeletonList'
 import styles from './Kitchen.module.css'
 
 export default function KitchenPage() {
@@ -75,7 +76,17 @@ export default function KitchenPage() {
   }
 
   if (loading) {
-    return <div className={styles.container}>Chargement du tableau de bord...</div>
+    return (
+      <div className={styles.container}>
+        <header className={styles.header}>
+          <h1>Tableau de Bord - Cuisine</h1>
+          <p>Gérez les commandes en cours de préparation.</p>
+        </header>
+        <div style={{ marginTop: '24px' }}>
+          <SkeletonList count={3} />
+        </div>
+      </div>
+    )
   }
 
   return (

@@ -6,6 +6,7 @@ import toast from 'react-hot-toast'
 import styles from './Orders.module.css'
 import { createClient } from '@/utils/supabase/client'
 import ClientTrackingMap from '@/components/ClientTrackingMap'
+import SkeletonList from '@/components/SkeletonList'
 import { useCart } from '@/context/CartContext'
 
 export default function OrdersPage() {
@@ -187,8 +188,21 @@ export default function OrdersPage() {
     return new Date(dateString).toLocaleDateString('fr-FR', options);
   }
 
+
   if (!isLoaded) {
-    return <div className={styles.container}>Chargement...</div>
+    return (
+      <div className={styles.container}>
+        <header className={styles.header}>
+          <div>
+            <h1>Vos Commandes</h1>
+            <p>Suivez et consultez l'historique de vos commandes.</p>
+          </div>
+        </header>
+        <div style={{ marginTop: '32px' }}>
+          <SkeletonList count={4} />
+        </div>
+      </div>
+    )
   }
 
   return (

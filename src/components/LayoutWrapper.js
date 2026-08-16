@@ -4,6 +4,8 @@ import { usePathname } from 'next/navigation'
 import { Toaster } from 'react-hot-toast'
 import Sidebar from '@/components/Sidebar'
 import BottomNav from '@/components/BottomNav'
+import GlobalNotifications from '@/components/GlobalNotifications'
+import InstallPrompt from '@/components/InstallPrompt'
 
 export default function LayoutWrapper({ children }) {
   const pathname = usePathname()
@@ -22,6 +24,8 @@ export default function LayoutWrapper({ children }) {
   return (
     <>
       <Toaster position="top-center" />
+      <GlobalNotifications />
+      <InstallPrompt />
       <div className="layout-wrapper">
         <aside className="layout-sidebar">
           <Sidebar />

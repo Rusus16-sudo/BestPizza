@@ -70,15 +70,12 @@ export default function HomeClient({ user, products, latestOffer }) {
             </svg>
             Foodora
           </div>
-          
-          <button className={styles.mobileCartBtn} onClick={() => router.push('/cart')}>
-            <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" strokeWidth="2.5" fill="none">
-              <circle cx="9" cy="21" r="1"></circle>
-              <circle cx="20" cy="21" r="1"></circle>
-              <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
-            </svg>
-            {totalItems > 0 && <span className={styles.cartBadge}>{totalItems}</span>}
-          </button>
+          <div 
+            className={styles.mobileProfileBtn} 
+            onClick={() => router.push('/profile')}
+          >
+            {user?.email ? user.email[0].toUpperCase() : 'U'}
+          </div>
         </div>
 
         {/* Location & Search & Profile Row */}
@@ -212,8 +209,8 @@ export default function HomeClient({ user, products, latestOffer }) {
         </div>
         
         <div className={`${styles.popularList} no-scrollbar`}>
-          {products
-            .filter(item => {
+          {(() => {
+            const popularItems = products.filter(item => {
               const categoryMap = {
                 'Pizza': ['Pizza', 'Pizzas'],
                 'Burgers': ['Burger', 'Burgers'],
@@ -224,20 +221,25 @@ export default function HomeClient({ user, products, latestOffer }) {
               
               const matchesSearch = item.title.toLowerCase().includes(searchQuery.toLowerCase());
               return actualMatchesCat && matchesSearch;
-            })
-            .map(item => (
-            <ProductCard 
-              key={item.id}
-              id={item.id}
-              title={item.title}
-              price={item.price}
-              image={item.image}
-              category={item.category}
-              isSpicy={item.isSpicy}
-              rating={item.rating || "4.5"}
-              prepTime={item.prep_time || "25-35 min"}
-            />
-          ))}
+            });
+
+            // On duplique le tableau pour l'effet de défilement infini
+            const marqueeItems = [...popularItems, ...popularItems];
+
+            return marqueeItems.map((item, index) => (
+              <ProductCard 
+                key={`${item.id}-${index}`}
+                id={item.id}
+                title={item.title}
+                price={item.price}
+                image={item.image}
+                category={item.category}
+                isSpicy={item.isSpicy}
+                rating={item.rating || "4.5"}
+                prepTime={item.prep_time || "25-35 min"}
+              />
+            ));
+          })()}
         </div>
       </section>
 

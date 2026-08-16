@@ -6,6 +6,7 @@ import { createClient } from '@/utils/supabase/client'
 import { products as mockProducts } from '@/data/products'
 import styles from './Categories.module.css'
 import ProductCard from '@/components/ProductCard'
+import SkeletonCard from '@/components/SkeletonCard'
 
 export default function CategoriesPage() {
   const router = useRouter()
@@ -81,7 +82,11 @@ export default function CategoriesPage() {
 
       {/* Render sections for each category */}
       {loading ? (
-        <div style={{ textAlign: 'center', marginTop: '40px' }}>Chargement...</div>
+        <div className={styles.productsGrid}>
+          <SkeletonCard />
+          <SkeletonCard />
+          <SkeletonCard />
+        </div>
       ) : (
         categoriesToRender.map(category => {
           const categoryProducts = productsList.filter(p => p.category === category)

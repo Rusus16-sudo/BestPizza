@@ -1,0 +1,120 @@
+'use client'
+
+import { useEffect, useState } from 'react'
+import { createClient } from '@/utils/supabase/client'
+import toast from 'react-hot-toast'
+
+export default function GlobalNotifications() {
+  const supabase = createClient()
+  const [userId, setUserId] = useState(null)
+
+  useEffect(() => {
+    // 1. Récupérer l'utilisateur courant
+    const fetchUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        setUserId(user.id)
+      }
+    }
+    
+    fetchUser()
+
+    // S'abonner aux changements d'authentification (si l'utilisateur se connecte/déconnecte)
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session?.user) {
+        setUserId(session.user.id)
+      } else {
+        setUserId(null)
+      }
+    })
+
+    return () => {
+      authListener.subscription.unsubscribe()
+    }
+  }, [])
+
+  useEffect(() => {
+    // 2. Si pas d'utilisateur, on ne s'abonne à rien
+    if (!userId) return
+
+    // 3. S'abonner aux mises à jour de la table 'orders' pour cet utilisateur précis
+    const subscription = supabase
+      .channel('public:orders:user_' + userId)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'orders',
+          filter: `user_id=eq.${userId}`
+        },
+        (payload) => {
+          const oldStatus = payload.old.status
+          const newStatus = payload.new.status
+
+          if (oldStatus !== newStatus) {
+            triggerNotification(newStatus, payload.new.id)
+          }
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(subscription)
+    }
+  }, [userId])
+
+  const triggerNotification = (status, orderId) => {
+    let message = ''
+    let icon = ''
+    let duration = 4000
+
+    switch (status) {
+      case 'en_preparation':
+        message = "La cuisine prépare votre commande !"
+        icon = '🧑‍🍳'
+        break
+      case 'en_route':
+        message = "Votre livreur est en route !"
+        icon = '🛵'
+        duration = 5000
+        break
+      case 'livre':
+        message = "Votre commande a été livrée. Bon appétit !"
+        icon = '🎉'
+        duration = 6000
+        break
+      case 'annule':
+        message = "Votre commande a été annulée."
+        icon = '❌'
+        break
+      default:
+        return // Ne rien afficher pour les autres statuts
+    }
+
+    toast(
+      (t) => (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <span style={{ fontSize: '1.5rem' }}>{icon}</span>
+          <div>
+            <p style={{ margin: 0, fontWeight: '600', color: '#1e293b' }}>Mise à jour de commande</p>
+            <p style={{ margin: 0, fontSize: '0.9rem', color: '#64748b' }}>{message}</p>
+          </div>
+        </div>
+      ),
+      {
+        duration: duration,
+        position: 'top-center',
+        style: {
+          borderRadius: '16px',
+          padding: '16px',
+          boxShadow: '0 10px 30px rgba(0, 0, 0, 0.1)',
+          border: '1px solid #f1f5f9'
+        }
+      }
+    )
+  }
+
+  // Ce composant ne rend rien visuellement, il tourne juste en arrière-plan
+  return null
+}

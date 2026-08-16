@@ -3,17 +3,29 @@
   flex-direction: column;
   padding: 20px;
   position: relative;
-  overflow-x: hidden;
   max-width: 100vw;
   box-sizing: border-box;
 }
 
-/* Header & Mobile Top Bar */
 .header {
   display: flex;
   flex-direction: column;
   gap: 16px;
   margin-bottom: 24px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background-color: var(--color-surface); /* Translucent light background */
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  margin-top: -20px;
+  margin-left: -20px;
+  margin-right: -20px;
+  padding-top: 20px;
+  padding-left: 20px;
+  padding-right: 20px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--color-border-light);
 }
 
 .mobileTopBar {
@@ -35,17 +47,19 @@
   color: var(--color-primary);
 }
 
-.mobileCartBtn {
+.mobileProfileBtn {
   position: relative;
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: white;
-  border: 1px solid var(--color-border);
+  background: var(--color-primary);
+  border: 2px solid white;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--color-text-primary);
+  color: white;
+  font-weight: 700;
+  font-size: 1.1rem;
   cursor: pointer;
   box-shadow: var(--shadow-soft);
 }
@@ -94,6 +108,8 @@
   border-radius: var(--radius-full);
   gap: 12px;
   width: 100%;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
 }
 
 .searchInput {
@@ -103,6 +119,7 @@
   font-size: 0.9rem;
   font-family: var(--font-body);
   outline: none;
+  color: var(--color-text-primary);
 }
 
 .searchResults {
@@ -110,10 +127,10 @@
   top: calc(100% + 8px);
   left: 0;
   right: 0;
-  background: white;
+  background: var(--color-surface-solid);
   border-radius: 16px;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.1);
-  border: 1px solid rgba(0,0,0,0.05);
+  box-shadow: var(--shadow-card);
+  border: 1px solid var(--color-border);
   max-height: 300px;
   overflow-y: auto;
   z-index: 50;
@@ -325,13 +342,29 @@
 /* Popular List */
 .popularSection {
   margin-bottom: 32px;
+  overflow: hidden;
 }
 
 .popularList {
   display: flex;
   gap: 20px;
-  overflow-x: auto;
   padding-bottom: 16px;
+  width: max-content;
+  animation: marquee 25s linear infinite;
+}
+
+.popularList:active {
+  animation-play-state: paused;
+}
+
+@keyframes marquee {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    /* Translate by exactly half the width (since we duplicate the array) minus half the gap */
+    transform: translateX(calc(-50% - 10px));
+  }
 }
 
 /* Desktop Responsiveness */
