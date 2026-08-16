@@ -5,10 +5,11 @@ import { createClient } from '@/utils/supabase/client'
 import toast from 'react-hot-toast'
 
 export default function GlobalNotifications() {
-  const supabase = createClient()
   const [userId, setUserId] = useState(null)
 
   useEffect(() => {
+    const supabase = createClient()
+    
     // 1. Récupérer l'utilisateur courant
     const fetchUser = async () => {
       const { data: { user } } = await supabase.auth.getUser()
@@ -29,13 +30,15 @@ export default function GlobalNotifications() {
     })
 
     return () => {
-      authListener.subscription.unsubscribe()
+      authListener?.subscription?.unsubscribe()
     }
   }, [])
 
   useEffect(() => {
     // 2. Si pas d'utilisateur, on ne s'abonne à rien
     if (!userId) return
+
+    const supabase = createClient()
 
     // 3. S'abonner aux mises à jour de la table 'orders' pour cet utilisateur précis
     const subscription = supabase
