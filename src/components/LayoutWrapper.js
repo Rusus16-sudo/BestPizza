@@ -8,7 +8,7 @@ import GlobalNotifications from '@/components/GlobalNotifications'
 import InstallPrompt from '@/components/InstallPrompt'
 
 export default function LayoutWrapper({ children }) {
-  const pathname = usePathname()
+  const pathname = usePathname() || ''
   
   // Pages without the global layout (Sidebar/BottomNav)
   const isAuthPage = pathname === '/login' || pathname === '/signup'

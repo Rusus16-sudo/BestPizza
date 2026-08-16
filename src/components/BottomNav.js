@@ -8,7 +8,7 @@ import { createClient } from '@/utils/supabase/client'
 import { useCart } from '@/context/CartContext'
 
 export default function BottomNav() {
-  const pathname = usePathname()
+  const pathname = usePathname() || ''
   const router = useRouter()
   const { totalItems } = useCart()
   const [isLivreur, setIsLivreur] = useState(false)

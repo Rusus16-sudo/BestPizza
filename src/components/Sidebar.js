@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/utils/supabase/client'
 
 export default function Sidebar() {
-  const pathname = usePathname()
+  const pathname = usePathname() || ''
   const router = useRouter()
   const [isGerant, setIsGerant] = useState(false)
   const [isLivreur, setIsLivreur] = useState(false)
