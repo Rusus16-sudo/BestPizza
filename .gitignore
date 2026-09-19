@@ -39,3 +39,11 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# scripts de développement (contiennent des identifiants de test, à ne pas publier)
+/create_accounts.js
+/clear_orders.js
+/force_clear.js
+/recover.js
+/fix_alerts.js
+/extract_css.js
