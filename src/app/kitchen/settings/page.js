@@ -1,13 +1,13 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { createClient } from '@/utils/supabase/client'
+import { getBrowserClient } from '@/utils/supabase/client'
 import { useRouter } from 'next/navigation'
 import styles from './Settings.module.css'
 
 export default function KitchenSettings() {
   const router = useRouter()
-  const supabase = createClient()
+  const [supabase] = useState(() => getBrowserClient())
   const [user, setUser] = useState(null)
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
 

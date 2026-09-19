@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/utils/supabase/client'
+import { getBrowserClient } from '@/utils/supabase/client'
 import toast from 'react-hot-toast'
 import DatePicker, { registerLocale } from 'react-datepicker'
 import "react-datepicker/dist/react-datepicker.css"
@@ -22,7 +22,7 @@ const SECTIONS = {
 
 export default function AdminClient({ section, initialStaff = [] }) {
   const router = useRouter()
-  const supabase = createClient()
+  const [supabase] = useState(() => getBrowserClient())
   
   const activeTab = section
   

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import Link from 'next/link'
-import { createClient } from '@/utils/supabase/client'
+import { getBrowserClient } from '@/utils/supabase/client'
 import { formatPrice } from '@/context/CartContext'
 import BarChart from './BarChart'
 import { formatDuration } from '@/lib/format'
@@ -48,7 +48,7 @@ function greeting(date) {
 }
 
 export default function AdminDashboard() {
-  const [supabase] = useState(() => createClient())
+  const [supabase] = useState(() => getBrowserClient())
   const [period, setPeriod] = useState('today')
   const [orders, setOrders] = useState([])
   const [live, setLive] = useState([])

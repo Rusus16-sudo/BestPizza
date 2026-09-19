@@ -2,12 +2,12 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { createClient } from '@/utils/supabase/client'
+import { getBrowserClient } from '@/utils/supabase/client'
 import BrandMark from '@/components/BrandMark'
 import styles from '../login/login.module.css'
 
 export default function ResetPasswordPage() {
-  const [supabase] = useState(() => createClient())
+  const [supabase] = useState(() => getBrowserClient())
   const [ready, setReady] = useState(false)
   const [hasSession, setHasSession] = useState(false)
   const [showPassword, setShowPassword] = useState(false)

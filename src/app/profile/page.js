@@ -2,12 +2,12 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/utils/supabase/client'
+import { getBrowserClient } from '@/utils/supabase/client'
 import styles from './Profile.module.css'
 
 export default function ProfilePage() {
   const router = useRouter()
-  const supabase = createClient()
+  const [supabase] = useState(() => getBrowserClient())
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
   const [avatarUrl, setAvatarUrl] = useState(null)

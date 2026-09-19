@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { createClient } from '@/utils/supabase/client'
+import { getBrowserClient } from '@/utils/supabase/client'
 import toast from 'react-hot-toast'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import { formatPrice } from '@/context/CartContext'
@@ -35,7 +35,7 @@ function quartierOf(address) {
 }
 
 export default function AdminOrders() {
-  const [supabase] = useState(() => createClient())
+  const [supabase] = useState(() => getBrowserClient())
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('active')

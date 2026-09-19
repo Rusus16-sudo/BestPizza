@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useCart, formatPrice } from '@/context/CartContext'
-import { createClient } from '@/utils/supabase/client'
+import { getBrowserClient } from '@/utils/supabase/client'
 import toast from 'react-hot-toast'
 import styles from './Product.module.css'
 import { SIZES, isPizzaCategory, computeUnitPrice } from '@/lib/pricing'
@@ -18,7 +18,7 @@ export default function ProductClient({ product }) {
   const [isFavorite, setIsFavorite] = useState(false)
   const [user, setUser] = useState(null)
   const [justAdded, setJustAdded] = useState(false)
-  const supabase = createClient()
+  const [supabase] = useState(() => getBrowserClient())
 
   const isPizza = isPizzaCategory(product.category)
   const reviews = Array.isArray(product.reviews) ? product.reviews : []

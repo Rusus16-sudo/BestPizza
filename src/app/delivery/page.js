@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { createClient } from '@/utils/supabase/client'
+import { getBrowserClient } from '@/utils/supabase/client'
 import toast from 'react-hot-toast'
 import TrackingMap from '@/components/TrackingMap'
 import ConfirmDialog from '@/components/ConfirmDialog'
@@ -23,7 +23,7 @@ function parseAddress(addressStr) {
 const isCash = (payment) => payment === 'Paiement à la livraison' || /esp[eè]ces/i.test(payment)
 
 export default function DeliveryPage() {
-  const [supabase] = useState(() => createClient())
+  const [supabase] = useState(() => getBrowserClient())
   const [userId, setUserId] = useState(null)
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(true)

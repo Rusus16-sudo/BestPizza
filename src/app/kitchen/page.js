@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/utils/supabase/client'
+import { getBrowserClient } from '@/utils/supabase/client'
 import toast from 'react-hot-toast'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import styles from './Kitchen.module.css'
@@ -49,7 +49,7 @@ function playChime(ctx) {
 
 export default function KitchenPage() {
   const router = useRouter()
-  const [supabase] = useState(() => createClient())
+  const [supabase] = useState(() => getBrowserClient())
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState(false)
