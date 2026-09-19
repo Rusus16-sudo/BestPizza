@@ -187,7 +187,7 @@
   width: 48px;
   height: 48px;
   border-radius: 14px;
-  background: rgba(242, 106, 29, 0.1);
+  background: rgba(217, 58, 31, 0.1);
   color: var(--color-primary);
   display: flex;
   align-items: center;
@@ -254,7 +254,7 @@
   outline: none;
   border-color: var(--color-primary);
   background: white;
-  box-shadow: 0 0 0 3px rgba(242, 106, 29, 0.15);
+  box-shadow: 0 0 0 3px rgba(217, 58, 31, 0.15);
 }
 
 .saveBtn {
@@ -268,12 +268,12 @@
   font-size: 1rem;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(242, 106, 29, 0.3);
+  box-shadow: 0 4px 12px rgba(217, 58, 31, 0.3);
 }
 
 .saveBtn:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(242, 106, 29, 0.4);
+  box-shadow: 0 6px 16px rgba(217, 58, 31, 0.4);
 }
 
 .saveBtn:disabled {

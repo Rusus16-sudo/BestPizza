@@ -1,233 +1,349 @@
-.container {
-  padding: 32px 24px;
+/* Écran cuisine : sombre, contrasté, lisible à un mètre */
+.page {
+  --k-bg: #171513;
+  --k-panel: #211e1b;
+  --k-card: #2b2724;
+  --k-line: #3a3531;
+  --k-text: #f5f2ee;
+  --k-muted: #b3aaa1;
+
   min-height: 100vh;
-  background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
-  font-family: 'Inter', system-ui, sans-serif;
+  padding: calc(16px + env(safe-area-inset-top)) var(--space-page) 32px;
+  background: var(--k-bg);
+  color: var(--k-text);
 }
 
 .header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 40px;
-  background: rgba(255, 255, 255, 0.6);
-  backdrop-filter: blur(12px);
-  padding: 16px 24px;
-  border-radius: 20px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
 }
 
-.header h1 {
-  font-size: 2.2rem;
-  font-weight: 900;
-  background: linear-gradient(90deg, #1f2937, #4b5563);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  letter-spacing: -0.5px;
-}
-
-.statusIndicator {
+.titleRow {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px 20px;
-  background: rgba(255, 255, 255, 0.9);
-  border-radius: 30px;
-  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.15);
-  font-weight: 700;
-  color: #059669;
-  letter-spacing: 0.5px;
+  gap: 14px;
+}
+
+.titleRow h1 {
+  font-size: clamp(1.8rem, 5vw, 2.4rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.live {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #7ed19b;
 }
 
 .liveDot {
-  width: 12px;
-  height: 12px;
-  background-color: #10b981;
+  width: 9px;
+  height: 9px;
   border-radius: 50%;
-  animation: pulse 2s infinite;
-  box-shadow: 0 0 10px rgba(16,185,129,0.6);
+  background: #4fbf77;
+  animation: pulse 2s ease-in-out infinite;
 }
 
-@keyframes pulse {
-  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
-  70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
-  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
-}
-
-.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
-  gap: 30px;
-}
-
-.orderCard {
-  background: white;
-  border-radius: 24px;
-  padding: 24px;
-  box-shadow: 0 4px 24px rgba(0,0,0,0.04);
+.headerActions {
   display: flex;
-  flex-direction: column;
-  gap: 20px;
-  border: 1px solid rgba(0, 0, 0, 0.03);
-  position: relative;
-  transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.3s;
+  gap: 8px;
 }
 
-.orderCard:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 12px 32px rgba(0,0,0,0.06);
-}
-
-.orderHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  border-bottom: 1px solid #f3f4f6;
-  padding-bottom: 16px;
-}
-
-.orderId {
-  font-size: 1.4rem;
-  font-weight: 800;
-  color: #111827;
-  letter-spacing: -0.5px;
-}
-
-.orderTime {
-  font-size: 0.9rem;
-  color: #6b7280;
-  font-weight: 500;
-  margin-top: 4px;
-}
-
-.orderStatus {
-  padding: 6px 14px;
-  border-radius: 20px;
-  font-size: 0.8rem;
+.soundBtn,
+.logoutBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 48px;
+  padding: 0 18px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--k-line);
+  background: var(--k-panel);
+  color: var(--k-text);
   font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  font-size: 0.95rem;
+  cursor: pointer;
 }
 
-.status_en_attente {
-  background: #fff1f2;
-  color: #e11d48;
+.logoutBtn {
+  width: 48px;
+  padding: 0;
 }
 
-.status_en_preparation {
-  background: #fffbeb;
-  color: #d97706;
+.soundOn {
+  border-color: #4fbf77;
+  color: #7ed19b;
 }
 
-.orderItems {
+.soundHint {
+  margin: 0 0 20px;
+  font-size: 0.92rem;
+  color: var(--k-muted);
+}
+
+.errorBox {
+  margin: 0 0 16px;
+  padding: 14px 16px;
+  border-radius: var(--radius-md);
+  background: rgba(217, 58, 31, 0.18);
+  color: #ffb4a3;
+  font-weight: 600;
+}
+
+/* Colonnes */
+.board {
+  display: grid;
+  gap: 16px;
+  margin-top: 8px;
+}
+
+.column {
+  padding: 14px;
+  border-radius: var(--radius-lg);
+  background: var(--k-panel);
+  min-width: 0;
+}
+
+.columnTitle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.count {
+  min-width: 30px;
+  height: 30px;
+  padding: 0 8px;
+  border-radius: var(--radius-full);
+  background: var(--k-card);
+  font-size: 0.95rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.empty {
+  margin: 0;
+  padding: 20px 8px;
+  color: var(--k-muted);
+}
+
+.skeleton {
+  height: 160px;
+  border-radius: var(--radius-md);
+  background: var(--k-card);
+  animation: pulse 1.6s ease-in-out infinite;
+}
+
+.cards {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  background: #fafafa;
-  padding: 16px;
-  border-radius: 16px;
 }
 
-.item {
+/* Carte de commande : neutre par défaut. C'est le minuteur qui alerte,
+   puis la carte entière quand la commande traîne. */
+.card {
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
+  padding: 18px;
+  border-radius: var(--radius-md);
+  background: var(--k-card);
+  border: 1px solid var(--k-line);
+  transition: border-color 0.3s ease, background-color 0.3s ease;
+}
+
+.cardHead {
+  display: flex;
   align-items: center;
-  font-weight: 600;
-  font-size: 1.1rem;
-  color: #374151;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 14px;
+  margin-bottom: 14px;
+  border-bottom: 1px solid var(--k-line);
+}
+
+.orderId {
+  font-family: var(--font-heading);
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+/* Minuteur : discret tant que tout va bien, puis de plus en plus présent */
+.timer {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 12px;
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--k-muted);
+  font-size: 0.92rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.warn .timer {
+  background: rgba(233, 162, 59, 0.16);
+  color: #f0b969;
+}
+
+.late .timer {
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.late {
+  border-color: rgba(217, 58, 31, 0.55);
+  background: #322523;
+}
+
+/* Nouvelle commande : la carte s'éclaire brièvement */
+.fresh {
+  border-color: var(--color-crust);
+  animation: fresh 1.4s ease-in-out 3;
+}
+
+.items {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.items li {
+  display: flex;
+  gap: 12px;
+  line-height: 1.25;
 }
 
 .qty {
-  color: #111827;
+  min-width: 30px;
+  height: 26px;
+  padding: 0 7px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--k-text);
+  font-size: 0.95rem;
   font-weight: 800;
-  margin-right: 12px;
-  font-size: 1rem;
+  font-variant-numeric: tabular-nums;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
-.instructionsBox {
-  background: #f8fafc;
-  padding: 16px;
-  border-radius: 16px;
-  border: 1px solid #e2e8f0;
+.itemName {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 1.2rem;
+  font-weight: 600;
+  padding-top: 1px;
 }
 
-.instructionsTitle {
-  font-size: 0.75rem;
+.size {
+  font-style: normal;
+  font-size: 0.92rem;
   font-weight: 700;
-  color: #64748b;
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
-  margin-bottom: 8px;
+  color: #f0b969;
 }
 
-.instructionsText {
+.extras {
   font-size: 0.95rem;
   font-weight: 500;
-  color: #334155;
-  line-height: 1.5;
+  color: var(--k-muted);
 }
 
-.actions {
+/* Mot du client */
+.note {
   display: flex;
-  gap: 16px;
-  margin-top: auto;
-  padding-top: 16px;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 16px 0 0;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: rgba(233, 162, 59, 0.12);
+  color: #ffd79a;
+  font-size: 1.02rem;
+  font-weight: 600;
 }
 
-.btnPrepare, .btnReady {
-  flex: 1;
-  padding: 16px;
+.note svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  opacity: 0.8;
+}
+
+.actionBtn {
+  min-height: 60px;
+  margin-top: 16px;
   border: none;
-  border-radius: 100px;
-  font-weight: 700;
-  font-size: 1.05rem;
+  border-radius: var(--radius-md);
+  background: var(--k-text);
+  color: var(--color-ink);
+  font-size: 1.1rem;
+  font-weight: 800;
   cursor: pointer;
-  transition: all 0.2s ease-in-out;
+  transition: transform var(--transition-fast), opacity var(--transition-fast);
 }
 
-.btnPrepare {
-  background: #fdf0ed;
-  color: var(--color-primary);
-}
-
-.btnPrepare:hover {
-  background: var(--color-primary);
-  color: white;
-  transform: scale(1.02);
-}
-
-.btnReady {
-  background: #ecfdf5;
-  color: #059669;
-}
-
-.btnReady:hover {
-  background: #10b981;
-  color: white;
-  transform: scale(1.02);
-}
-
-.btnPrepare:active, .btnReady:active {
+.actionBtn:active {
   transform: scale(0.98);
 }
 
-.emptyState {
-  grid-column: 1 / -1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 80px 20px;
-  background: rgba(255, 255, 255, 0.5);
-  backdrop-filter: blur(10px);
-  border-radius: 30px;
-  color: #6b7280;
-  text-align: center;
-  border: 2px dashed rgba(0,0,0,0.05);
+.actionBtn:disabled {
+  opacity: 0.6;
+  cursor: progress;
 }
 
-.emptyState h2 {
-  font-size: 1.8rem;
-  color: #374151;
-  margin-bottom: 10px;
+.actionReady {
+  background: #4fbf77;
+  color: #0e2a18;
+}
+
+.page :focus-visible {
+  outline-color: var(--color-crust);
+}
+
+@keyframes pulse {
+  50% { opacity: 0.45; }
+}
+
+@keyframes fresh {
+  50% { background: #38302a; }
+}
+
+@media (min-width: 1000px) {
+  .board {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: start;
+  }
+
+  .column {
+    min-height: 60vh;
+  }
+}
+
+@media (max-width: 520px) {
+  .soundBtn {
+    padding: 0 14px;
+    font-size: 0.85rem;
+  }
 }

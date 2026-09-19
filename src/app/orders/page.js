@@ -29,6 +29,12 @@ export default function OrdersPage() {
       const { data: { user: currentUser } } = await supabase.auth.getUser()
       if (currentUser) setUser(currentUser)
 
+      if (!currentUser) {
+        setOrders([])
+        setIsLoaded(true)
+        return
+      }
+
       const { data, error } = await supabase
         .from('orders')
         .select(`
@@ -38,23 +44,25 @@ export default function OrdersPage() {
           total_amount,
           created_at,
           order_items (
-            pizza_id,
+            product_id,
             product_name,
             quantity,
             price
           )
         `)
+        .eq('user_id', currentUser.id)
         .order('created_at', { ascending: false })
 
       if (data && data.length > 0) {
         const formattedOrders = data.map(o => ({
           id: o.short_id,
+          uuid: o.id,
           date: o.created_at,
           status: o.status,
           total: o.total_amount,
-          restaurant: 'Foodora Central',
+          restaurant: 'Best Pizza',
           items: o.order_items.map(item => ({
-            productId: item.pizza_id,
+            productId: item.product_id,
             name: item.product_name,
             quantity: item.quantity,
             price: item.price
@@ -70,7 +78,7 @@ export default function OrdersPage() {
     fetchOrders()
   }, [])
 
-  const activeOrders = orders.filter(o => o.status === 'en_attente' || o.status === 'en_preparation' || o.status === 'en_route')
+  const activeOrders = orders.filter(o => o.status === 'en_attente' || o.status === 'en_preparation' || o.status === 'prete' || o.status === 'en_route')
   const historyOrders = orders.filter(o => o.status === 'livre' || o.status === 'annule')
 
   const ordersToDisplay = activeTab === 'en_cours' ? activeOrders : historyOrders
@@ -81,7 +89,7 @@ export default function OrdersPage() {
       const product = {
         id: item.productId || Date.now().toString() + Math.random(),
         title: item.name,
-        image: '/pizza1.png'
+        image: '/margherita.png'
       };
       
       addToCart(product, item.quantity, 'Moyenne', {}, item.price);
@@ -105,8 +113,14 @@ export default function OrdersPage() {
       case 'en_preparation':
         return { 
           label: 'En préparation', 
-          icon: <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="2.5" fill="none"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>,
+          icon: <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="2.5" fill="none"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path></svg>,
           class: styles.status_en_preparation 
+        }
+      case 'prete':
+        return {
+          label: 'Prête, bientôt en route',
+          icon: <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="2.5" fill="none"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>,
+          class: styles.status_en_preparation
         }
       case 'en_route':
         return { 
@@ -279,7 +293,7 @@ export default function OrdersPage() {
                 </div>
 
                 {order.status === 'en_route' && (
-                  <ClientTrackingMap orderId={order.id} />
+                  <ClientTrackingMap orderId={order.uuid} />
                 )}
 
                 <div className={styles.orderTotalRow}>

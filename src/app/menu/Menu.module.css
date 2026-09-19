@@ -1,65 +1,112 @@
-.menuContainer {
-  min-height: 100vh;
-  background-color: var(--color-background);
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-  max-width: 1200px;
+.container {
+  width: 100%;
+  max-width: 1280px;
   margin: 0 auto;
+  padding: 0 var(--space-page) 48px;
 }
 
-.header {
+/* Raccourcis vers chaque catégorie */
+.jump {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  margin: 4px calc(-1 * var(--space-page)) 8px;
+  padding: 0 var(--space-page);
+}
+
+.jumpLink {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 20px 0;
-}
-
-.backBtn {
-  background: white;
-  border: 1px solid var(--color-border);
-  border-radius: 50%;
-  width: 40px;
   height: 40px;
+  padding: 0 18px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  font-size: 0.93rem;
+  font-weight: 600;
+  transition: border-color var(--transition-fast);
+}
+
+.jumpLink:hover {
+  border-color: var(--color-text-tertiary);
+}
+
+.section {
+  margin-top: 32px;
+  scroll-margin-top: 96px;
+}
+
+.sectionTitle {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  color: var(--color-text-primary);
-  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-}
-
-.header h1 {
-  font-size: 1.8rem;
-  font-weight: 800;
-  margin: 0;
-  color: var(--color-text-primary);
-}
-
-.menuContent {
-  display: flex;
-  flex-direction: column;
-  gap: 40px;
-}
-
-.categorySection {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.categoryTitle {
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 16px;
   font-size: 1.4rem;
-  font-weight: 700;
-  color: var(--color-primary);
-  border-bottom: 2px solid rgba(239, 68, 68, 0.1);
-  padding-bottom: 8px;
-  margin: 0;
 }
 
-.productsGrid {
+.count {
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  color: var(--color-text-tertiary);
+}
+
+.grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 28px 14px;
+}
+
+/* Squelettes de chargement */
+.skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.skelImage,
+.skelLine,
+.skelLineShort {
+  background: linear-gradient(90deg, var(--color-surface-muted) 0%, #f7f7f5 50%, var(--color-surface-muted) 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s linear infinite;
+}
+
+.skelImage {
+  aspect-ratio: 1;
+  border-radius: var(--radius-lg);
+}
+
+.skelLine {
+  height: 16px;
+  width: 80%;
+  border-radius: 6px;
+}
+
+.skelLineShort {
+  height: 14px;
+  width: 45%;
+  border-radius: 6px;
+}
+
+@keyframes shimmer {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}
+
+@media (min-width: 769px) {
+  .grid {
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 36px 24px;
+  }
+
+  .section {
+    margin-top: 48px;
+  }
+
+  .sectionTitle {
+    font-size: 1.6rem;
+  }
 }

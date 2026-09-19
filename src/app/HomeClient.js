@@ -1,273 +1,190 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useRef } from 'react'
 import Link from 'next/link'
 import { useCart } from '@/context/CartContext'
 import styles from './page.module.css'
-import CategoryPill from '@/components/CategoryPill'
 import ProductCard from '@/components/ProductCard'
+import BrandMark from '@/components/BrandMark'
+
+const CATEGORIES = [
+  { id: 'all', label: 'Tout', aliases: [] },
+  { id: 'Pizza', label: 'Pizzas', aliases: ['pizza', 'pizzas'] },
+  { id: 'Burgers', label: 'Burgers', aliases: ['burger', 'burgers'] },
+  { id: 'Sides', label: 'Accompagnements', aliases: ['side', 'sides', 'accompagnement', 'accompagnements'] },
+  { id: 'Desserts', label: 'Desserts', aliases: ['dessert', 'desserts'] },
+  { id: 'Drinks', label: 'Boissons', aliases: ['drink', 'drinks', 'boisson', 'boissons'] },
+]
+
+const inCategory = (item, cat) =>
+  cat.id === 'all' || cat.aliases.includes(String(item.category).toLowerCase())
+
+function describeOffer(offer) {
+  if (offer.target_type === 'all') return 'sur toute la carte'
+  if (offer.target_type === 'category') return `sur les ${offer.target_value}`
+  return 'sur une sélection'
+}
 
 export default function HomeClient({ user, products, latestOffer }) {
-  const router = useRouter()
   const { totalItems } = useCart()
-  const [activeCategory, setActiveCategory] = useState('Pizza')
+  const [activeCategory, setActiveCategory] = useState('all')
   const [searchQuery, setSearchQuery] = useState('')
-  const [location, setLocation] = useState('Paris, France')
+  const menuRef = useRef(null)
 
-  useEffect(() => {
-    if ('geolocation' in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        async (position) => {
-          try {
-            const { latitude, longitude } = position.coords;
-            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=10`);
-            const data = await res.json();
-            if (data && data.address) {
-              const city = data.address.city || data.address.town || data.address.village || 'Ville inconnue';
-              const country = data.address.country || 'France';
-              setLocation(`${city}, ${country}`);
-            }
-          } catch (e) {
-            console.error('Erreur de géolocalisation', e);
-          }
-        },
-        (error) => {
-          console.error('Geoloc refusée ou erreur', error);
-        }
-      )
-    }
-  }, [])
+  const query = searchQuery.trim().toLowerCase()
+  const isSearching = query.length > 0
+  const initial = user?.email ? user.email[0].toUpperCase() : null
 
-  const categoryConfigs = [
-    { id: 'Pizza', label: 'Pizza', fallback: '/margherita.png', aliases: ['Pizza', 'Pizzas'] },
-    { id: 'Burgers', label: 'Burgers', fallback: '/margherita.png', aliases: ['Burger', 'Burgers'] },
-    { id: 'Desserts', label: 'Desserts', fallback: '/margherita.png', aliases: ['Dessert', 'Desserts'] },
-    { id: 'Drinks', label: 'Boissons', fallback: '/margherita.png', aliases: ['Drink', 'Drinks', 'Boissons'] }
-  ]
+  // Seules les catégories qui ont des plats sont proposées
+  const categories = CATEGORIES.filter(cat => cat.id === 'all' || products.some(p => inCategory(p, cat)))
+  const currentCat = categories.find(c => c.id === activeCategory) || categories[0]
 
-  const categories = categoryConfigs.map(cat => {
-    const catProducts = products.filter(p => cat.aliases.includes(p.category))
-    const iconImage = catProducts.length > 0 && catProducts[0].image ? catProducts[0].image : cat.fallback
-    return {
-      id: cat.id,
-      label: cat.label,
-      icon: <img src={iconImage} alt={cat.label} style={{width: '40px', height: '40px', borderRadius: '8px', objectFit: 'cover'}}/>,
-      count: `${catProducts.length} Plats`
-    }
-  })
+  const rated = products.filter(p => p.rating).sort((a, b) => Number(b.rating) - Number(a.rating))
+  const featured = (rated.length >= 3 ? rated : products.filter(p => inCategory(p, CATEGORIES[1]))).slice(0, 8)
+  const featuredTitle = rated.length >= 3 ? 'Les plus appréciées' : 'Nos pizzas'
+
+  const visibleProducts = isSearching
+    ? products.filter(p => p.title.toLowerCase().includes(query) || String(p.category).toLowerCase().includes(query))
+    : products.filter(p => inCategory(p, currentCat))
+
+  const scrollToMenu = () => menuRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+
+  const renderCard = (item, variant) => (
+    <ProductCard
+      key={`${variant}-${item.id}`}
+      id={item.id}
+      title={item.title}
+      price={item.price}
+      image={item.image}
+      category={item.category}
+      isSpicy={item.isSpicy ?? item.is_spicy}
+      rating={item.rating}
+      prepTime={item.prep_time || '25-35 min'}
+      variant={variant}
+    />
+  )
 
   return (
     <div className={styles.appContainer}>
-      
-      {/* Header */}
       <header className={styles.header}>
-        {/* Mobile Logo & Cart row */}
-        <div className={styles.mobileTopBar}>
-          <div className={styles.mobileLogo}>
-            <svg viewBox="0 0 24 24" width="24" height="24" className={styles.logoIcon} fill="currentColor">
-              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z" />
-            </svg>
-            Foodora
-          </div>
-          <div 
-            className={styles.mobileProfileBtn} 
-            onClick={() => router.push('/profile')}
-          >
-            {user?.email ? user.email[0].toUpperCase() : 'U'}
-          </div>
-        </div>
+        <div className={styles.headerRow}>
+          <Link href="/" className={styles.mobileBrand} aria-label="Best Pizza, accueil">
+            <BrandMark />
+          </Link>
 
-        {/* Location & Search & Profile Row */}
-        <div className={styles.topControls}>
-          <div className={styles.locationBlock}>
-            <svg viewBox="0 0 24 24" width="16" height="16" stroke="var(--color-primary)" strokeWidth="2" fill="none">
-              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-              <circle cx="12" cy="10" r="3"></circle>
+          <div className={styles.searchWrapper} role="search">
+            <svg className={styles.searchIcon} viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" strokeWidth="2.2" fill="none" aria-hidden="true">
+              <circle cx="11" cy="11" r="7.5"></circle>
+              <line x1="21" y1="21" x2="16.5" y2="16.5"></line>
             </svg>
-            <span className={styles.locationText}>{location}</span>
-            <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" strokeWidth="2" fill="none"><polyline points="6 9 12 15 18 9"></polyline></svg>
-          </div>
-
-          <div className={`${styles.searchWrapper} soft-surface`} style={{ position: 'relative' }}>
-            <svg viewBox="0 0 24 24" width="18" height="18" stroke="var(--color-text-tertiary)" strokeWidth="2" fill="none">
-              <circle cx="11" cy="11" r="8"></circle>
-              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-            </svg>
-            <input 
-              type="text" 
-              placeholder="Rechercher plats, restaurants..." 
+            <label htmlFor="search" className="visually-hidden">Rechercher un plat</label>
+            <input
+              id="search"
+              type="search"
+              placeholder="Une envie ? Margherita, burger…"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className={styles.searchInput}
+              autoComplete="off"
             />
-            {searchQuery.length > 0 && (
-              <div className={styles.searchResults}>
-                {products
-                  .filter(item => item.title.toLowerCase().includes(searchQuery.toLowerCase()))
-                  .map(item => (
-                    <div 
-                      key={item.id} 
-                      className={styles.searchResultItem}
-                      onClick={() => router.push(`/product/${item.id}`)}
-                    >
-                      <img src={item.image} alt={item.title} className={styles.searchResultImage} />
-                      <div className={styles.searchResultInfo}>
-                        <span className={styles.searchResultTitle}>{item.title}</span>
-                        <span className={styles.searchResultPrice}>{item.price} FCFA</span>
-                      </div>
-                    </div>
-                  ))
-                }
-                {products.filter(item => item.title.toLowerCase().includes(searchQuery.toLowerCase())).length === 0 && (
-                  <div className={styles.searchResultEmpty}>Aucun résultat</div>
-                )}
-              </div>
+            {isSearching && (
+              <button className={styles.clearSearch} onClick={() => setSearchQuery('')} aria-label="Effacer la recherche">
+                <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
             )}
           </div>
 
-          <div className={styles.desktopProfileBlock}>
-            <button className={styles.desktopCartBtn} onClick={() => router.push('/cart')}>
-              <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" strokeWidth="2.5" fill="none">
-                <circle cx="9" cy="21" r="1"></circle>
-                <circle cx="20" cy="21" r="1"></circle>
-                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+          <div className={styles.headerActions}>
+            <Link href="/cart" className={styles.iconBtn} aria-label={`Panier, ${totalItems} article${totalItems > 1 ? 's' : ''}`}>
+              <svg viewBox="0 0 24 24" width="21" height="21" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <path d="M16 10a4 4 0 0 1-8 0"></path>
               </svg>
               {totalItems > 0 && <span className={styles.cartBadge}>{totalItems}</span>}
-            </button>
-            <div className={styles.profileUser} onClick={() => router.push(user ? '/profile' : '/login')} style={{ cursor: 'pointer' }}>
-              <div className={styles.avatar}>
-                {user ? user.email.charAt(0).toUpperCase() : 'J'}
-              </div>
-              <span className={styles.userName}>{user ? user.email.split('@')[0] : 'Se connecter'}</span>
-            </div>
+            </Link>
+            {user ? (
+              <Link href="/profile" className={styles.avatar} aria-label="Mon profil">{initial}</Link>
+            ) : (
+              <Link href="/login" className={styles.loginBtn}>Se connecter</Link>
+            )}
           </div>
         </div>
       </header>
-      
-      {/* Hero Section */}
-      <section className={styles.heroSection}>
-        <div className={styles.promoCard}>
-          <div className={styles.promoContent}>
-            <h2>Délicieux et<br/><span className={styles.highlight}>livré vite</span></h2>
-            <p>Commandez dans vos restos favoris<br/>et faites-vous livrer à la porte.</p>
-            <button className={styles.orderNowBtn} onClick={() => router.push('/product/1')}>
-              Commander 
-              <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="2" fill="none">
-                <line x1="5" y1="12" x2="19" y2="12"></line>
-                <polyline points="12 5 19 12 12 19"></polyline>
-              </svg>
-            </button>
-          </div>
-          <div className={styles.promoImageWrapper}>
-            <img src="/margherita.png" alt="Delicious Food" />
-            {latestOffer && (
-              <div className={`${styles.dealFloatingCard} soft-surface`}>
-                <div className={styles.dealTag}>
-                  <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M8.5 14.5A2.5 2.5 0 0011 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 11-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 002.5 2.5z"></path>
-                  </svg>
-                  PROMO
-                </div>
-                <h3>-{latestOffer.discount_percentage}%</h3>
-                <p>{latestOffer.target_type === 'all' ? 'sur tout' : latestOffer.target_type === 'category' ? `sur ${latestOffer.target_value}` : 'sur ce produit'}</p>
-                <button className={styles.dealBtn} onClick={() => router.push('/offers')}>Code: {latestOffer.code} <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" strokeWidth="2" fill="none"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></button>
-              </div>
-            )}
-          </div>
-        </div>
-      </section>
 
-      {/* Categories */}
-      <section className={styles.categoriesSection}>
-        <div className={styles.sectionHeader}>
-          <h3>Catégories</h3>
-          <button className={styles.viewAllBtn} onClick={() => router.push('/menu')}>Voir tout</button>
-        </div>
-        <div className={`${styles.categoriesList} no-scrollbar`}>
-          {categories.map(cat => (
-            <div 
-              key={cat.id} 
-              className={`${styles.catCard} soft-surface ${activeCategory === cat.id ? styles.activeCat : ''}`}
-              onClick={() => setActiveCategory(cat.id)}
-            >
-              <div className={styles.catIconBox}>
-                {cat.icon}
-              </div>
-              <span className={styles.catTitle}>{cat.label}</span>
-              <span className={styles.catCount}>{cat.count}</span>
+      {isSearching ? (
+        <section className={styles.section} aria-live="polite">
+          <div className={styles.sectionHeader}>
+            <h2>
+              {visibleProducts.length > 0
+                ? `${visibleProducts.length} résultat${visibleProducts.length > 1 ? 's' : ''}`
+                : 'Aucun plat trouvé'}
+            </h2>
+          </div>
+          {visibleProducts.length > 0 ? (
+            <div className={styles.grid}>{visibleProducts.map(item => renderCard(item, 'grid'))}</div>
+          ) : (
+            <div className={styles.emptyState}>
+              <p>Rien ne correspond à « {searchQuery} ». Essayez un autre mot, ou parcourez la carte.</p>
+              <button className="btn btn-secondary" onClick={() => setSearchQuery('')}>Voir toute la carte</button>
             </div>
-          ))}
-        </div>
-      </section>
+          )}
+        </section>
+      ) : (
+        <>
+          <section className={styles.hero}>
+            <div className={styles.heroText}>
+              <h1>Sortie du four,<br />livrée chez vous.</h1>
+              <p>Choisissez votre pizza, on s’occupe du reste.</p>
+              <div className={styles.heroActions}>
+                <button className="btn btn-primary" onClick={scrollToMenu}>Voir la carte</button>
+                {latestOffer && (
+                  <Link href="/offers" className={styles.offerPill}>
+                    <strong>-{latestOffer.discount_percentage}%</strong> {describeOffer(latestOffer)}
+                  </Link>
+                )}
+              </div>
+            </div>
+            <div className={styles.heroPizza} aria-hidden="true">
+              <img src="/margherita.png" alt="" />
+            </div>
+          </section>
 
-      {/* Popular Restaurants / Products */}
-      <section className={styles.popularSection}>
-        <div className={styles.sectionHeader}>
-          <h3>Populaire en ce moment</h3>
-          <button className={styles.viewAllBtn} onClick={() => router.push('/menu')}>Voir tout</button>
-        </div>
-        
-        <div className={`${styles.popularList} no-scrollbar`}>
-          {(() => {
-            const popularItems = products.filter(item => {
-              const categoryMap = {
-                'Pizza': ['Pizza', 'Pizzas'],
-                'Burgers': ['Burger', 'Burgers'],
-                'Desserts': ['Dessert', 'Desserts'],
-                'Drinks': ['Drink', 'Drinks', 'Boissons']
-              };
-              const actualMatchesCat = categoryMap[activeCategory]?.includes(item.category) || false;
-              
-              const matchesSearch = item.title.toLowerCase().includes(searchQuery.toLowerCase());
-              return actualMatchesCat && matchesSearch;
-            });
+          {featured.length > 0 && (
+            <section className={styles.section}>
+              <div className={styles.sectionHeader}>
+                <h2>{featuredTitle}</h2>
+                <Link href="/menu" className={styles.seeAll}>Tout voir</Link>
+              </div>
+              <div className={`${styles.rail} no-scrollbar`}>
+                {featured.map(item => renderCard(item, 'rail'))}
+              </div>
+            </section>
+          )}
 
-            // On duplique le tableau pour l'effet de défilement infini
-            const marqueeItems = [...popularItems, ...popularItems];
-
-            return marqueeItems.map((item, index) => (
-              <ProductCard 
-                key={`${item.id}-${index}`}
-                id={item.id}
-                title={item.title}
-                price={item.price}
-                image={item.image}
-                category={item.category}
-                isSpicy={item.isSpicy}
-                rating={item.rating || "4.5"}
-                prepTime={item.prep_time || "25-35 min"}
-              />
-            ));
-          })()}
-        </div>
-      </section>
-
-      {/* Tous nos plats */}
-      <section className={styles.popularSection} style={{ marginTop: '24px' }}>
-        <div className={styles.sectionHeader}>
-          <h3>Tous nos plats</h3>
-        </div>
-        
-        <div className={`${styles.popularList} no-scrollbar`}>
-          {products
-            .filter(item => item.title.toLowerCase().includes(searchQuery.toLowerCase()))
-            .map(item => (
-            <ProductCard 
-              key={`all-${item.id}`}
-              id={item.id}
-              title={item.title}
-              price={item.price}
-              image={item.image}
-              category={item.category}
-              isSpicy={item.isSpicy}
-              rating={item.rating || "4.5"}
-              prepTime={item.prep_time || "25-35 min"}
-            />
-          ))}
-        </div>
-      </section>
-      
+          <section className={styles.section} ref={menuRef} aria-labelledby="menu-title">
+            <div className={styles.sectionHeader}>
+              <h2 id="menu-title">La carte</h2>
+            </div>
+            <div className={`${styles.chips} no-scrollbar`} role="tablist" aria-label="Catégories">
+              {categories.map(cat => (
+                <button
+                  key={cat.id}
+                  role="tab"
+                  aria-selected={currentCat.id === cat.id}
+                  className={`${styles.chip} ${currentCat.id === cat.id ? styles.chipActive : ''}`}
+                  onClick={() => setActiveCategory(cat.id)}
+                >
+                  {cat.label}
+                </button>
+              ))}
+            </div>
+            <div className={styles.grid}>
+              {visibleProducts.map(item => renderCard(item, 'grid'))}
+            </div>
+          </section>
+        </>
+      )}
     </div>
   )
 }

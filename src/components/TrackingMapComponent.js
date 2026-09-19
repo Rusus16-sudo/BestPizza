@@ -39,15 +39,15 @@ export default function TrackingMapComponent({ position }) {
 
   if (!mounted) return <div style={{ height: '300px', background: '#f3f4f6', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Chargement de la carte...</div>
 
-  // default to center of Paris if no position
-  const validPosition = position && position.lat && position.lng ? [position.lat, position.lng] : [48.8566, 2.3522];
+  // Par défaut : centre de Douala
+  const validPosition = position && position.lat && position.lng ? [position.lat, position.lng] : [4.0511, 9.7679];
 
   return (
     <div style={{ height: '300px', width: '100%', borderRadius: '12px', overflow: 'hidden', border: '1px solid #e5e7eb', zIndex: 1, position: 'relative' }}>
       <MapContainer center={validPosition} zoom={15} style={{ height: '100%', width: '100%' }}>
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-          url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+          url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         {position && position.lat && position.lng && (
           <Marker position={validPosition} icon={scooterIcon}>

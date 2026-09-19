@@ -1,91 +1,149 @@
+/* Carte produit : photo + texte, sans cadre. La photo porte l'émotion. */
 .card {
-  min-width: 260px;
-  max-width: 260px;
-  border-radius: var(--radius-xl);
+  position: relative;
   display: flex;
   flex-direction: column;
-  flex-shrink: 0;
-  transition: transform var(--transition-bounce), box-shadow var(--transition-bounce);
-  background: var(--color-surface);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid var(--color-border);
-  box-shadow: var(--shadow-soft);
-  position: relative;
-  overflow: hidden;
+  min-width: 0;
 }
 
-.card:hover {
-  transform: translateY(-8px) scale(1.02);
-  box-shadow: var(--shadow-card);
-  border-color: rgba(255, 255, 255, 0.15);
+.rail {
+  width: 208px;
+  flex-shrink: 0;
+  scroll-snap-align: start;
+}
+
+.link {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  border-radius: var(--radius-lg);
 }
 
 .imageContainer {
   position: relative;
   width: 100%;
-  height: 150px;
+  aspect-ratio: 1 / 1;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--color-surface-muted);
 }
 
 .productImage {
-  width: 100%;
-  height: 100%;
   object-fit: cover;
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (hover: hover) {
+  .link:hover .productImage {
+    transform: scale(1.04);
+  }
+}
+
+.spicyTag {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px 4px 8px;
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--color-primary);
+  font-size: 0.75rem;
+  font-weight: 700;
 }
 
 .content {
   display: flex;
   flex-direction: column;
-  padding: 16px;
-}
-
-.headerRow {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 4px;
+  gap: 4px;
+  padding: 0 4px;
 }
 
 .title {
-  font-size: 1rem;
+  font-family: var(--font-heading);
+  font-size: 1.05rem;
   font-weight: 700;
+  letter-spacing: -0.01em;
   color: var(--color-text-primary);
-  line-height: 1.2;
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.rating {
+.meta {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 12px;
   font-size: 0.85rem;
-  font-weight: 700;
-  color: var(--color-text-primary);
-}
-
-.star {
-  color: #ffc107;
-}
-
-.subtitle {
-  font-size: 0.8rem;
-  color: var(--color-text-tertiary);
-  margin-bottom: 16px;
-}
-
-.footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-top: 1px dashed var(--color-border);
-  padding-top: 12px;
+  color: var(--color-text-secondary);
 }
 
 .metaItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.star {
+  color: var(--color-crust);
+}
+
+.newTag {
+  color: var(--color-basil);
+  font-weight: 600;
+}
+
+.price {
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--color-text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Ajout rapide : dans le coin bas-droit de la photo (calque carré de même taille) */
+.addSlot {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  aspect-ratio: 1 / 1;
+  pointer-events: none;
+}
+
+.addBtn {
+  pointer-events: auto;
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: none;
+  background: var(--color-primary);
+  color: #fff;
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 0.8rem;
-  color: var(--color-text-secondary);
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: var(--shadow-glow);
+  transition: transform var(--transition-bounce), background-color var(--transition-fast);
+  z-index: 5;
+}
+
+.addBtn:hover {
+  background: var(--color-primary-hover);
+}
+
+.addBtn:active {
+  transform: scale(0.9);
+}
+
+.addBtn.added {
+  background: var(--color-basil);
+  box-shadow: none;
 }
 
 .dotsBtn {

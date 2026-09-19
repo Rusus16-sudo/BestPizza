@@ -1075,15 +1075,15 @@
 }
 
 .reviewCard {
-  background: white;
+  background: var(--color-surface);
   border-radius: var(--radius-lg);
-  padding: 24px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+  padding: 20px;
+  box-shadow: none;
   border: 1px solid var(--color-border);
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  transition: transform 0.2s, box-shadow 0.2s;
+  align-items: flex-start;
+  gap: 14px;
 }
 
 .reviewCard:hover {
@@ -1095,6 +1095,8 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
+  gap: 16px;
+  width: 100%;
 }
 
 .reviewUser {
@@ -1106,7 +1108,7 @@
 .userAvatar {
   width: 40px;
   height: 40px;
-  background: var(--color-primary);
+  background: var(--color-ink);
   color: white;
   border-radius: 50%;
   display: flex;
@@ -1129,18 +1131,32 @@
 }
 
 .reviewStars {
-  color: #fbbf24;
-  font-size: 1.1rem;
+  color: var(--color-crust);
+  font-size: 1.05rem;
   letter-spacing: 2px;
+  white-space: nowrap;
+  padding-top: 2px;
 }
 
+.starOff {
+  color: var(--color-border);
+}
+
+/* Le plat concerné : une étiquette, pas une ligne décorée */
 .reviewProduct {
-  font-size: 0.85rem;
-  color: var(--color-text-secondary);
-  background: #f8fafc;
-  padding: 8px 12px;
-  border-radius: var(--radius-sm);
-  border-left: 3px solid var(--color-primary);
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 12px;
+  border-radius: var(--radius-full);
+  background: var(--color-bg-base);
+  color: var(--color-text-primary);
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.reviewProduct svg {
+  color: var(--color-primary);
 }
 
 .reviewProduct span {
@@ -1149,9 +1165,175 @@
 }
 
 .reviewComment {
-  font-size: 0.95rem;
-  line-height: 1.5;
-  color: var(--color-text-secondary);
-  font-style: italic;
+  font-size: 1rem;
+  line-height: 1.55;
+  color: var(--color-text-primary);
   margin: 0;
+  max-width: 52ch;
+}
+
+/* =====================================================================
+   Refonte : alignement sur la charte Best Pizza (tomate / ardoise)
+   Ces règles viennent en dernier et remplacent les styles ci-dessus.
+   ===================================================================== */
+.container {
+  max-width: 1100px;
+  padding: calc(16px + env(safe-area-inset-top)) var(--space-page) 48px;
+  background: transparent;
+}
+
+.header {
+  margin-bottom: 20px;
+}
+
+.header h1 {
+  font-size: clamp(1.8rem, 5vw, 2.4rem);
+  letter-spacing: -0.03em;
+}
+
+.header p {
+  margin: 4px 0 0;
+  color: var(--color-text-secondary);
+}
+
+/* Onglets : une ligne qui défile sur mobile, jamais de texte sur 3 lignes */
+.tabsContainer {
+  gap: 6px;
+  margin: 0 calc(-1 * var(--space-page)) 28px;
+  padding: 0 var(--space-page) 12px;
+  border-bottom: 1px solid var(--color-border);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.tabsContainer::-webkit-scrollbar {
+  display: none;
+}
+
+.tabsContainer .tab {
+  flex-shrink: 0;
+  white-space: nowrap;
+  height: 40px;
+  padding: 0 16px;
+  border: none;
+  border-radius: var(--radius-full);
+  background: none;
+  color: var(--color-text-secondary);
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.tabsContainer .tab:hover {
+  background: var(--color-surface-muted);
+  color: var(--color-text-primary);
+}
+
+.tabsContainer .tabActive,
+.tabsContainer .tabActive:hover {
+  background: var(--color-ink);
+  color: #fff;
+}
+
+/* Chiffres clés : sobres, sans dégradés */
+.metricCard,
+.cardOrange,
+.cardBlue {
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border);
+  box-shadow: none;
+  border-radius: var(--radius-lg);
+}
+
+.cardOrange {
+  background: var(--color-ink);
+  border-color: var(--color-ink);
+  color: #fff;
+}
+
+.metricCard:hover {
+  transform: none;
+}
+
+.metricBgDeco {
+  display: none;
+}
+
+.metricIconBox {
+  box-shadow: none;
+  background: rgba(255, 255, 255, 0.1);
+  color: inherit;
+}
+
+.cardBlue .metricIconBox {
+  background: var(--color-surface-muted);
+}
+
+.metricIconBox svg {
+  width: 24px;
+  height: 24px;
+}
+
+.metricTitle {
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 600;
+  font-size: 0.95rem;
+  opacity: 0.75;
+}
+
+.metricValue {
+  font-family: var(--font-heading);
+  font-variant-numeric: tabular-nums;
+}
+
+.metricSubtext {
+  font-weight: 500;
+  opacity: 0.65;
+}
+
+.filterSection {
+  border-color: var(--color-border);
+  box-shadow: none;
+  border-radius: var(--radius-lg);
+}
+
+.periodBtn {
+  background: var(--color-surface);
+  border-color: var(--color-border);
+  color: var(--color-text-primary);
+}
+
+.dashboardTitle {
+  letter-spacing: -0.02em;
+}
+
+.menuHeader {
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.btnConfirm {
+  border-radius: var(--radius-full);
+  font-weight: 700;
+}
+
+.solidBtnSuspend {
+  background: none;
+  color: var(--color-primary);
+  border: 1px solid var(--color-border);
+}
+
+.card {
+  box-shadow: none;
+  border: 1px solid var(--color-border);
+}
+
+.periodBtn.active {
+  background: var(--color-ink);
+  border-color: var(--color-ink);
+  color: #fff;
+  box-shadow: none;
 }

@@ -1,273 +1,279 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { createClient } from '@/utils/supabase/client'
 import toast from 'react-hot-toast'
 import TrackingMap from '@/components/TrackingMap'
-import SkeletonList from '@/components/SkeletonList'
+import ConfirmDialog from '@/components/ConfirmDialog'
+import { formatPrice } from '@/context/CartContext'
 import styles from './Delivery.module.css'
 
+// "Quartier: X | Tél: Y | Paiement: Z"
+function parseAddress(addressStr) {
+  const out = { quartier: addressStr || 'Adresse non précisée', phone: '', payment: 'Paiement à la livraison' }
+  if (!addressStr || !addressStr.includes('|')) return out
+  addressStr.split('|').map(p => p.trim()).forEach(p => {
+    if (p.startsWith('Quartier:')) out.quartier = p.replace('Quartier:', '').trim()
+    else if (p.startsWith('Tél:')) out.phone = p.replace('Tél:', '').trim()
+    else if (p.startsWith('Paiement:')) out.payment = p.replace('Paiement:', '').trim()
+  })
+  return out
+}
+
+const isCash = (payment) => payment === 'Paiement à la livraison' || /esp[eè]ces/i.test(payment)
+
 export default function DeliveryPage() {
+  const [supabase] = useState(() => createClient())
+  const [userId, setUserId] = useState(null)
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(true)
-  const [toastMessage, setToastMessage] = useState('')
+  const [loadError, setLoadError] = useState(null)
   const [driverPosition, setDriverPosition] = useState(null)
-  const ordersRef = useRef([])
-  const supabase = createClient()
+  const [busyId, setBusyId] = useState(null)
+  const [confirmOrder, setConfirmOrder] = useState(null)
+  const myOrdersRef = useRef([])
+  const channelsRef = useRef(new Map())
 
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async () => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+    setUserId(user.id)
+
     const { data, error } = await supabase
       .from('orders')
       .select(`
-        id,
-        short_id,
-        status,
-        customer_name,
-        delivery_address,
-        total_amount,
-        created_at,
-        order_items (
-          product_name,
-          quantity
-        )
+        id, short_id, status, customer_name, delivery_address, total_amount, created_at, driver_id,
+        order_items ( product_name, quantity )
       `)
-      .eq('status', 'en_route')
+      .in('status', ['prete', 'en_route'])
       .order('created_at', { ascending: true })
 
-    if (data) {
-      setOrders(data)
-      ordersRef.current = data
+    if (error) {
+      console.error('Livraisons:', error.message)
+      setLoadError(error.message)
+      setLoading(false)
+      return
     }
+    setLoadError(null)
+    setOrders(data)
+    myOrdersRef.current = data.filter(o => o.status === 'en_route' && o.driver_id === user.id)
     setLoading(false)
-  }
+  }, [supabase])
 
   useEffect(() => {
     fetchOrders()
-
-    // Realtime subscription
     const channel = supabase
-      .channel('public:orders:delivery')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, (payload) => {
-        fetchOrders()
-      })
+      .channel('delivery-orders')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => fetchOrders())
       .subscribe()
-
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [])
+  }, [supabase, fetchOrders])
 
-  // Start GPS tracking
+  // Position GPS partagée avec les clients de MES livraisons en cours,
+  // sur un canal ouvert une seule fois par commande.
   useEffect(() => {
-    let watchId;
-    if ('geolocation' in navigator) {
-      watchId = navigator.geolocation.watchPosition(
-        (position) => {
-          const newPos = {
-            lat: position.coords.latitude,
-            lng: position.coords.longitude
-          };
-          setDriverPosition(newPos);
-          
-          // Broadcast to all active orders
-          ordersRef.current.forEach(order => {
-            const channel = supabase.channel(`tracking_${order.id}`);
-            channel.subscribe((status) => {
-              if (status === 'SUBSCRIBED') {
-                channel.send({
-                  type: 'broadcast',
-                  event: 'location',
-                  payload: newPos
-                });
-              }
-            });
-          });
-        },
-        (error) => console.error("Erreur GPS:", error),
-        { enableHighAccuracy: true }
-      );
-    }
+    if (!('geolocation' in navigator)) return
+    const channels = channelsRef.current
+    const watchId = navigator.geolocation.watchPosition(
+      (position) => {
+        const pos = { lat: position.coords.latitude, lng: position.coords.longitude }
+        setDriverPosition(pos)
+        const activeIds = new Set(myOrdersRef.current.map(o => o.id))
+
+        for (const [id, ch] of channels) {
+          if (!activeIds.has(id)) {
+            supabase.removeChannel(ch)
+            channels.delete(id)
+          }
+        }
+        for (const id of activeIds) {
+          let ch = channels.get(id)
+          if (!ch) {
+            ch = supabase.channel(`tracking_${id}`)
+            ch.subscribe()
+            channels.set(id, ch)
+          }
+          ch.send({ type: 'broadcast', event: 'location', payload: pos })
+        }
+      },
+      (error) => console.error('Erreur GPS:', error.message),
+      { enableHighAccuracy: true, maximumAge: 10000 }
+    )
     return () => {
-      if (watchId) navigator.geolocation.clearWatch(watchId);
-    };
+      navigator.geolocation.clearWatch(watchId)
+      for (const ch of channels.values()) supabase.removeChannel(ch)
+      channels.clear()
+    }
   }, [supabase])
 
-  const handleDeliver = async (id) => {
-    const { error } = await supabase
+  const takeOrder = async (order) => {
+    setBusyId(order.id)
+    // Ne réussit que si personne ne l'a prise entre-temps
+    const { data, error } = await supabase
       .from('orders')
-      .update({ status: 'livre' })
-      .eq('id', id)
-
+      .update({ status: 'en_route', driver_id: userId })
+      .eq('id', order.id)
+      .eq('status', 'prete')
+      .is('driver_id', null)
+      .select('id')
+    setBusyId(null)
     if (error) {
-      console.error('Erreur lors de la mise à jour:', error)
-      toast.error("Erreur lors de la mise à jour du statut")
+      toast.error("La commande n'a pas pu être prise. Vérifiez la connexion.")
+      return
+    }
+    if (!data || data.length === 0) {
+      toast.error('Un autre livreur a déjà pris cette commande.')
     } else {
-      setToastMessage("Commande marquée comme livrée ! ✅")
-      setTimeout(() => setToastMessage(''), 3000)
+      toast.success(`Commande ${order.short_id} prise en charge`)
     }
+    fetchOrders()
   }
 
-  const formatAddress = (addressStr) => {
-    if (!addressStr) return { quartier: 'Adresse non précisée', phone: '', payment: '' };
-    
-    // addressStr looks like: "Quartier: X | Tél: Y | Paiement: Z"
-    if (!addressStr.includes('Quartier:') && !addressStr.includes('|')) {
-      // Old format where it was just the neighborhood string
-      return { quartier: addressStr, phone: 'Non renseigné', payment: 'Espèces (Par défaut)' };
+  const markDelivered = async () => {
+    const order = confirmOrder
+    setConfirmOrder(null)
+    setBusyId(order.id)
+    const { error } = await supabase.from('orders').update({ status: 'livre' }).eq('id', order.id)
+    setBusyId(null)
+    if (error) {
+      toast.error("La livraison n'a pas pu être enregistrée. Réessayez.")
+      return
     }
-
-    const parts = addressStr.split('|').map(p => p.trim());
-    let quartier = '', phone = '', payment = '';
-    
-    parts.forEach(p => {
-      if (p.startsWith('Quartier:')) quartier = p.replace('Quartier:', '').trim();
-      else if (p.startsWith('Tél:')) phone = p.replace('Tél:', '').trim();
-      else if (p.startsWith('Paiement:')) payment = p.replace('Paiement:', '').trim();
-    });
-    
-    return { 
-      quartier: quartier || addressStr, 
-      phone: phone || 'Non renseigné', 
-      payment: payment || 'Espèces'
-    };
+    toast.success(`Commande ${order.short_id} livrée`)
+    fetchOrders()
   }
+
+  const mine = orders.filter(o => o.status === 'en_route' && o.driver_id === userId)
+  const available = orders.filter(o => o.status === 'prete' && !o.driver_id)
+
+  const renderItems = (order) => (
+    <p className={styles.items}>
+      {order.order_items.map(i => `${i.quantity}× ${i.product_name}`).join(', ')}
+    </p>
+  )
 
   return (
-    <div className={styles.container}>
+    <div className={styles.page}>
       <header className={styles.header}>
-        <div className={styles.headerIcon}>
-          <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" strokeWidth="2.5" fill="none">
-            <rect x="1" y="3" width="15" height="13"></rect>
-            <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
-            <circle cx="5.5" cy="18.5" r="2.5"></circle>
-            <circle cx="18.5" cy="18.5" r="2.5"></circle>
-          </svg>
-        </div>
-        <h1>Espace Livreur</h1>
+        <h1>Livraisons</h1>
+        <p>{mine.length > 0 ? `${mine.length} en cours` : 'Aucune livraison en cours'}</p>
       </header>
 
-      <div className={styles.content}>
-        <h2 className={styles.sectionTitle}>
-          Commandes prêtes à livrer
-          <span className={styles.badge}>{orders.length}</span>
-        </h2>
-        
+      {loadError && (
+        <div className={styles.errorBox} role="alert">
+          Les livraisons n’ont pas pu être chargées. Si le problème persiste, prévenez le gérant.
+        </div>
+      )}
+
+      <section className={styles.section} aria-labelledby="mine-title">
+        <h2 id="mine-title" className={styles.sectionTitle}>Mes livraisons</h2>
+
         {loading ? (
-          <div style={{ padding: '20px' }}>
-            <SkeletonList count={5} />
-          </div>
-        ) : orders.length === 0 ? (
-          <div className={styles.emptyState}>
-            <svg viewBox="0 0 24 24" width="48" height="48" stroke="currentColor" strokeWidth="1" fill="none">
-              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-              <polyline points="22 4 12 14.01 9 11.01"></polyline>
-            </svg>
-            <p>Aucune livraison en attente pour le moment.</p>
-          </div>
+          <div className={styles.skeleton} />
+        ) : mine.length === 0 ? (
+          <p className={styles.empty}>Prenez une commande prête ci-dessous pour démarrer.</p>
         ) : (
-          <div className={styles.ordersGrid}>
-            {orders.map(order => {
-              const { quartier, phone, payment } = formatAddress(order.delivery_address);
-              
+          <>
+            <div className={styles.map}>
+              <TrackingMap position={driverPosition} />
+              <p className={styles.mapNote}>Votre position est partagée avec vos clients pendant la livraison.</p>
+            </div>
+            <div className={styles.list}>
+              {mine.map(order => {
+                const { quartier, phone, payment } = parseAddress(order.delivery_address)
+                const cash = isCash(payment)
+                return (
+                  <article key={order.id} className={`${styles.card} ${styles.cardMine}`}>
+                    <div className={styles.cardHead}>
+                      <span className={styles.orderId}>{order.short_id}</span>
+                      <span className={styles.customer}>{order.customer_name}</span>
+                    </div>
+
+                    <p className={styles.address}>{quartier}</p>
+
+                    <div className={`${styles.amount} ${cash ? styles.amountCash : ''}`}>
+                      <span>{cash ? 'À encaisser' : 'Mobile Money'}</span>
+                      <strong>{formatPrice(order.total_amount)}</strong>
+                    </div>
+
+                    {renderItems(order)}
+
+                    <div className={styles.quickActions}>
+                      {phone ? (
+                        <a href={`tel:${phone.replace(/\s/g, '')}`} className={styles.secondaryBtn}>
+                          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z" /></svg>
+                          Appeler
+                        </a>
+                      ) : (
+                        <span className={`${styles.secondaryBtn} ${styles.disabled}`}>Pas de numéro</span>
+                      )}
+                      <a
+                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(quartier)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={styles.secondaryBtn}
+                      >
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><polygon points="3 11 22 2 13 21 11 13 3 11" /></svg>
+                        Itinéraire
+                      </a>
+                    </div>
+
+                    <button
+                      className={styles.primaryBtn}
+                      onClick={() => setConfirmOrder(order)}
+                      disabled={busyId === order.id}
+                    >
+                      {busyId === order.id ? 'Enregistrement…' : 'Commande livrée'}
+                    </button>
+                  </article>
+                )
+              })}
+            </div>
+          </>
+        )}
+      </section>
+
+      <section className={styles.section} aria-labelledby="available-title">
+        <h2 id="available-title" className={styles.sectionTitle}>
+          À récupérer <span className={styles.count}>{available.length}</span>
+        </h2>
+
+        {loading ? (
+          <div className={styles.skeleton} />
+        ) : available.length === 0 ? (
+          <p className={styles.empty}>Aucune commande prête pour le moment. Elles apparaissent ici dès que la cuisine les termine.</p>
+        ) : (
+          <div className={styles.list}>
+            {available.map(order => {
+              const { quartier } = parseAddress(order.delivery_address)
               return (
-                <div key={order.id} className={styles.orderCard}>
-                  <div className={styles.orderHeader}>
+                <article key={order.id} className={styles.card}>
+                  <div className={styles.cardHead}>
                     <span className={styles.orderId}>{order.short_id}</span>
-                    <span className={styles.orderAmount}>{order.total_amount} FCFA</span>
+                    <span className={styles.amountSmall}>{formatPrice(order.total_amount)}</span>
                   </div>
-                  
-                  <div className={styles.customerInfo}>
-                    <div className={styles.infoRow}>
-                      <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="2" fill="none">
-                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                        <circle cx="12" cy="7" r="4"></circle>
-                      </svg>
-                      <strong>{order.customer_name}</strong>
-                    </div>
-                    
-                    <div className={styles.infoRow}>
-                      <div className={styles.iconBox}>
-                        <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="2" fill="none">
-                          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                          <circle cx="12" cy="10" r="3"></circle>
-                        </svg>
-                      </div>
-                      <div className={styles.infoContent}>
-                        <span className={styles.infoLabel}>Adresse de livraison</span>
-                        <span>{quartier}</span>
-                      </div>
-                    </div>
-
-                    <div className={styles.infoRow}>
-                      <div className={styles.iconBox}>
-                        <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="2" fill="none">
-                          <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
-                        </svg>
-                      </div>
-                      <div className={styles.infoContent}>
-                        <span className={styles.infoLabel}>Téléphone</span>
-                        {phone !== 'Non renseigné' ? (
-                          <a href={`tel:${phone}`} className={styles.phoneLink}>{phone}</a>
-                        ) : (
-                          <span>{phone}</span>
-                        )}
-                      </div>
-                    </div>
-                    
-                    <div className={styles.infoRow}>
-                      <div className={styles.iconBox}>
-                        <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="2" fill="none">
-                          <rect x="2" y="6" width="20" height="12" rx="2" ry="2"></rect>
-                          <circle cx="12" cy="12" r="2"></circle>
-                          <path d="M6 12h.01M18 12h.01"></path>
-                        </svg>
-                      </div>
-                      <div className={styles.infoContent}>
-                        <span className={styles.infoLabel}>Mode de paiement</span>
-                        <span className={styles.paymentMethod}>{payment}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div style={{ marginTop: '8px', marginBottom: '8px' }}>
-                    <TrackingMap position={driverPosition} />
-                    <p style={{ fontSize: '0.8rem', color: '#6b7280', textAlign: 'center', marginTop: '4px' }}>
-                      Votre position est partagée en temps réel avec le client
-                    </p>
-                  </div>
-                  
-                  {order.order_items && order.order_items.length > 0 && (
-                    <div className={styles.orderItems}>
-                      {order.order_items.map((item, idx) => (
-                        <div key={idx} className={styles.itemRow}>
-                          <span className={styles.itemQty}>{item.quantity}x</span>
-                          <span className={styles.itemName}>{item.product_name}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  <button 
-                    className={styles.deliverBtn}
-                    onClick={() => handleDeliver(order.id)}
-                  >
-                    Marquer comme Livré
+                  <p className={styles.address}>{quartier}</p>
+                  {renderItems(order)}
+                  <button className={styles.takeBtn} onClick={() => takeOrder(order)} disabled={busyId === order.id}>
+                    {busyId === order.id ? 'Prise en charge…' : 'Je la prends'}
                   </button>
-                </div>
+                </article>
               )
             })}
           </div>
         )}
-      </div>
+      </section>
 
-      {toastMessage && (
-        <div className="globalToast">
-          <svg viewBox="0 0 24 24" width="20" height="20" stroke="#10b981" strokeWidth="2" fill="none">
-            <polyline points="20 6 9 17 4 12"></polyline>
-          </svg>
-          {toastMessage}
-        </div>
-      )}
+      <ConfirmDialog
+        open={!!confirmOrder}
+        title="Commande livrée ?"
+        message={confirmOrder ? `Confirmez que ${confirmOrder.short_id} a été remise au client${isCash(parseAddress(confirmOrder.delivery_address).payment) ? ` et que vous avez encaissé ${formatPrice(confirmOrder.total_amount)}` : ''}.` : ''}
+        confirmLabel="Oui, livrée"
+        onConfirm={markDelivered}
+        onCancel={() => setConfirmOrder(null)}
+      />
     </div>
   )
 }

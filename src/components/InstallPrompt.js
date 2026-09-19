@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import styles from './InstallPrompt.module.css'
 
-export default function InstallPrompt() {
+export default function InstallPrompt({ hidden = false }) {
   const [deferredPrompt, setDeferredPrompt] = useState(null)
   const [showPrompt, setShowPrompt] = useState(false)
 
@@ -66,18 +66,18 @@ export default function InstallPrompt() {
     localStorage.setItem('pwa_prompt_dismissed', Date.now().toString())
   }
 
-  if (!showPrompt) return null
+  if (!showPrompt || hidden) return null
 
   return (
     <div className={styles.promptContainer}>
       <div className={styles.promptContent}>
         <div className={styles.leftSection}>
           <div className={styles.iconWrapper}>
-            <img src="/icon-192x192.png" alt="Foodora App" className={styles.appIcon} />
+            <img src="/icon-192x192.png" alt="Best Pizza" className={styles.appIcon} />
           </div>
           <div className={styles.promptText}>
-            <div className={styles.promptTitle}>L'App Foodora</div>
-            <div className={styles.promptDesc}>Plus rapide, plus fluide !</div>
+            <div className={styles.promptTitle}>L'app Best Pizza</div>
+            <div className={styles.promptDesc}>Commandez depuis votre écran d’accueil</div>
           </div>
         </div>
         <div className={styles.promptActions}>

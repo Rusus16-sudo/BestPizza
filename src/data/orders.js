@@ -8,7 +8,7 @@ export const mockOrders = [
       { name: 'Pepperoni Épicée', quantity: 1, price: 6500 },
       { name: 'Double Smash Burger', quantity: 1, price: 6000 }
     ],
-    restaurant: 'Foodora Central'
+    restaurant: 'Best Pizza'
   },
   {
     id: 'CMD-09832',
@@ -19,7 +19,7 @@ export const mockOrders = [
       { name: '4 Fromages', quantity: 1, price: 7500 },
       { name: 'Sauce Piquante', quantity: 1, price: 500 }
     ],
-    restaurant: 'Foodora Central'
+    restaurant: 'Best Pizza'
   },
   {
     id: 'CMD-08711',
@@ -30,7 +30,7 @@ export const mockOrders = [
       { name: 'Margherita', quantity: 2, price: 4500 },
       { name: 'Coca-Cola Frais', quantity: 2, price: 500 }
     ],
-    restaurant: 'Foodora Central'
+    restaurant: 'Best Pizza'
   },
   {
     id: 'CMD-07542',
@@ -40,6 +40,6 @@ export const mockOrders = [
     items: [
       { name: 'Végétarienne Suprême', quantity: 1, price: 5500 }
     ],
-    restaurant: 'Foodora Central'
+    restaurant: 'Best Pizza'
   }
 ];

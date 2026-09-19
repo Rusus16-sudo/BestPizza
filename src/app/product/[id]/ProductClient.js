@@ -2,276 +2,212 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { useCart } from '@/context/CartContext'
+import Link from 'next/link'
+import { useCart, formatPrice } from '@/context/CartContext'
 import { createClient } from '@/utils/supabase/client'
 import toast from 'react-hot-toast'
 import styles from './Product.module.css'
+import { SIZES, isPizzaCategory, computeUnitPrice } from '@/lib/pricing'
+
 
 export default function ProductClient({ product }) {
   const router = useRouter()
-  const { addToCart } = useCart()
+  const { addToCart, totalItems } = useCart()
   const [quantity, setQuantity] = useState(1)
   const [size, setSize] = useState('Moyenne')
   const [isFavorite, setIsFavorite] = useState(false)
-  const [showToast, setShowToast] = useState(false)
-  const [showReviewToast, setShowReviewToast] = useState(false)
-  const [showFavToast, setShowFavToast] = useState(false)
   const [user, setUser] = useState(null)
+  const [justAdded, setJustAdded] = useState(false)
   const supabase = createClient()
+
+  const isPizza = isPizzaCategory(product.category)
+  const reviews = Array.isArray(product.reviews) ? product.reviews : []
+  const reviewCount = Array.isArray(product.reviews) ? product.reviews.length : Number(product.reviews) || 0
+  const isMock = String(product.id).length <= 10
 
   useEffect(() => {
     const initFav = async () => {
       const { data: { user } } = await supabase.auth.getUser()
-      const isMock = String(product.id).length <= 10
-      
       if (user) setUser(user)
 
       if (user && !isMock) {
         const { data } = await supabase.from('favorites').select('*').eq('user_id', user.id).eq('product_id', product.id).maybeSingle()
         if (data) setIsFavorite(true)
       } else {
-        const favs = JSON.parse(localStorage.getItem('favorites') || '[]')
-        if (favs.includes(product.id) || favs.includes(String(product.id))) setIsFavorite(true)
+        try {
+          const favs = JSON.parse(localStorage.getItem('favorites') || '[]')
+          if (favs.includes(product.id) || favs.includes(String(product.id))) setIsFavorite(true)
+        } catch (e) {}
       }
     }
     initFav()
   }, [product.id])
-  
-  // Initialize customization state to false for each addon
-  const initialCustomizations = (product.customizations || []).reduce((acc, curr) => {
-    acc[curr.id] = false
-    return acc
-  }, {})
-  
-  const [customizations, setCustomizations] = useState(initialCustomizations)
 
-  // Calculate total price
-  let totalPrice = product.price
-  if (size === 'Grande') totalPrice += 1000
-  if (size === 'Extra Grande') totalPrice += 2000;
-  
-  (product.customizations || []).forEach(c => {
-    if (customizations[c.id]) {
-      totalPrice += c.price
+  const [customizations, setCustomizations] = useState(() =>
+    (product.customizations || []).reduce((acc, c) => ({ ...acc, [c.id]: false }), {})
+  )
+
+  const unitPrice = computeUnitPrice(product, size, customizations)
+  const totalPrice = unitPrice * quantity
+
+  const toggleFavorite = async () => {
+    const newIsFav = !isFavorite
+    setIsFavorite(newIsFav)
+
+    if (user && !isMock) {
+      if (newIsFav) {
+        await supabase.from('favorites').insert([{ user_id: user.id, product_id: product.id }])
+      } else {
+        await supabase.from('favorites').delete().eq('user_id', user.id).eq('product_id', product.id)
+      }
+    } else {
+      try {
+        let favs = JSON.parse(localStorage.getItem('favorites') || '[]')
+        if (newIsFav) {
+          if (!favs.includes(product.id)) favs.push(product.id)
+        } else {
+          favs = favs.filter(id => id !== product.id && id !== String(product.id))
+        }
+        localStorage.setItem('favorites', JSON.stringify(favs))
+      } catch (e) {}
     }
-  })
-  
-  totalPrice = totalPrice * quantity
-
-  const handleToggle = (id) => {
-    setCustomizations(prev => ({
-      ...prev,
-      [id]: !prev[id]
-    }))
+    toast.success(newIsFav ? 'Ajouté aux favoris' : 'Retiré des favoris', { id: 'fav' })
   }
 
-  const handleDecrease = () => {
-    if (quantity > 1) setQuantity(q => q - 1)
+  const handleAdd = () => {
+    addToCart(product, quantity, isPizza ? size : 'Standard', customizations, totalPrice)
+    setJustAdded(true)
+    setTimeout(() => setJustAdded(false), 1600)
+    toast.success(`${quantity > 1 ? `${quantity} × ` : ''}${product.title} ajouté au panier`, { id: 'cart-add' })
   }
-
-  const handleIncrease = () => {
-    setQuantity(q => q + 1)
-  }
-
 
   return (
-    <div className={styles.productContainer}>
-      <div className={styles.topActions}>
-        <button className={styles.actionBtn} onClick={() => router.back()}>
-          <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" strokeWidth="2" fill="none">
-            <polyline points="15 18 9 12 15 6"></polyline>
-          </svg>
-        </button>
-      </div>
-
-      <div className={styles.imageHero}>
-        <img src={product.image} alt={product.title} />
-      </div>
-
-      <div className={styles.detailsSheet}>
-        <div className={styles.detailsHeader}>
-          {product.isSpicy && (
-            <span className={styles.badge}>
-              <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path>
-              </svg>
-              Épicé
-            </span>
-          )}
-          <div className={styles.headerRow}>
-            <h1>{product.title}</h1>
-            <button 
-              className={`${styles.favBtn} ${isFavorite ? styles.favBtnActive : ''}`} 
-              onClick={async () => {
-                const newIsFav = !isFavorite
-                setIsFavorite(newIsFav)
-                const isMock = String(product.id).length <= 10
-                
-                if (user && !isMock) {
-                  if (newIsFav) {
-                    await supabase.from('favorites').insert([{ user_id: user.id, product_id: product.id }])
-                  } else {
-                    await supabase.from('favorites').delete().eq('user_id', user.id).eq('product_id', product.id)
-                  }
-                } else {
-                  let favs = JSON.parse(localStorage.getItem('favorites') || '[]')
-                  if (newIsFav) {
-                    if (!favs.includes(product.id)) favs.push(product.id)
-                  } else {
-                    favs = favs.filter(id => id !== product.id && id !== String(product.id))
-                  }
-                  localStorage.setItem('favorites', JSON.stringify(favs))
-                }
-                
-                setShowFavToast(true)
-                setTimeout(() => setShowFavToast(false), 3000)
-              }}
-            >
-              <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" strokeWidth="2" fill={isFavorite ? "#f26a1d" : "none"}>
-                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-              </svg>
-            </button>
-          </div>
-          <div className={styles.ratingRow}>
-            <span className={styles.star}>★</span>
-            <span className={styles.ratingText}>{product.rating} <span className={styles.reviews}>({product.reviews?.length || 0} avis)</span></span>
-            <span className={styles.basePrice}>{product.price} FCFA</span>
-          </div>
-          <p className={styles.description}>{product.description}</p>
-          <div className={styles.metaItem}>
-            <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" strokeWidth="2" fill="none">
-              <circle cx="12" cy="12" r="10"></circle>
-              <polyline points="12 6 12 12 16 14"></polyline>
-            </svg>
-            <span style={{marginLeft: '4px', fontSize: '0.9rem'}}>{product.prep_time || '25-35 min'} de préparation</span>
-          </div>
-        </div>
-
-        <div className={styles.customizeSection}>
-          <h3>Personnaliser</h3>
-          
-          <div className={styles.sizeRow}>
-            <span className={styles.optionLabel}>Taille</span>
-            <div className={styles.sizeOptions}>
-              {['Moyenne', 'Grande', 'Extra Grande'].map(s => (
-                <button 
-                  key={s}
-                  className={`${styles.sizeBtn} ${size === s ? styles.sizeActive : ''}`}
-                  onClick={() => setSize(s)}
-                >
-                  {s}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {product.customizations && product.customizations.length > 0 && (
-            <div className={styles.addonsList}>
-              {product.customizations.map(addon => (
-                <div key={addon.id} className={styles.addonRow}>
-                <span className={styles.optionLabel}>{addon.label} <span className={styles.addonPrice}>(+{addon.price} FCFA)</span></span>
-                <label className={styles.switch}>
-                  <input 
-                    type="checkbox" 
-                    checked={customizations[addon.id]} 
-                    onChange={() => handleToggle(addon.id)} 
-                  />
-                  <span className={styles.slider}></span>
-                </label>
-              </div>
-            ))}
-            </div>
-          )}
-        </div>
-
-        {/* Reviews Section */}
-        <div className={styles.reviewsSection}>
-          <h3>Avis des clients</h3>
-          
-          <div className={styles.reviewsList}>
-            {product.reviews && product.reviews.length > 0 ? (
-              product.reviews.map(review => (
-                <div key={review.id} className={styles.reviewCard}>
-                  <div className={styles.reviewHeader}>
-                    <span className={styles.reviewStars}>{'★'.repeat(review.rating)}{'☆'.repeat(5 - review.rating)}</span>
-                    <span className={styles.reviewDate}>{new Date(review.created_at).toLocaleDateString()}</span>
-                  </div>
-                  <p className={styles.reviewComment}>{review.comment}</p>
-                </div>
-              ))
-            ) : (
-              <p className={styles.noReviews}>Aucun avis pour le moment. Soyez le premier !</p>
-            )}
-          </div>
-        </div>
-
-        <div className={styles.stickyFooter}>
-          <div className={styles.quantityControl}>
-            <button className={styles.qBtn} onClick={handleDecrease}>-</button>
-            <span className={styles.qValue}>{quantity}</span>
-            <button className={styles.qBtn} onClick={handleIncrease}>+</button>
-          </div>
-          <button 
-            className={styles.addToCartBtn}
-            onClick={() => {
-              addToCart(product, quantity, size, customizations, totalPrice)
-              setShowToast(true)
-              setTimeout(() => setShowToast(false), 5000)
-            }}
+    <div className={styles.page}>
+      <div className={styles.media}>
+        <img src={product.image} alt={product.title} className={styles.photo} />
+        <div className={styles.topActions}>
+          <button className={styles.roundBtn} onClick={() => router.back()} aria-label="Retour">
+            <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" strokeWidth="2.2" fill="none" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6" /></svg>
+          </button>
+          <button
+            className={`${styles.roundBtn} ${isFavorite ? styles.favActive : ''}`}
+            onClick={toggleFavorite}
+            aria-pressed={isFavorite}
+            aria-label={isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris'}
           >
-            <div className={styles.addToCartContent}>
-              <span className={styles.addToCartText}>Ajouter au Panier</span>
-              <div className={styles.addToCartPriceTag}>
-                {totalPrice} FCFA
-              </div>
-            </div>
+            <svg viewBox="0 0 24 24" width="21" height="21" stroke="currentColor" strokeWidth="2" fill={isFavorite ? 'currentColor' : 'none'} aria-hidden="true">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z" />
+            </svg>
           </button>
         </div>
       </div>
 
-      {showToast && (
-        <div className={styles.toastOverlay}>
-          <div className={styles.toastContent}>
-            <div className={styles.toastText}>
-              <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" strokeWidth="2" fill="none">
-                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                <polyline points="22 4 12 14.01 9 11.01"></polyline>
-              </svg>
-              <span>Ajouté avec succès !</span>
+      <div className={styles.details}>
+        <header className={styles.intro}>
+          <h1>{product.title}</h1>
+          <div className={styles.meta}>
+            {product.rating ? (
+              <span className={styles.metaItem}>
+                <svg className={styles.star} viewBox="0 0 24 24" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>
+                <strong>{product.rating}</strong>
+                {reviewCount > 0 && <span>({reviewCount} avis)</span>}
+              </span>
+            ) : (
+              <span className={styles.newTag}>Nouveau</span>
+            )}
+            <span className={styles.metaItem}>{product.prep_time || '25-35 min'}</span>
+            {(product.isSpicy ?? product.is_spicy) && <span className={`${styles.metaItem} ${styles.spicy}`}>Épicé</span>}
+          </div>
+          <p className={styles.price}>{formatPrice(product.price)}</p>
+          {product.description && <p className={styles.description}>{product.description}</p>}
+        </header>
+
+        {isPizza && (
+          <section className={styles.block} aria-labelledby="size-title">
+            <h2 id="size-title">Taille</h2>
+            <div className={styles.sizes} role="radiogroup" aria-labelledby="size-title">
+              {SIZES.map(s => (
+                <button
+                  key={s.id}
+                  role="radio"
+                  aria-checked={size === s.id}
+                  className={`${styles.size} ${size === s.id ? styles.sizeActive : ''}`}
+                  onClick={() => setSize(s.id)}
+                >
+                  <span className={styles.sizeName}>{s.id}</span>
+                  <span className={styles.sizeExtra}>{s.extra ? `+${s.extra.toLocaleString('fr-FR')}` : 'Inclus'}</span>
+                </button>
+              ))}
             </div>
-            <button className={styles.toastBtn} onClick={() => router.push('/cart')}>
-              Voir le panier
+          </section>
+        )}
+
+        {product.customizations?.length > 0 && (
+          <section className={styles.block} aria-labelledby="addons-title">
+            <h2 id="addons-title">Suppléments</h2>
+            <div className={styles.addons}>
+              {product.customizations.map(addon => (
+                <label key={addon.id} className={`${styles.addon} ${customizations[addon.id] ? styles.addonOn : ''}`}>
+                  <input
+                    type="checkbox"
+                    checked={!!customizations[addon.id]}
+                    onChange={() => setCustomizations(prev => ({ ...prev, [addon.id]: !prev[addon.id] }))}
+                  />
+                  <span className={styles.check} aria-hidden="true">
+                    <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" strokeWidth="3.2" fill="none" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                  </span>
+                  <span className={styles.addonLabel}>{addon.label}</span>
+                  <span className={styles.addonPrice}>+{Number(addon.price).toLocaleString('fr-FR')}</span>
+                </label>
+              ))}
+            </div>
+          </section>
+        )}
+
+        <section className={styles.block} aria-labelledby="reviews-title">
+          <h2 id="reviews-title">Avis clients</h2>
+          {reviews.length > 0 ? (
+            <ul className={styles.reviews}>
+              {reviews.map(review => (
+                <li key={review.id} className={styles.review}>
+                  <div className={styles.reviewHead}>
+                    <span className={styles.reviewStars} aria-label={`${review.rating} sur 5`}>
+                      {'★'.repeat(review.rating)}<span className={styles.reviewStarsOff}>{'★'.repeat(5 - review.rating)}</span>
+                    </span>
+                    <time className={styles.reviewDate}>{new Date(review.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}</time>
+                  </div>
+                  {review.comment && <p>{review.comment}</p>}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className={styles.muted}>Pas encore d’avis. Vous pourrez noter ce plat depuis vos commandes après la livraison.</p>
+          )}
+        </section>
+
+        <div className={styles.buyBar}>
+          <div className={styles.stepper} role="group" aria-label="Quantité">
+            <button onClick={() => setQuantity(q => Math.max(1, q - 1))} disabled={quantity <= 1} aria-label="Retirer un">
+              <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" strokeWidth="2.6" fill="none" strokeLinecap="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12" /></svg>
+            </button>
+            <span aria-live="polite">{quantity}</span>
+            <button onClick={() => setQuantity(q => q + 1)} aria-label="Ajouter un">
+              <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" strokeWidth="2.6" fill="none" strokeLinecap="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
             </button>
           </div>
+          {justAdded && totalItems > 0 ? (
+            <Link href="/cart" className={`${styles.addBtn} ${styles.addBtnDone}`}>
+              <span>Voir le panier</span>
+              <span className={styles.addPrice}>{totalItems} article{totalItems > 1 ? 's' : ''}</span>
+            </Link>
+          ) : (
+            <button className={styles.addBtn} onClick={handleAdd}>
+              <span>Ajouter</span>
+              <span className={styles.addPrice}>{formatPrice(totalPrice)}</span>
+            </button>
+          )}
         </div>
-      )}
-
-      {showReviewToast && (
-        <div className={styles.toastOverlay}>
-          <div className={styles.toastContent}>
-            <div className={styles.toastText}>
-              <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" strokeWidth="2" fill="none">
-                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                <polyline points="22 4 12 14.01 9 11.01"></polyline>
-              </svg>
-              <span>Avis publié avec succès !</span>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {showFavToast && (
-        <div className={styles.toastOverlay}>
-          <div className={styles.toastContent}>
-            <div className={styles.toastText}>
-              <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" strokeWidth="2" fill="none">
-                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" fill={isFavorite ? "#f26a1d" : "none"} stroke={isFavorite ? "#f26a1d" : "currentColor"}></path>
-              </svg>
-              <span>{isFavorite ? 'Plat ajouté aux favoris !' : 'Retiré des favoris'}</span>
-            </div>
-          </div>
-        </div>
-      )}
+      </div>
     </div>
   )
 }

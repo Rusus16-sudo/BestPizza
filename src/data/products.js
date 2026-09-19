@@ -81,7 +81,7 @@ export const products = [
     category: 'Sides',
     price: 2500,
     isSpicy: false,
-    image: 'https://images.unsplash.com/photo-1576107255627-8a4cefb4b187?auto=format&fit=crop&q=80&w=400',
+    image: 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?auto=format&fit=crop&q=80&w=400',
     rating: 4.6,
     reviews: 42,
     description: 'Des frites de patate douce croustillantes à l\'extérieur et fondantes à l\'intérieur.',
@@ -122,7 +122,7 @@ export const products = [
     image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&q=80&w=400',
     rating: 4.8,
     reviews: 142,
-    description: 'Deux steaks hachés pur boeuf caramélisés, double cheddar affiné, cornichons, oignons fondants et notre sauce secrète Foodora.',
+    description: 'Deux steaks hachés pur boeuf caramélisés, double cheddar affiné, cornichons, oignons fondants et notre sauce secrète Best Pizza.',
     customizations: [
       { id: 'bacon', label: 'Bacon Fumé', price: 1000 },
       { id: 'extra_steak', label: 'Steak Supplémentaire', price: 1500 }

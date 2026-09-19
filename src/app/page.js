@@ -21,18 +21,16 @@ export default async function Home() {
   }
 
   const { data: productsData, error } = await supabase.from('products').select('*, reviews(rating)')
-  console.log("Supabase products fetch:", productsData, "Error:", error)
   
   let products = productsData
   if (products) {
     products = products.map(p => {
-      const avg = p.reviews && p.reviews.length > 0 ? (p.reviews.reduce((a, b) => a + b.rating, 0) / p.reviews.length).toFixed(1) : "4.5"
+      const avg = p.reviews && p.reviews.length > 0 ? (p.reviews.reduce((a, b) => a + b.rating, 0) / p.reviews.length).toFixed(1) : null
       return { ...p, rating: avg }
     })
   }
 
   const finalProducts = (products && products.length > 0) ? products : mockProducts
-  console.log("Final products passed to HomeClient:", finalProducts?.length)
 
   const { data: offers } = await supabase.from('offers').select('*').order('created_at', { ascending: false })
   const now = new Date()

@@ -105,8 +105,8 @@ export default function CategoriesPage() {
                   title={item.title}
                   price={item.price}
                   image={item.image}
-                  isSpicy={item.isSpicy}
-                  rating={item.rating || "4.5"}
+                  isSpicy={item.isSpicy ?? item.is_spicy}
+                  rating={item.rating}
                 />
               ))}
             </div>

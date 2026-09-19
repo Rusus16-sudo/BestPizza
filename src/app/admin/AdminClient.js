@@ -7,15 +7,24 @@ import toast from 'react-hot-toast'
 import DatePicker, { registerLocale } from 'react-datepicker'
 import "react-datepicker/dist/react-datepicker.css"
 import { fr } from 'date-fns/locale/fr'
+import AdminPageHeader from './AdminPageHeader'
 import styles from './Admin.module.css'
+import ConfirmDialog from '@/components/ConfirmDialog'
 
 registerLocale('fr', fr)
 
-export default function AdminClient({ initialStaff }) {
+const SECTIONS = {
+  staff: { title: 'Équipe', subtitle: 'Créez les comptes de la cuisine et des livreurs, et gérez leurs accès.' },
+  menu: { title: 'La carte', subtitle: 'Les plats que vos clients voient et commandent.' },
+  offers: { title: 'Promotions', subtitle: 'Codes promo et réductions proposés à vos clients.' },
+  reviews: { title: 'Avis clients', subtitle: 'Ce que vos clients pensent de vos plats.' },
+}
+
+export default function AdminClient({ section, initialStaff = [] }) {
   const router = useRouter()
   const supabase = createClient()
   
-  const [activeTab, setActiveTab] = useState('dashboard') // 'dashboard', 'staff', 'menu'
+  const activeTab = section
   
   // --- STAFF STATE ---
   const [email, setEmail] = useState('')
@@ -30,12 +39,6 @@ export default function AdminClient({ initialStaff }) {
   const [resetLoading, setResetLoading] = useState(false)
   const [resetMessage, setResetMessage] = useState({ type: '', text: '' })
 
-  // --- DASHBOARD STATE ---
-  const [dateRange, setDateRange] = useState([new Date(), new Date()])
-  const [startDate, endDate] = dateRange
-  const [activePeriod, setActivePeriod] = useState('today') // today, yesterday, week, month, custom
-  const [periodMetrics, setPeriodMetrics] = useState({ count: 0, revenue: 0 })
-  const [dashboardLoading, setDashboardLoading] = useState(true)
 
   // --- MENU STATE ---
   const [products, setProducts] = useState([])
@@ -47,6 +50,7 @@ export default function AdminClient({ initialStaff }) {
   const [formLoading, setFormLoading] = useState(false)
   const [openDropdownId, setOpenDropdownId] = useState(null)
   const [toastMessage, setToastMessage] = useState('')
+  const [memberToToggle, setMemberToToggle] = useState(null)
 
   // --- OFFERS STATE ---
   const [offers, setOffers] = useState([])
@@ -68,74 +72,14 @@ export default function AdminClient({ initialStaff }) {
   }
 
   useEffect(() => {
-    if (activeTab === 'dashboard') {
-      fetchMetrics()
-    } else if (activeTab === 'menu') {
+    if (activeTab === 'menu') {
       fetchProducts()
     } else if (activeTab === 'offers') {
       fetchOffers()
     } else if (activeTab === 'reviews') {
       fetchReviews()
     }
-  }, [activeTab, dateRange])
-
-  const fetchMetrics = async () => {
-    setDashboardLoading(true)
-    
-    // Si endDate est null (pendant la sélection d'une plage), on attend
-    if (!startDate || !endDate) return;
-
-    // Ajuster les heures pour couvrir la journée entière
-    const start = new Date(startDate)
-    start.setHours(0, 0, 0, 0)
-    
-    const end = new Date(endDate)
-    end.setHours(23, 59, 59, 999)
-
-    const { data: orders, error } = await supabase
-      .from('orders')
-      .select('created_at, total_price')
-      .eq('status', 'livre')
-      .gte('created_at', start.toISOString())
-      .lte('created_at', end.toISOString())
-
-    if (!error && orders) {
-      let count = 0
-      let revenue = 0
-      
-      orders.forEach(order => {
-        count += 1
-        revenue += Number(order.total_price) || 0
-      })
-      
-      setPeriodMetrics({ count, revenue })
-    }
-    setDashboardLoading(false)
-  }
-
-  const handlePeriodChange = (period) => {
-    setActivePeriod(period)
-    const today = new Date()
-    
-    if (period === 'today') {
-      setDateRange([today, today])
-    } else if (period === 'yesterday') {
-      const yesterday = new Date(today)
-      yesterday.setDate(yesterday.getDate() - 1)
-      setDateRange([yesterday, yesterday])
-    } else if (period === 'week') {
-      const startOfWeek = new Date(today)
-      const day = startOfWeek.getDay()
-      const diff = startOfWeek.getDate() - day + (day === 0 ? -6 : 1) // adjust when day is sunday
-      startOfWeek.setDate(diff)
-      setDateRange([startOfWeek, today])
-    } else if (period === 'month') {
-      const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1)
-      setDateRange([startOfMonth, today])
-    } else if (period === 'custom') {
-      // Garder les dates actuelles, l'utilisateur va les modifier via le datepicker
-    }
-  }
+  }, [activeTab])
 
   const fetchProducts = async () => {
     setMenuLoading(true)
@@ -170,7 +114,7 @@ export default function AdminClient({ initialStaff }) {
       .select(`
         *,
         products(title),
-        profiles(email, full_name, user_role)
+        profiles(email, first_name, last_name)
       `)
       .order('created_at', { ascending: false })
     
@@ -375,8 +319,10 @@ export default function AdminClient({ initialStaff }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId, isActive: newStatus })
       })
-      if (!res.ok) throw new Error('Erreur lors du changement de statut')
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(data.error || 'Le statut n’a pas pu être modifié')
       setStaff(staff.map(s => s.id === userId ? { ...s, is_active: newStatus } : s))
+      toast.success(newStatus ? 'Compte réactivé' : 'Compte suspendu')
     } catch (err) {
       toast.error(err.message)
     }
@@ -417,127 +363,7 @@ export default function AdminClient({ initialStaff }) {
   }
 
   return (
-    <div className={styles.container}>
-      <header className={styles.header}>
-        <div>
-          <h1>Administration</h1>
-          <p>Gérez votre restaurant en toute simplicité.</p>
-        </div>
-      </header>
-
-      {/* TABS */}
-      <div className={styles.tabsContainer}>
-        <button 
-          className={`${styles.tab} ${activeTab === 'dashboard' ? styles.tabActive : ''}`}
-          onClick={() => setActiveTab('dashboard')}
-        >
-          Tableau de Bord
-        </button>
-        <button 
-          className={`${styles.tab} ${activeTab === 'staff' ? styles.tabActive : ''}`}
-          onClick={() => setActiveTab('staff')}
-        >
-          Personnel
-        </button>
-        <button 
-          className={`${styles.tab} ${activeTab === 'menu' ? styles.tabActive : ''}`}
-          onClick={() => setActiveTab('menu')}
-        >
-          Gestion du Menu
-        </button>
-        <button 
-          className={`${styles.tab} ${activeTab === 'offers' ? styles.tabActive : ''}`}
-          onClick={() => setActiveTab('offers')}
-        >
-          Promotions
-        </button>
-        <button 
-          className={`${styles.tab} ${activeTab === 'reviews' ? styles.tabActive : ''}`}
-          onClick={() => setActiveTab('reviews')}
-        >
-          Avis Clients
-        </button>
-      </div>
-
-      {/* TAB CONTENT: DASHBOARD */}
-      {activeTab === 'dashboard' && (
-        <div>
-          {dashboardLoading ? (
-            <p>Chargement des statistiques...</p>
-          ) : (
-            <>
-              <div className={styles.dashboardHeader}>
-                <div>
-                  <h2 className={styles.dashboardTitle}>Aperçu des Ventes</h2>
-                  <p className={styles.dashboardSubtitle}>Suivez vos performances sur la période sélectionnée</p>
-                </div>
-              </div>
-
-              <div className={styles.filterSection}>
-                <div className={styles.periodButtons}>
-                  <button className={`${styles.periodBtn} ${activePeriod === 'today' ? styles.active : ''}`} onClick={() => handlePeriodChange('today')}>Aujourd'hui</button>
-                  <button className={`${styles.periodBtn} ${activePeriod === 'yesterday' ? styles.active : ''}`} onClick={() => handlePeriodChange('yesterday')}>Hier</button>
-                  <button className={`${styles.periodBtn} ${activePeriod === 'week' ? styles.active : ''}`} onClick={() => handlePeriodChange('week')}>Cette Semaine</button>
-                  <button className={`${styles.periodBtn} ${activePeriod === 'month' ? styles.active : ''}`} onClick={() => handlePeriodChange('month')}>Ce Mois</button>
-                  <button className={`${styles.periodBtn} ${activePeriod === 'custom' ? styles.active : ''}`} onClick={() => handlePeriodChange('custom')}>Période Personnalisée</button>
-                </div>
-
-                {activePeriod === 'custom' && (
-                  <div className={styles.datePickerContainer}>
-                    <label>Sélectionnez une plage de dates :</label>
-                    <DatePicker
-                      selectsRange={true}
-                      startDate={startDate}
-                      endDate={endDate}
-                      onChange={(update) => setDateRange(update)}
-                      isClearable={false}
-                      locale="fr"
-                      dateFormat="dd/MM/yyyy"
-                      className={styles.formInput}
-                      wrapperClassName={styles.datePickerWrapper}
-                    />
-                  </div>
-                )}
-              </div>
-
-              <div className={styles.metricsGridLarge}>
-                <div className={`${styles.metricCard} ${styles.cardOrange}`}>
-                  <div className={styles.metricIconBox}>
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line>
-                    </svg>
-                  </div>
-                  <div className={styles.metricContent}>
-                    <div className={styles.metricTitle}>Chiffre d'Affaires</div>
-                    <div className={styles.metricValue}>{periodMetrics.revenue.toLocaleString('fr-FR')} <span className={styles.currency}>FCFA</span></div>
-                    <div className={styles.metricSubtext}>
-                      Pour la période sélectionnée
-                    </div>
-                  </div>
-                  <div className={styles.metricBgDeco}></div>
-                </div>
-
-                <div className={`${styles.metricCard} ${styles.cardBlue}`}>
-                  <div className={styles.metricIconBox}>
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
-                    </svg>
-                  </div>
-                  <div className={styles.metricContent}>
-                    <div className={styles.metricTitle}>Commandes Livrées</div>
-                    <div className={styles.metricValue}>{periodMetrics.count} <span className={styles.currency}>commandes</span></div>
-                    <div className={styles.metricSubtext}>
-                      Pour la période sélectionnée
-                    </div>
-                  </div>
-                  <div className={styles.metricBgDeco}></div>
-                </div>
-              </div>
-            </>
-          )}
-        </div>
-      )}
-
+    <AdminPageHeader title={SECTIONS[section]?.title} subtitle={SECTIONS[section]?.subtitle}>
       {/* TAB CONTENT: STAFF */}
       {activeTab === 'staff' && (
         <div className={styles.grid}>
@@ -560,7 +386,7 @@ export default function AdminClient({ initialStaff }) {
               </div>
               <div className={styles.inputGroup}>
                 <label>Mot de passe provisoire</label>
-                <input type="password" className={styles.formInput} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Min. 6 caractères" required minLength="6" />
+                <input type="password" className={styles.formInput} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="8 caractères minimum" required minLength="8" />
               </div>
               <button type="submit" className={styles.submitBtn} disabled={loading || !email || !password}>
                 {loading ? 'En cours...' : 'Créer le compte'}
@@ -592,8 +418,8 @@ export default function AdminClient({ initialStaff }) {
                       </div>
                     </div>
                     <div className={styles.memberActions}>
-                      <button onClick={() => openResetModal(member)} className={`${styles.solidBtn} ${styles.solidBtnPass}`}>MDP</button>
-                      <button onClick={() => handleToggleStatus(member.id, member.is_active)} className={`${styles.solidBtn} ${member.is_active ? styles.solidBtnSuspend : styles.solidBtnActivate}`}>
+                      <button onClick={() => openResetModal(member)} className={`${styles.solidBtn} ${styles.solidBtnPass}`}>Mot de passe</button>
+                      <button onClick={() => member.is_active ? setMemberToToggle(member) : handleToggleStatus(member.id, member.is_active)} className={`${styles.solidBtn} ${member.is_active ? styles.solidBtnSuspend : styles.solidBtnActivate}`}>
                         {member.is_active ? 'Suspendre' : 'Réactiver'}
                       </button>
                     </div>
@@ -609,7 +435,7 @@ export default function AdminClient({ initialStaff }) {
       {activeTab === 'menu' && (
         <div onClick={() => setOpenDropdownId(null)}>
           <div className={styles.menuHeader}>
-            <h2 style={{ margin: 0, fontSize: '1.4rem' }}>Carte du Restaurant</h2>
+            <p style={{ margin: 0, color: 'var(--color-text-secondary)' }}>{products.length} plat{products.length > 1 ? 's' : ''} à la carte</p>
           </div>
           
           {menuLoading ? (
@@ -749,12 +575,9 @@ export default function AdminClient({ initialStaff }) {
       {activeTab === 'offers' && (
         <div className={styles.menuContainer}>
           <div className={styles.menuHeader}>
-            <div>
-              <h2 className={styles.dashboardTitle}>Promotions & Offres</h2>
-              <p className={styles.dashboardSubtitle}>Créez des codes promo et des réductions attractives</p>
-            </div>
-            <button className={styles.btnConfirm} onClick={() => openOfferModal()} style={{ width: 'auto', padding: '12px 24px' }}>
-              Nouvelle Offre
+            <p style={{ margin: 0, color: 'var(--color-text-secondary)' }}>{offers.length} offre{offers.length > 1 ? 's' : ''}</p>
+            <button className={styles.btnConfirm} onClick={() => openOfferModal()} style={{ width: 'auto', flex: '0 0 auto', padding: '12px 24px' }}>
+              Nouvelle offre
             </button>
           </div>
 
@@ -873,12 +696,6 @@ export default function AdminClient({ initialStaff }) {
       {/* TAB CONTENT: AVIS CLIENTS */}
       {activeTab === 'reviews' && (
         <div>
-          <div className={styles.dashboardHeader}>
-            <div>
-              <h2 className={styles.dashboardTitle}>Avis Clients</h2>
-              <p className={styles.dashboardSubtitle}>Consultez les retours de vos clients sur vos plats</p>
-            </div>
-          </div>
 
           {reviewsLoading ? (
             <p>Chargement des avis...</p>
@@ -893,21 +710,25 @@ export default function AdminClient({ initialStaff }) {
                   <div className={styles.reviewHeader}>
                     <div className={styles.reviewUser}>
                       <div className={styles.userAvatar}>
-                        {(review.profiles?.full_name || review.profiles?.email || 'A')[0].toUpperCase()}
+                        {([review.profiles?.first_name, review.profiles?.last_name].filter(Boolean).join(' ') || review.profiles?.email || 'A')[0].toUpperCase()}
                       </div>
                       <div>
-                        <strong>{review.profiles?.full_name || review.profiles?.email || 'Client Anonyme'}</strong>
+                        <strong>{[review.profiles?.first_name, review.profiles?.last_name].filter(Boolean).join(' ') || review.profiles?.email?.split('@')[0] || 'Client'}</strong>
                         <div className={styles.reviewDate}>{new Date(review.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</div>
                       </div>
                     </div>
-                    <div className={styles.reviewStars}>
-                      {'★'.repeat(review.rating)}{'☆'.repeat(5 - review.rating)}
+                    <div className={styles.reviewStars} aria-label={`${review.rating} sur 5`}>
+                      <span aria-hidden="true">{'★'.repeat(review.rating)}</span>
+                      <span className={styles.starOff} aria-hidden="true">{'★'.repeat(5 - review.rating)}</span>
                     </div>
                   </div>
-                  <div className={styles.reviewProduct}>
-                    Concernant : <span>{review.products?.title || 'Produit inconnu'}</span>
-                  </div>
-                  <p className={styles.reviewComment}>"{review.comment}"</p>
+                  <span className={styles.reviewProduct}>
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="3.5" />
+                    </svg>
+                    {review.products?.title || 'Plat supprimé'}
+                  </span>
+                  {review.comment && <p className={styles.reviewComment}>« {review.comment} »</p>}
                 </div>
               ))}
             </div>
@@ -924,11 +745,11 @@ export default function AdminClient({ initialStaff }) {
             <form onSubmit={handleResetPassword}>
               <div className={styles.inputGroup}>
                 <label>Saisissez le nouveau mot de passe</label>
-                <input type="password" className={styles.formInput} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} required minLength="6" />
+                <input type="password" className={styles.formInput} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} required minLength="8" />
               </div>
               <div className={styles.modalActions}>
                 <button type="button" onClick={() => setResetModalOpen(false)} className={styles.btnCancel}>Annuler</button>
-                <button type="submit" disabled={resetLoading || newPassword.length < 6} className={styles.btnConfirm}>Confirmer</button>
+                <button type="submit" disabled={resetLoading || newPassword.length < 8} className={styles.btnConfirm}>Confirmer</button>
               </div>
             </form>
             {resetMessage.text && (
@@ -948,6 +769,15 @@ export default function AdminClient({ initialStaff }) {
           {toastMessage}
         </div>
       )}
-    </div>
+      <ConfirmDialog
+        open={!!memberToToggle}
+        title="Suspendre ce compte ?"
+        message={memberToToggle ? `${memberToToggle.email} ne pourra plus se connecter tant que le compte ne sera pas réactivé.` : ''}
+        confirmLabel="Suspendre"
+        danger
+        onConfirm={() => { handleToggleStatus(memberToToggle.id, true); setMemberToToggle(null) }}
+        onCancel={() => setMemberToToggle(null)}
+      />
+    </AdminPageHeader>
   )
 }

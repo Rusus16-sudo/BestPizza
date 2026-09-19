@@ -1,24 +1,37 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import { createClient } from '@/utils/supabase/client'
 import { products as mockProducts } from '@/data/products'
 import ProductCard from '@/components/ProductCard'
-import SkeletonCard from '@/components/SkeletonCard'
+import PageHeader from '@/components/PageHeader'
 import styles from './Menu.module.css'
 
+const CATEGORY_LABELS = {
+  pizza: 'Pizzas', pizzas: 'Pizzas',
+  burger: 'Burgers', burgers: 'Burgers',
+  dessert: 'Desserts', desserts: 'Desserts',
+  drink: 'Boissons', drinks: 'Boissons', boisson: 'Boissons', boissons: 'Boissons',
+  side: 'Accompagnements', sides: 'Accompagnements',
+}
+const ORDER = ['Pizzas', 'Burgers', 'Accompagnements', 'Desserts', 'Boissons']
+
+const labelFor = (category) => CATEGORY_LABELS[String(category).toLowerCase()] || category || 'Autres'
+const slug = (label) => label.toLowerCase().normalize('NFD').replace(/[^a-z]/g, '')
+
 export default function MenuPage() {
-  const router = useRouter()
   const [productsList, setProductsList] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const fetchProducts = async () => {
       const supabase = createClient()
-      const { data } = await supabase.from('products').select('*')
+      const { data } = await supabase.from('products').select('*, reviews(rating)')
       if (data && data.length > 0) {
-        setProductsList(data)
+        setProductsList(data.map(p => ({
+          ...p,
+          rating: p.reviews?.length ? (p.reviews.reduce((a, r) => a + r.rating, 0) / p.reviews.length).toFixed(1) : null
+        })))
       } else {
         setProductsList(mockProducts)
       }
@@ -27,56 +40,63 @@ export default function MenuPage() {
     fetchProducts()
   }, [])
 
-  // Group products by category
-  const groupedProducts = productsList.reduce((acc, product) => {
-    if (!acc[product.category]) {
-      acc[product.category] = []
-    }
-    acc[product.category].push(product)
+  // Regroupe par catégorie, dans un ordre fixe
+  const grouped = productsList.reduce((acc, product) => {
+    const label = labelFor(product.category)
+    ;(acc[label] ||= []).push(product)
     return acc
   }, {})
+  const sections = Object.entries(grouped).sort(([a], [b]) => {
+    const ia = ORDER.indexOf(a), ib = ORDER.indexOf(b)
+    return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib)
+  })
 
   return (
-    <div className={styles.menuContainer}>
-      <header className={styles.header}>
-        <button className={styles.backBtn} onClick={() => router.back()}>
-          <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" strokeWidth="2" fill="none">
-            <polyline points="15 18 9 12 15 6"></polyline>
-          </svg>
-        </button>
-        <h1>Notre Menu Complet</h1>
-      </header>
+    <div className={styles.container}>
+      <PageHeader title="La carte" subtitle={loading ? undefined : `${productsList.length} plats`} />
 
-      <div className={styles.menuContent}>
-        {loading ? (
-          <div className={styles.productsGrid}>
-            <SkeletonCard />
-            <SkeletonCard />
-            <SkeletonCard />
-            <SkeletonCard />
-            <SkeletonCard />
-            <SkeletonCard />
-          </div>
-        ) : (
-          Object.entries(groupedProducts).map(([category, items]) => (
-          <div key={category} className={styles.categorySection}>
-            <h2 className={styles.categoryTitle}>{category}</h2>
-            <div className={styles.productsGrid}>
+      {!loading && sections.length > 1 && (
+        <nav className={`${styles.jump} no-scrollbar`} aria-label="Aller à une catégorie">
+          {sections.map(([label]) => (
+            <a key={label} href={`#${slug(label)}`} className={styles.jumpLink}>{label}</a>
+          ))}
+        </nav>
+      )}
+
+      {loading ? (
+        <div className={styles.grid} aria-busy="true" aria-label="Chargement de la carte">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className={styles.skeleton}>
+              <div className={styles.skelImage} />
+              <div className={styles.skelLine} />
+              <div className={styles.skelLineShort} />
+            </div>
+          ))}
+        </div>
+      ) : (
+        sections.map(([label, items]) => (
+          <section key={label} id={slug(label)} className={styles.section} aria-labelledby={`title-${slug(label)}`}>
+            <h2 id={`title-${slug(label)}`} className={styles.sectionTitle}>
+              {label} <span className={styles.count}>{items.length}</span>
+            </h2>
+            <div className={styles.grid}>
               {items.map(item => (
-                <ProductCard 
+                <ProductCard
                   key={item.id}
                   id={item.id}
                   title={item.title}
                   price={item.price}
                   image={item.image}
-                  isSpicy={item.isSpicy}
-                  rating={item.rating || "4.5"}
+                  category={item.category}
+                  isSpicy={item.isSpicy ?? item.is_spicy}
+                  rating={item.rating}
+                  prepTime={item.prep_time || '25-35 min'}
                 />
               ))}
             </div>
-          </div>
-        )))}
-      </div>
+          </section>
+        ))
+      )}
     </div>
   )
 }

@@ -6,7 +6,7 @@ import { createClient } from '@/utils/supabase/server'
 export async function generateMetadata({ params }) {
   const { id } = await params
   let title = "Best Pizza"
-  let image = "/pizza1.png"
+  let image = "/margherita.png"
   
   if (id.length > 10) {
     const supabase = await createClient()
@@ -46,7 +46,7 @@ export default async function ProductPage({ params }) {
     const { data } = await supabase.from('products').select('*, reviews(*)').eq('id', id).single()
     if (data) {
       product = { ...data }
-      const avg = product.reviews && product.reviews.length > 0 ? (product.reviews.reduce((a, b) => a + b.rating, 0) / product.reviews.length).toFixed(1) : "4.5"
+      const avg = product.reviews && product.reviews.length > 0 ? (product.reviews.reduce((a, b) => a + b.rating, 0) / product.reviews.length).toFixed(1) : null
       product.rating = avg
     }
   }

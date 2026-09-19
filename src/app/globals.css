@@ -1,47 +1,65 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Manrope:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Figtree:wght@400;500;600;700&display=swap');
 
 :root {
-  /* Core Theme Colors */
-  --color-primary: #f26a1d; /* Foodora-like soft orange */
-  --color-primary-hover: #e05b10;
-  --color-primary-dim: rgba(242, 106, 29, 0.1);
-  
-  /* Background & Surface - Premium Light (Art Gallery) */
-  --color-bg-base: #fcfcfd; /* Off-white / whisper grey */
-  --color-surface: rgba(255, 255, 255, 0.8); /* Translucent white for glassmorphism */
-  --color-surface-hover: #f3f4f6;
+  /* Palette — tirée des photos : tomate, ardoise, basilic, croûte dorée */
+  --color-primary: #d93a1f;          /* Tomate */
+  --color-primary-rgb: 217, 58, 31;
+  --color-primary-hover: #bf2f16;
+  --color-primary-dark: #bf2f16;
+  --color-primary-dim: rgba(217, 58, 31, 0.08);
+
+  --color-ink: #1f1d1b;              /* Ardoise */
+  --color-basil: #2e7d4a;
+  --color-basil-dim: rgba(46, 125, 74, 0.1);
+  --color-crust: #e9a23b;
+
+  /* Fonds & surfaces */
+  --color-bg-base: #f6f6f4;
+  --color-background: #f6f6f4;
+  --color-surface: #ffffff;
   --color-surface-solid: #ffffff;
-  
-  /* Text */
-  --color-text-primary: #0f172a; /* Deep Slate / Charcoal Ink */
-  --color-text-secondary: #64748b; /* Muted Steel */
-  --color-text-tertiary: #94a3b8; /* Light Steel */
-  
-  /* Borders */
-  --color-border: rgba(15, 23, 42, 0.06); /* Whisper border */
-  --color-border-light: rgba(15, 23, 42, 0.03);
-  
-  /* Typography */
-  --font-heading: 'Outfit', sans-serif;
-  --font-body: 'Manrope', sans-serif;
-  
-  /* Radii */
-  --radius-sm: 0.5rem;
-  --radius-md: 1rem;
-  --radius-lg: 1.5rem;
-  --radius-xl: 2rem;
+  --color-surface-hover: #efefec;
+  --color-surface-muted: #efefec;
+
+  /* Texte (contrastes AA sur blanc et sur le fond) */
+  --color-text-primary: #1f1d1b;
+  --color-text-secondary: #5f5a55;
+  --color-text-tertiary: #767069;
+
+  /* Bordures */
+  --color-border: #e6e4e0;
+  --color-border-light: #efeeeb;
+
+  /* Typographie */
+  --font-heading: 'Bricolage Grotesque', system-ui, sans-serif;
+  --font-body: 'Figtree', system-ui, sans-serif;
+
+  /* Rayons — hiérarchisés : petits contrôles, photos, feuilles */
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
   --radius-full: 9999px;
-  
-  /* Soft Shadows / Glows */
-  --shadow-soft: 0 4px 20px rgba(0, 0, 0, 0.03);
-  --shadow-medium: 0 10px 40px rgba(0, 0, 0, 0.06);
-  --shadow-card: 0 8px 30px rgba(0, 0, 0, 0.04);
-  --shadow-glow: 0 0 20px rgba(242, 106, 29, 0.15);
-  
-  /* Transitions - Spring Physics */
-  --transition-fast: 0.15s cubic-bezier(0.2, 0.8, 0.2, 1);
-  --transition-normal: 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-  --transition-bounce: 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* Ombres — rares, réservées à ce qui flotte */
+  --shadow-soft: 0 1px 2px rgba(31, 29, 27, 0.04), 0 2px 8px rgba(31, 29, 27, 0.04);
+  --shadow-card: 0 2px 4px rgba(31, 29, 27, 0.04), 0 8px 24px rgba(31, 29, 27, 0.06);
+  --shadow-medium: 0 12px 40px rgba(31, 29, 27, 0.12);
+  --shadow-glow: 0 8px 24px rgba(217, 58, 31, 0.28);
+
+  /* Espacements */
+  --space-page: 20px;
+
+  /* Transitions */
+  --transition-fast: 0.18s cubic-bezier(0.2, 0.8, 0.2, 1);
+  --transition-normal: 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-bounce: 0.45s cubic-bezier(0.34, 1.4, 0.64, 1);
+
+  --bottom-nav-height: 72px;
+}
+
+* {
+  box-sizing: border-box;
 }
 
 html, body {
@@ -49,14 +67,14 @@ html, body {
   padding: 0;
   height: 100%;
   width: 100%;
-  overscroll-behavior-y: none; /* Empêche le rebond sur iOS/Android */
-  -webkit-tap-highlight-color: transparent; /* Retire le rectangle bleu au clic */
-  user-select: none; /* Empêche la sélection de texte par erreur */
-  -webkit-user-select: none;
+  overscroll-behavior-y: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {
   font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.5;
   background-color: var(--color-bg-base);
   color: var(--color-text-primary);
   -webkit-font-smoothing: antialiased;
@@ -68,6 +86,8 @@ body {
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-heading);
   font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
   margin: 0;
 }
 
@@ -76,50 +96,75 @@ a {
   text-decoration: none;
 }
 
-* {
-  box-sizing: border-box;
+button {
+  font-family: inherit;
+  color: inherit;
 }
 
-/* On réactive la sélection de texte seulement là où c'est utile */
-input, textarea {
-  user-select: auto;
-  -webkit-user-select: auto;
+img {
+  max-width: 100%;
 }
 
-/* Base Components & Utilities */
+/* Les boutons et la navigation ne sont pas sélectionnables ; le texte l'est (codes promo, n° de commande) */
+button, nav, [role="button"] {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Focus clavier visible partout */
+:focus-visible {
+  outline: 2.5px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* Prix : chiffres tabulaires pour qu'ils s'alignent */
+.price {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* Composants de base */
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0.75rem 1.5rem;
+  gap: 8px;
+  min-height: 48px;
+  padding: 0 24px;
   border-radius: var(--radius-full);
-  font-family: var(--font-heading);
-  font-weight: 600;
-  font-size: 0.95rem;
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 1rem;
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: background-color var(--transition-fast), transform var(--transition-fast);
   border: none;
-  outline: none;
+}
+
+.btn:active {
+  transform: scale(0.97);
 }
 
 .btn-primary {
   background-color: var(--color-primary);
   color: #fff;
-  box-shadow: 0 6px 15px rgba(242, 106, 29, 0.3);
 }
 
 .btn-primary:hover {
   background-color: var(--color-primary-hover);
-  transform: translateY(-2px);
+}
+
+.btn-secondary {
+  background-color: var(--color-surface);
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border);
 }
 
 .soft-surface {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  box-shadow: var(--shadow-card);
 }
 
-/* Hide scrollbar for horizontal scrolling lists */
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
@@ -128,92 +173,110 @@ input, textarea {
   scrollbar-width: none;
 }
 
-/* Global Responsive Layout wrapper (Sidebar + Content) */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* Mise en page globale : barre latérale (bureau) + contenu */
 .layout-wrapper {
   display: flex;
-  width: 100vw;
+  width: 100%;
   min-height: 100vh;
-  overflow: hidden;
 }
 
 .layout-sidebar {
-  display: none; /* Hidden on mobile */
-  width: 250px;
+  display: none;
+  width: 248px;
   flex-shrink: 0;
   background: var(--color-surface);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
   border-right: 1px solid var(--color-border);
   height: 100vh;
   position: fixed;
   left: 0;
   top: 0;
   z-index: 50;
-  padding: 24px 20px;
+  padding: 28px 18px;
   flex-direction: column;
-  overflow-y: auto; /* Permet le défilement si beaucoup de menus */
+  overflow-y: auto;
 }
 
 .layout-content {
   flex: 1;
   width: 100%;
+  min-width: 0;
   height: 100vh;
   overflow-y: auto;
   position: relative;
-  /* Mobile padding bottom for bottom nav */
-  padding-bottom: 80px; 
+  padding-bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom));
 }
 
-/* Custom Scrollbar for Light Theme */
+.layout-content.no-bottom-nav {
+  padding-bottom: 0;
+}
+
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
-
 ::-webkit-scrollbar-track {
   background: transparent;
 }
-
 ::-webkit-scrollbar-thumb {
-  background: rgba(15, 23, 42, 0.2); /* Visible on light background */
+  background: rgba(31, 29, 27, 0.18);
   border-radius: 4px;
 }
-
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(15, 23, 42, 0.4);
+  background: rgba(31, 29, 27, 0.35);
 }
 
 @media (min-width: 769px) {
+  :root {
+    --space-page: 40px;
+  }
   .layout-sidebar {
-    display: flex; /* Visible on desktop */
+    display: flex;
   }
   .layout-content {
-    margin-left: 250px; /* Push content past sidebar */
-    width: calc(100vw - 250px);
-    padding-bottom: 0; /* No bottom nav on desktop */
+    margin-left: 248px;
+    width: calc(100% - 248px);
+    padding-bottom: 0;
   }
 }
 
 .globalToast {
   position: fixed;
-  bottom: 24px;
+  bottom: calc(var(--bottom-nav-height) + 16px + env(safe-area-inset-bottom));
   left: 50%;
   transform: translateX(-50%);
-  background: #1e293b;
+  background: var(--color-ink);
   color: white;
-  padding: 12px 24px;
-  border-radius: 99px;
+  padding: 12px 20px;
+  border-radius: var(--radius-full);
   font-size: 0.95rem;
-  font-weight: 500;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+  font-weight: 600;
+  box-shadow: var(--shadow-medium);
   z-index: 9999;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   animation: toastSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 @keyframes toastSlideUp {
-  from { opacity: 0; transform: translate(-50%, 20px) scale(0.95); }
-  to { opacity: 1; transform: translate(-50%, 0) scale(1); }
+  from { opacity: 0; transform: translate(-50%, 16px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

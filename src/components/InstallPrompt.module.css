@@ -16,7 +16,7 @@
   width: 100%;
   max-width: 450px;
   border-radius: 16px;
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--shadow-medium);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -73,7 +73,7 @@
 }
 
 .installBtn {
-  background: linear-gradient(135deg, var(--color-primary), #ff7a45);
+  background: var(--color-primary);
   color: white;
   border: none;
   padding: 8px 18px;
@@ -81,7 +81,7 @@
   font-weight: 700;
   font-size: 0.85rem;
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(242, 106, 29, 0.3);
+  box-shadow: none;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   white-space: nowrap;
 }

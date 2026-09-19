@@ -13,11 +13,10 @@ export const metadata = {
 };
 
 export const viewport = {
-  themeColor: "#ff5a5f",
+  themeColor: "#ffffff",
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
+  viewportFit: 'cover',
 };
 
 import LayoutWrapper from '@/components/LayoutWrapper';
@@ -32,7 +31,6 @@ export default function RootLayout({ children }) {
         <meta name="apple-mobile-web-app-title" content="Best Pizza" />
         <meta name="format-detection" content="telephone=no" />
         <meta name="mobile-web-app-capable" content="yes" />
-        <meta name="theme-color" content="#ff5a5f" />
         <link rel="apple-touch-icon" href="/icon-192x192.png" />
       </head>
       <body>

@@ -6,8 +6,12 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/utils/supabase/client'
 import toast from 'react-hot-toast'
+import { useCart, formatPrice } from '@/context/CartContext'
 
-export default function ProductCard({ id, title, price, image, category = 'Pizza', isSpicy = false, rating = "4.5", prepTime = "25-35 min" }) {
+export default function ProductCard({ id, title, price, image, category = 'Pizza', isSpicy = false, rating = null, prepTime = "25-35 min", variant = 'grid' }) {
+  const { addToCart } = useCart()
+  const [justAdded, setJustAdded] = useState(false)
+  const isPizza = ['pizza', 'pizzas'].includes(String(category).toLowerCase())
   const [showDropdown, setShowDropdown] = useState(false)
   const [isGerant, setIsGerant] = useState(false)
   const [editModalOpen, setEditModalOpen] = useState(false)
@@ -33,7 +37,7 @@ export default function ProductCard({ id, title, price, image, category = 'Pizza
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
         const { data } = await supabase.from('profiles').select('role').eq('id', user.id).single()
-        if (data?.role === 'gerant') {
+        if (['admin', 'gerant'].includes(data?.role)) {
           setIsGerant(true)
         }
       }
@@ -112,18 +116,66 @@ export default function ProductCard({ id, title, price, image, category = 'Pizza
     router.refresh()
   }
 
-  // Use static rating from prop to avoid SSR hydration mismatch
-  
+  const handleQuickAdd = (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    const size = isPizza ? 'Moyenne' : 'Standard'
+    addToCart({ id, title, image, category }, 1, size, {}, Number(price))
+    setJustAdded(true)
+    toast.success(`${title} ajouté au panier`, { id: 'cart-add' })
+    setTimeout(() => setJustAdded(false), 1400)
+  }
+
   return (
     <>
-    <Link href={`/product/${id}`} style={{ textDecoration: 'none' }}>
-      <div className={styles.card}>
+    <div className={`${styles.card} ${variant === 'rail' ? styles.rail : ''}`}>
+      <Link href={`/product/${id}`} className={styles.link}>
         <div className={styles.imageContainer}>
-          <Image src={image} alt={title} fill className={styles.productImage} style={{ objectFit: 'cover' }} sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" />
+          <Image src={image} alt="" fill className={styles.productImage} sizes={variant === 'rail' ? '208px' : '(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw'} />
+          {isSpicy && (
+            <span className={styles.spicyTag}>
+              <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" aria-hidden="true"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
+              Épicé
+            </span>
+          )}
+        </div>
+        <div className={styles.content}>
+          <h3 className={styles.title}>{title}</h3>
+          <div className={styles.meta}>
+            {rating ? (
+              <span className={styles.metaItem}>
+                <svg className={styles.star} viewBox="0 0 24 24" width="13" height="13" fill="currentColor" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                <span className="visually-hidden">Note </span>{rating}
+              </span>
+            ) : (
+              <span className={styles.newTag}>Nouveau</span>
+            )}
+            {prepTime && <span className={styles.metaItem}>{prepTime}</span>}
+          </div>
+          <span className={styles.price}>{formatPrice(price)}</span>
+        </div>
+      </Link>
+
+      <div className={styles.addSlot}>
+      <button
+        type="button"
+        className={`${styles.addBtn} ${justAdded ? styles.added : ''}`}
+        onClick={handleQuickAdd}
+        aria-label={`Ajouter ${title} au panier`}
+      >
+        {justAdded ? (
+          <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+        ) : (
+          <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" strokeWidth="2.6" fill="none" strokeLinecap="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        )}
+      </button>
+      </div>
+
           {isGerant && (
             <>
               <button 
-                className={styles.dotsBtn} 
+                className={styles.dotsBtn}
+                aria-label="Gérer ce plat"
                 onClick={(e) => {
                   e.preventDefault()
                   e.stopPropagation()
@@ -171,46 +223,13 @@ export default function ProductCard({ id, title, price, image, category = 'Pizza
               )}
             </>
           )}
-        </div>
-        
-        <div className={styles.content}>
-          <div className={styles.headerRow}>
-            <h3 className={styles.title}>{title}</h3>
-            <div className={styles.rating}>
-              <svg className={styles.star} viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
-                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
-              </svg>
-              {rating}
-            </div>
-          </div>
-          
-          <div className={styles.subtitle}>
-            {category}
-          </div>
-          
-          <div className={styles.footer}>
-            <div className={styles.metaItem}>
-              <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" strokeWidth="2" fill="none">
-                <circle cx="12" cy="12" r="10"></circle>
-                <polyline points="12 6 12 12 16 14"></polyline>
-              </svg>
-              {prepTime}
-            </div>
-            <div className={styles.metaItem}>
-              <span style={{ fontWeight: '700', color: 'var(--color-primary)' }}>{price} FCFA</span>
-              <span style={{ margin: '0 4px', opacity: 0.4 }}>•</span>
-              <span style={{ fontSize: '0.75rem' }}>Livraison</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </Link>
+    </div>
     
     {deleteModalOpen && (
       <div className={styles.modalOverlay}>
         <div className={styles.modal} style={{ maxWidth: '400px', textAlign: 'center' }}>
           <h3 className={styles.modalTitle}>Supprimer ce plat ?</h3>
-          <p className={styles.modalText}>Voulez-vous vraiment supprimer "{title}" ? Cette action est irréversible.</p>
+          <p className={styles.modalText}>Voulez-vous vraiment supprimer « {title} » ? Cette action est irréversible.</p>
           <div className={styles.modalActions} style={{ justifyContent: 'center' }}>
             <button className={`${styles.solidBtn} ${styles.cancelBtn}`} onClick={() => setDeleteModalOpen(false)} disabled={isSaving}>Annuler</button>
             <button className={`${styles.solidBtn} ${styles.solidBtnDanger}`} onClick={handleDelete} disabled={isSaving}>
@@ -225,7 +244,7 @@ export default function ProductCard({ id, title, price, image, category = 'Pizza
       <div className={styles.modalOverlay}>
         <div className={styles.modal}>
           <h3 className={styles.modalTitle}>Modifier un produit</h3>
-          <p className={styles.modalText}>Modifiez les informations pour "{title}".</p>
+          <p className={styles.modalText}>Modifiez les informations pour « {title} ».</p>
           <form onSubmit={handleEdit}>
             <div className={styles.inputGroup}>
               <label>Nom du produit</label>
@@ -270,7 +289,7 @@ export default function ProductCard({ id, title, price, image, category = 'Pizza
                       className={styles.imagePreview} 
                     />
                     <div className={styles.imagePreviewOverlay}>
-                      Changer l'image
+                      Changer l’image
                     </div>
                   </div>
                 ) : (

@@ -77,6 +77,10 @@ export default function GlobalNotifications() {
         message = "La cuisine prépare votre commande !"
         icon = '🧑‍🍳'
         break
+      case 'prete':
+        message = "Votre commande est prête, un livreur va la récupérer."
+        icon = '🍕'
+        break
       case 'en_route':
         message = "Votre livreur est en route !"
         icon = '🛵'
@@ -100,8 +104,8 @@ export default function GlobalNotifications() {
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <span style={{ fontSize: '1.5rem' }}>{icon}</span>
           <div>
-            <p style={{ margin: 0, fontWeight: '600', color: '#1e293b' }}>Mise à jour de commande</p>
-            <p style={{ margin: 0, fontSize: '0.9rem', color: '#64748b' }}>{message}</p>
+            <p style={{ margin: 0, fontWeight: 700, color: '#fff' }}>Votre commande</p>
+            <p style={{ margin: 0, fontSize: '0.9rem', color: 'rgba(255,255,255,0.75)' }}>{message}</p>
           </div>
         </div>
       ),
@@ -109,10 +113,10 @@ export default function GlobalNotifications() {
         duration: duration,
         position: 'top-center',
         style: {
-          borderRadius: '16px',
-          padding: '16px',
-          boxShadow: '0 10px 30px rgba(0, 0, 0, 0.1)',
-          border: '1px solid #f1f5f9'
+          background: '#1f1d1b',
+          borderRadius: '20px',
+          padding: '14px 18px',
+          maxWidth: '420px'
         }
       }
     )
