@@ -1337,3 +1337,36 @@
   color: #fff;
   box-shadow: none;
 }
+
+/* Champ mot de passe avec bouton « afficher » */
+.passwordWrap {
+  position: relative;
+  display: flex;
+}
+
+.passwordWrap .formInput {
+  width: 100%;
+  padding-right: 48px;
+}
+
+.eyeBtn {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  color: var(--color-text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.eyeBtn:hover {
+  background: var(--color-surface-muted);
+  color: var(--color-text-primary);
+}
