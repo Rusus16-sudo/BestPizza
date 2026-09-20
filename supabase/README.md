@@ -14,6 +14,7 @@ relancé sans risque : il ne recrée pas ce qui existe déjà.
 | 1 | `migrations/20260919_aligner_base_et_securite.sql` | Aligne la base sur l'application et la sécurise |
 | 2 | `seed_products.sql` | Importe les 10 plats de la carte de démonstration |
 | 3 | `migrations/20260920_profils_automatiques.sql` | Crée le profil de chaque nouveau compte, avec son prénom |
+| 4 | `migrations/20260920_paiements_notchpay.sql` | Paiement Mobile Money : statut « paiement » et suivi du règlement |
 
 ## Ce que contient la migration principale
 
@@ -26,6 +27,8 @@ relancé sans risque : il ne recrée pas ce qui existe déjà.
   toutes les commandes ; un livreur voit les commandes prêtes et les siennes ; le gérant voit tout.
   Personne ne peut changer son propre rôle.
 - **Temps réel** activé sur `orders`, et **espace de stockage** `products` pour les photos.
+
+Le paiement en ligne est décrit dans [`docs/paiement-notchpay.md`](../docs/paiement-notchpay.md).
 
 ## Points d'attention
 

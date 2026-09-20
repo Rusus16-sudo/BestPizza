@@ -379,3 +379,13 @@
     -webkit-backdrop-filter: none;
   }
 }
+
+.payNote {
+  margin: 0 0 4px;
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  background: var(--color-bg-base);
+  color: var(--color-text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}

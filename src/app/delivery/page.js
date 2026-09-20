@@ -42,7 +42,7 @@ export default function DeliveryPage() {
     const { data, error } = await supabase
       .from('orders')
       .select(`
-        id, short_id, status, customer_name, delivery_address, total_amount, created_at, driver_id,
+        id, short_id, status, customer_name, delivery_address, total_amount, created_at, driver_id, payment_method, payment_status,
         order_items ( product_name, quantity )
       `)
       .in('status', ['prete', 'en_route'])
@@ -183,7 +183,8 @@ export default function DeliveryPage() {
             <div className={styles.list}>
               {mine.map(order => {
                 const { quartier, phone, payment } = parseAddress(order.delivery_address)
-                const cash = isCash(payment)
+                // Une commande réglée en ligne ne se paie pas au client
+                const cash = order.payment_status !== 'paye' && isCash(payment)
                 return (
                   <article key={order.id} className={`${styles.card} ${styles.cardMine}`}>
                     <div className={styles.cardHead}>
@@ -194,7 +195,7 @@ export default function DeliveryPage() {
                     <p className={styles.address}>{quartier}</p>
 
                     <div className={`${styles.amount} ${cash ? styles.amountCash : ''}`}>
-                      <span>{cash ? 'À encaisser' : 'Mobile Money'}</span>
+                      <span>{cash ? 'À encaisser' : 'Déjà payé'}</span>
                       <strong>{formatPrice(order.total_amount)}</strong>
                     </div>
 

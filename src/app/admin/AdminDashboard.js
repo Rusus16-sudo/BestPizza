@@ -22,6 +22,7 @@ const LIVE = [
 ]
 
 const STATUS_LABEL = {
+  paiement: 'Paiement en attente',
   en_attente: 'En attente', en_preparation: 'Au four', prete: 'Prête',
   en_route: 'En route', livre: 'Livrée', annule: 'Annulée',
 }
@@ -64,7 +65,7 @@ export default function AdminDashboard() {
     const [ordersRes, liveRes, reviewsRes] = await Promise.all([
       supabase
         .from('orders')
-        .select('id, short_id, status, total_amount, created_at, customer_name, order_items ( product_name, quantity, price )')
+        .select('id, short_id, status, total_amount, created_at, customer_name, payment_status, order_items ( product_name, quantity, price )')
         .gte('created_at', prevStart.toISOString())
         .order('created_at', { ascending: false }),
       supabase
@@ -118,8 +119,9 @@ export default function AdminDashboard() {
     const revenue = sumRevenue(cur)
     const prevRevenue = sumRevenue(prev)
     const delivered = cur.filter(o => o.status === 'livre')
-    const placed = cur.filter(o => o.status !== 'annule')
-    const prevPlaced = prev.filter(o => o.status !== 'annule')
+    // Une commande jamais payée n'est pas une commande
+    const placed = cur.filter(o => o.status !== 'annule' && o.status !== 'paiement')
+    const prevPlaced = prev.filter(o => o.status !== 'annule' && o.status !== 'paiement')
 
     // Histogramme : par heure aujourd'hui, par jour sinon
     let buckets

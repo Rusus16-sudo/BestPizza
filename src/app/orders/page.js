@@ -22,6 +22,28 @@ export default function OrdersPage() {
   const [selectedProduct, setSelectedProduct] = useState(null)
   const [newReview, setNewReview] = useState({ rating: 5, comment: '' })
   const [isSubmittingReview, setIsSubmittingReview] = useState(false)
+  const [payingOrder, setPayingOrder] = useState(null)
+
+  // Reprendre un paiement interrompu
+  const resumePayment = async (shortId) => {
+    setPayingOrder(shortId)
+    try {
+      const res = await fetch('/api/payments/notchpay/retry', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ shortId }),
+      })
+      const data = await res.json()
+      if (data.paymentUrl) {
+        window.location.assign(data.paymentUrl)
+        return
+      }
+      toast.error(data.error || "Le paiement n'a pas pu être relancé.")
+    } catch {
+      toast.error('Pas de connexion. Réessayez.')
+    }
+    setPayingOrder(null)
+  }
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -42,6 +64,8 @@ export default function OrdersPage() {
           short_id,
           status,
           total_amount,
+          payment_status,
+          payment_method,
           created_at,
           order_items (
             product_id,
@@ -59,6 +83,8 @@ export default function OrdersPage() {
           uuid: o.id,
           date: o.created_at,
           status: o.status,
+          paymentStatus: o.payment_status,
+          paymentMethod: o.payment_method,
           total: o.total_amount,
           restaurant: 'Best Pizza',
           items: o.order_items.map(item => ({
@@ -78,7 +104,7 @@ export default function OrdersPage() {
     fetchOrders()
   }, [])
 
-  const activeOrders = orders.filter(o => o.status === 'en_attente' || o.status === 'en_preparation' || o.status === 'prete' || o.status === 'en_route')
+  const activeOrders = orders.filter(o => o.status === 'paiement' || o.status === 'en_attente' || o.status === 'en_preparation' || o.status === 'prete' || o.status === 'en_route')
   const historyOrders = orders.filter(o => o.status === 'livre' || o.status === 'annule')
 
   const ordersToDisplay = activeTab === 'en_cours' ? activeOrders : historyOrders
@@ -104,6 +130,12 @@ export default function OrdersPage() {
 
   const getStatusDisplay = (status) => {
     switch(status) {
+      case 'paiement':
+        return {
+          label: 'Paiement à finaliser',
+          icon: <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="2.5" fill="none"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M2 11h20"/></svg>,
+          class: styles.status_en_preparation
+        }
       case 'en_attente':
         return { 
           label: 'En attente', 
@@ -302,6 +334,19 @@ export default function OrdersPage() {
                     <span className={styles.totalPrice}>{order.total} FCFA</span>
                   </div>
                   
+                  {order.status === 'paiement' && (
+                    <button
+                      className={styles.reorderBtn}
+                      onClick={() => resumePayment(order.id)}
+                      disabled={payingOrder === order.id}
+                    >
+                      <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="2" y="6" width="20" height="12" rx="2" /><path d="M2 11h20" />
+                      </svg>
+                      {payingOrder === order.id ? 'Un instant…' : 'Finaliser le paiement'}
+                    </button>
+                  )}
+
                   {activeTab === 'historique' && order.status === 'livre' && (
                     <button className={styles.reorderBtn} onClick={() => handleReorder(order)}>
                       <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="2" fill="none">

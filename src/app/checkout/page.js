@@ -11,7 +11,7 @@ import styles from './Checkout.module.css'
 
 const PAYMENT_METHODS = [
   { value: 'Paiement à la livraison', title: 'Espèces', hint: 'Vous payez le livreur à la réception' },
-  { value: 'MTN / Orange Money', title: 'Mobile Money', hint: 'MTN ou Orange Money' },
+  { value: 'MTN / Orange Money', title: 'Mobile Money', hint: 'MTN ou Orange, payé maintenant' },
 ]
 
 export default function CheckoutPage() {
@@ -24,6 +24,7 @@ export default function CheckoutPage() {
   const [errors, setErrors] = useState({})
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [orderSuccess, setOrderSuccess] = useState(null)
+  const payOnline = paymentMethod === 'MTN / Orange Money'
 
   // Pré-remplit le téléphone si l'utilisateur est connecté
   useEffect(() => {
@@ -90,8 +91,15 @@ export default function CheckoutPage() {
         return
       }
 
-      setOrderSuccess(data.shortId)
       clearCart()
+
+      if (data.paymentUrl) {
+        // Paiement en ligne : on confie la suite à Notch Pay
+        window.location.assign(data.paymentUrl)
+        return
+      }
+
+      setOrderSuccess(data.shortId)
       setTimeout(() => router.push('/orders'), 2600)
     } catch (err) {
       toast.error("Pas de connexion. Vérifiez votre réseau et réessayez.")
@@ -197,6 +205,12 @@ export default function CheckoutPage() {
         </div>
 
         <aside className={styles.summary} aria-labelledby="summary-title">
+          {payOnline && (
+            <p className={styles.payNote}>
+              Vous serez redirigé vers la page de paiement sécurisée, puis vous validerez sur votre téléphone.
+              La cuisine reçoit la commande dès le paiement confirmé.
+            </p>
+          )}
           <h2 id="summary-title">Récapitulatif</h2>
           <ul className={styles.summaryList}>
             {cartItems.map(item => (
@@ -219,10 +233,10 @@ export default function CheckoutPage() {
           <div className={styles.submitBar}>
             <button type="submit" className={styles.submitBtn} disabled={isSubmitting}>
               {isSubmitting ? (
-                <span>Envoi en cours…</span>
+                <span>{payOnline ? 'Ouverture du paiement…' : 'Envoi en cours…'}</span>
               ) : (
                 <>
-                  <span>Confirmer la commande</span>
+                  <span>{payOnline ? 'Payer maintenant' : 'Confirmer la commande'}</span>
                   <span className="price">{formatPrice(finalTotal)}</span>
                 </>
               )}

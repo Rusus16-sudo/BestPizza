@@ -1,6 +1,18 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient, requireRole } from '@/utils/supabase/admin'
 import { computeUnitPrice, isPizzaCategory, SIZES, promoApplies, isOfferValid } from '@/lib/pricing'
+import { initializePayment, isNotchPayConfigured } from '@/lib/notchpay'
+import { headers } from 'next/headers'
+
+const MOBILE_MONEY = 'MTN / Orange Money'
+
+async function siteOrigin() {
+  if (process.env.NEXT_PUBLIC_SITE_URL) return process.env.NEXT_PUBLIC_SITE_URL
+  const h = await headers()
+  const host = h.get('x-forwarded-host') || h.get('host') || 'localhost:3000'
+  const proto = h.get('x-forwarded-proto') || (host.startsWith('localhost') ? 'http' : 'https')
+  return `${proto}://${host}`
+}
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 const PAYMENTS = ['Paiement à la livraison', 'MTN / Orange Money']
@@ -32,6 +44,13 @@ export async function POST(request) {
   }
   if (!PAYMENTS.includes(paymentMethod)) {
     return NextResponse.json({ error: 'Moyen de paiement invalide.' }, { status: 400 })
+  }
+
+  const payOnline = paymentMethod === MOBILE_MONEY
+  if (payOnline && !isNotchPayConfigured()) {
+    return NextResponse.json({
+      error: "Le paiement Mobile Money n'est pas disponible pour le moment. Choisissez le paiement à la livraison.",
+    }, { status: 503 })
   }
 
   const db = createAdminClient()
@@ -93,7 +112,9 @@ export async function POST(request) {
     .insert({
       short_id: shortId,
       user_id: user.id,
-      status: 'en_attente',
+      status: payOnline ? 'paiement' : 'en_attente',
+      payment_method: payOnline ? 'mobile_money' : 'especes',
+      payment_status: payOnline ? 'en_attente' : 'a_la_livraison',
       total_price: total,
       total_amount: total,
       promo_code: offer?.code || null,
@@ -126,5 +147,46 @@ export async function POST(request) {
     return NextResponse.json({ error: "La commande n'a pas pu être enregistrée. Réessayez dans un instant." }, { status: 500 })
   }
 
-  return NextResponse.json({ shortId: order.short_id, total, discount })
+  if (!payOnline) {
+    return NextResponse.json({ shortId: order.short_id, total, discount })
+  }
+
+  // Paiement en ligne : on ouvre le paiement chez Notch Pay et on renvoie
+  // l'adresse de sa page. La commande n'ira en cuisine qu'une fois payée.
+  try {
+    const origin = await siteOrigin()
+    const payment = await initializePayment({
+      amount: total,
+      reference: order.id,
+      description: `Commande ${order.short_id} – Best Pizza`,
+      callback: `${origin}/paiement/retour`,
+      customer: {
+        name: profile.email?.split('@')[0] || 'Client',
+        email: profile.email || user.email,
+        phone: cleanPhone,
+      },
+    })
+
+    if (!payment.authorizationUrl) {
+      throw new Error('Notch Pay n’a pas renvoyé de page de paiement')
+    }
+
+    await db.from('orders').update({ payment_reference: payment.reference }).eq('id', order.id)
+
+    return NextResponse.json({
+      shortId: order.short_id,
+      total,
+      discount,
+      paymentUrl: payment.authorizationUrl,
+      paymentReference: payment.reference,
+    })
+  } catch (error) {
+    console.error('Ouverture du paiement Notch Pay:', error.message)
+    // Sans paiement ouvert, la commande resterait bloquée : on la retire
+    await db.from('order_items').delete().eq('order_id', order.id)
+    await db.from('orders').delete().eq('id', order.id)
+    return NextResponse.json({
+      error: "Le paiement n'a pas pu être lancé. Réessayez, ou choisissez le paiement à la livraison.",
+    }, { status: 502 })
+  }
 }

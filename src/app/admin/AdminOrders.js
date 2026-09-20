@@ -8,6 +8,7 @@ import { formatPrice } from '@/context/CartContext'
 import styles from './AdminOrders.module.css'
 
 const STATUS = {
+  paiement: { label: 'Paiement en attente', tone: 'wait' },
   en_attente: { label: 'En attente', tone: 'wait' },
   en_preparation: { label: 'En préparation', tone: 'cook' },
   prete: { label: 'Prête', tone: 'ready' },
@@ -19,6 +20,7 @@ const ACTIVE = ['en_attente', 'en_preparation', 'prete', 'en_route']
 
 const FILTERS = [
   { id: 'active', label: 'En cours' },
+  { id: 'paiement', label: 'À payer' },
   { id: 'livre', label: 'Livrées' },
   { id: 'annule', label: 'Annulées' },
 ]
@@ -45,7 +47,7 @@ export default function AdminOrders() {
     const { data, error } = await supabase
       .from('orders')
       .select(`
-        id, short_id, status, total_amount, created_at, delivery_address, customer_name,
+        id, short_id, status, total_amount, created_at, delivery_address, customer_name, payment_method, payment_status,
         driver:profiles!orders_driver_id_fkey ( email ),
         order_items ( product_name, quantity )
       `)
@@ -148,6 +150,9 @@ export default function AdminOrders() {
                   </p>
                   <p className={styles.meta}>
                     {order.customer_name} — {quartierOf(order.delivery_address)}
+                    {order.payment_status === 'paye'
+                      ? <> — payé en ligne</>
+                      : order.payment_method === 'mobile_money' ? <> — paiement en attente</> : <> — à encaisser</>}
                     {order.driver?.email && <> — livreur : {order.driver.email.split('@')[0]}</>}
                   </p>
                 </div>
