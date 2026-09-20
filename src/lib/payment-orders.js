@@ -10,6 +10,11 @@ export async function applyPaymentResult({ order, notchStatus, amount }) {
   const db = createAdminClient()
   const paymentStatus = mapPaymentStatus(notchStatus)
 
+  // Une commande payée le reste : aucune réponse tardive ne la fait reculer
+  if (order.payment_status === 'paye') {
+    return { changed: false, paymentStatus: 'paye', status: order.status }
+  }
+
   // Déjà traité : on ne refait rien
   if (order.payment_status === paymentStatus && paymentStatus !== 'en_attente') {
     return { changed: false, paymentStatus, status: order.status }
