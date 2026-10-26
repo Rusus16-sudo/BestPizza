@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { getBrowserClient } from '@/utils/supabase/client'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import styles from './Settings.module.css'
 
 export default function KitchenSettings() {
@@ -33,6 +34,12 @@ export default function KitchenSettings() {
   return (
     <div className={styles.container}>
       <header className={styles.header}>
+        {/* Sur téléphone, seul chemin de retour vers l'écran cuisine */}
+        <Link href="/kitchen" className={styles.backBtn} aria-label="Retour à l'écran cuisine">
+          <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+        </Link>
         <h1>Paramètres Cuisinier</h1>
       </header>
 

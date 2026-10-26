@@ -7,7 +7,29 @@
 .header {
   display: flex;
   align-items: center;
+  gap: 16px;
   margin-bottom: 40px;
+}
+
+.backBtn {
+  flex-shrink: 0;
+  background: white;
+  border: 1px solid var(--color-border);
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-primary);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+/* Sur ordinateur, la barre latérale ramène à l'écran cuisine */
+@media (min-width: 769px) {
+  .backBtn {
+    display: none;
+  }
 }
 
 .header h1 {

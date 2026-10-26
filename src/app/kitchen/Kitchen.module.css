@@ -56,6 +56,7 @@
 }
 
 .soundBtn,
+.settingsBtn,
 .logoutBtn {
   display: inline-flex;
   align-items: center;
@@ -72,9 +73,17 @@
   cursor: pointer;
 }
 
+.settingsBtn,
 .logoutBtn {
   width: 48px;
   padding: 0;
+}
+
+/* Sur ordinateur, les paramètres sont dans la barre latérale */
+@media (min-width: 769px) {
+  .settingsBtn {
+    display: none;
+  }
 }
 
 .soundOn {
@@ -346,6 +355,12 @@
 }
 
 @media (max-width: 520px) {
+  /* Titre et boutons ne tiennent pas sur une ligne : les boutons passent dessous */
+  .header {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
   .soundBtn {
     padding: 0 14px;
     font-size: 0.85rem;
