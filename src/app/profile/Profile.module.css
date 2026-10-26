@@ -257,6 +257,22 @@
   box-shadow: 0 0 0 3px rgba(217, 58, 31, 0.15);
 }
 
+.formInput:read-only {
+  color: var(--color-text-tertiary);
+  cursor: default;
+}
+
+.staffNote {
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--color-text-secondary);
+}
+
+.staffNote a {
+  color: var(--color-primary);
+  font-weight: 700;
+}
+
 .saveBtn {
   margin-top: 8px;
   background: var(--color-primary);

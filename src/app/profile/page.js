@@ -3,7 +3,15 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { getBrowserClient } from '@/utils/supabase/client'
+import Link from 'next/link'
 import styles from './Profile.module.css'
+
+const STAFF_SETTINGS = {
+  cuisinier: '/kitchen/settings',
+  livreur: '/delivery/settings',
+  gerant: '/admin/parametres',
+  admin: '/admin/parametres',
+}
 
 export default function ProfilePage() {
   const router = useRouter()
@@ -21,6 +29,11 @@ export default function ProfilePage() {
   })
   const [updating, setUpdating] = useState(false)
   const [message, setMessage] = useState({ text: '', type: '' })
+  const [role, setRole] = useState(null)
+
+  // Le personnel change son mot de passe dans ses Paramètres, et son email
+  // (son identifiant) seulement par le gérant
+  const staffSettings = STAFF_SETTINGS[role]
 
   const handleAvatarChange = (e) => {
     if (e.target.files && e.target.files[0]) {
@@ -34,6 +47,8 @@ export default function ProfilePage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
         setUser(user)
+        const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle()
+        setRole(profile?.role || 'client')
         setFormData({
           displayName: user.user_metadata?.display_name || (user.email ? user.email.split('@')[0] : ''),
           phone: user.user_metadata?.phone || '',
@@ -68,14 +83,14 @@ export default function ProfilePage() {
       }
 
       // Update email if changed
-      if (formData.email !== user.email) {
+      if (!staffSettings && formData.email !== user.email) {
         updates.email = formData.email
       }
 
       // Update password if provided
-      if (formData.password) {
-        if (formData.password.length < 6) {
-          setMessage({ text: 'Le mot de passe doit contenir au moins 6 caractères', type: 'error' })
+      if (!staffSettings && formData.password) {
+        if (formData.password.length < 8) {
+          setMessage({ text: 'Le mot de passe doit contenir au moins 8 caractères', type: 'error' })
           setUpdating(false)
           return
         }
@@ -178,22 +193,30 @@ export default function ProfilePage() {
             <input 
               type="email" 
               className={styles.formInput} 
-              value={formData.email} 
-              onChange={e => setFormData({...formData, email: e.target.value})} 
+              value={formData.email}
+              onChange={e => setFormData({...formData, email: e.target.value})}
+              readOnly={Boolean(staffSettings)}
               required
             />
           </div>
 
-          <div className={styles.inputGroup}>
-            <label>Nouveau Mot de passe (laisser vide pour ne pas modifier)</label>
-            <input 
-              type="password" 
-              className={styles.formInput} 
-              value={formData.password} 
-              onChange={e => setFormData({...formData, password: e.target.value})} 
-              placeholder="••••••••"
-            />
-          </div>
+          {staffSettings ? (
+            <p className={styles.staffNote}>
+              Votre email sert d’identifiant : seul le gérant peut le changer.
+              Votre mot de passe se change dans <Link href={staffSettings}>Paramètres</Link>.
+            </p>
+          ) : (
+            <div className={styles.inputGroup}>
+              <label>Nouveau Mot de passe (laisser vide pour ne pas modifier)</label>
+              <input
+                type="password"
+                className={styles.formInput}
+                value={formData.password}
+                onChange={e => setFormData({...formData, password: e.target.value})}
+                placeholder="8 caractères minimum"
+              />
+            </div>
+          )}
 
           <button type="submit" className={styles.saveBtn} disabled={updating}>
             {updating ? 'Sauvegarde...' : 'Sauvegarder les modifications'}

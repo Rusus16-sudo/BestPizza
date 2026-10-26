@@ -159,6 +159,91 @@
   cursor: default;
 }
 
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field label {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+}
+
+.field input {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-background);
+  font-size: 1rem;
+  color: var(--color-text-primary);
+}
+
+.field input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  background: var(--color-surface);
+}
+
+.passwordWrap {
+  position: relative;
+}
+
+.passwordWrap input {
+  padding-right: 48px;
+}
+
+.eye {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  transform: translateY(-50%);
+  width: 38px;
+  height: 38px;
+  border: none;
+  background: none;
+  border-radius: var(--radius-full);
+  color: var(--color-text-tertiary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.eye:hover {
+  background: var(--color-surface-hover);
+}
+
+.formError,
+.formSuccess {
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.formError {
+  background: var(--color-primary-dim);
+  color: var(--color-primary-hover);
+}
+
+.formSuccess {
+  background: var(--color-basil-dim);
+  color: var(--color-basil);
+}
+
+.form .primaryBtn {
+  margin-top: 4px;
+}
+
 .helperText {
   color: var(--color-text-secondary);
   font-size: 0.95rem;
