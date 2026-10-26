@@ -206,6 +206,7 @@ export default function AdminDashboard() {
       </header>
 
       <PushOptIn
+        required
         className={styles.pushOptIn}
         title="Alertes en cas de problème"
         description="Vous êtes prévenu si un paiement ne correspond pas à sa commande. Pas de notification pour l’activité normale."

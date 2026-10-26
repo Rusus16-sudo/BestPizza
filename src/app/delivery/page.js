@@ -150,6 +150,7 @@ export default function DeliveryPage() {
       </header>
 
       <PushOptIn
+        required
         className={styles.pushOptIn}
         title="Soyez prévenu des commandes prêtes"
         description="Une notification dès qu’une commande attend un livreur, même app fermée."

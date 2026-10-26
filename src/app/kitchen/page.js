@@ -186,6 +186,7 @@ export default function KitchenPage() {
       )}
 
       <PushOptIn
+        required
         dark
         className={styles.pushOptIn}
         title="Ne ratez aucune commande"

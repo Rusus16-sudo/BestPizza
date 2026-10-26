@@ -6,12 +6,14 @@ import styles from './PushOptIn.module.css'
 import { getPushState, enablePush } from '@/lib/push-client'
 
 // Invite à activer les notifications sur cet appareil : le client pour suivre
-// sa commande, le personnel pour ce qui le concerne. Ne s'affiche que si
-// elles peuvent encore être activées. `dark` : pour l'écran cuisine.
+// sa commande, le personnel pour ce qui le concerne. `dark` : pour l'écran cuisine.
+// `required` (personnel) : pas de croix, et l'encart reste tant que ce n'est pas
+// activé, y compris pour expliquer quoi faire si c'est bloqué ou impossible.
 export default function PushOptIn({
   title = 'Suivez votre commande, même app fermée',
   description = 'On vous prévient quand elle passe en cuisine, part en livraison et arrive.',
   dark = false,
+  required = false,
   className = '',
 }) {
   const [state, setState] = useState(null)
@@ -22,7 +24,10 @@ export default function PushOptIn({
     getPushState().then(setState).catch(() => setState('unsupported'))
   }, [])
 
-  if (dismissed || (state !== 'disabled' && state !== 'ios-install')) return null
+  const visibleStates = required
+    ? ['disabled', 'ios-install', 'denied', 'unsupported']
+    : ['disabled', 'ios-install']
+  if (dismissed || !visibleStates.includes(state)) return null
 
   const handleEnable = async () => {
     setBusy(true)
@@ -52,6 +57,13 @@ export default function PushOptIn({
             Sur iPhone, ajoutez d’abord Best Pizza à l’écran d’accueil :
             bouton Partager, puis « Sur l’écran d’accueil ».
           </span>
+        ) : state === 'denied' ? (
+          <span>
+            Les notifications sont bloquées. Touchez le cadenas à gauche de l’adresse du site,
+            autorisez les notifications, puis rechargez la page.
+          </span>
+        ) : state === 'unsupported' ? (
+          <span>Ce navigateur ne reçoit pas les notifications. Ouvrez le site dans Chrome ou Safari à jour.</span>
         ) : (
           <span>{description}</span>
         )}
@@ -62,12 +74,14 @@ export default function PushOptIn({
             {busy ? 'Un instant…' : 'Activer'}
           </button>
         )}
-        <button className={styles.closeBtn} onClick={() => setDismissed(true)} aria-label="Fermer">
-          <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round">
-            <line x1="18" y1="6" x2="6" y2="18" />
-            <line x1="6" y1="6" x2="18" y2="18" />
-          </svg>
-        </button>
+        {!required && (
+          <button className={styles.closeBtn} onClick={() => setDismissed(true)} aria-label="Fermer">
+            <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        )}
       </div>
     </div>
   )
