@@ -27,7 +27,7 @@ self.addEventListener('push', (event) => {
   )
 })
 
-// Toucher la notification ouvre le suivi de commande,
+// Toucher la notification ouvre l'espace qu'elle concerne (data.url),
 // en réutilisant l'app si elle est déjà ouverte.
 self.addEventListener('notificationclick', (event) => {
   event.notification.close()
@@ -35,13 +35,21 @@ self.addEventListener('notificationclick', (event) => {
 
   event.waitUntil((async () => {
     const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true })
-    for (const client of windows) {
-      if (new URL(client.url).origin === self.location.origin && 'focus' in client) {
-        await client.focus()
-        if ('navigate' in client) await client.navigate(url)
-        return
-      }
+    const client = windows.find((c) => new URL(c.url).origin === self.location.origin)
+
+    if (!client) {
+      await self.clients.openWindow(url)
+      return
     }
-    await self.clients.openWindow(url)
+
+    await client.focus()
+    if (client.url === url) return
+    try {
+      // Possible seulement si la page est déjà pilotée par ce service worker
+      await client.navigate(url)
+    } catch {
+      // Sinon, c'est l'app elle-même qui change de page (GlobalNotifications)
+      client.postMessage({ type: 'open-url', url })
+    }
   })())
 })

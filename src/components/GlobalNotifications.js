@@ -12,6 +12,15 @@ export default function GlobalNotifications() {
   useEffect(() => {
     // Le service worker reçoit les notifications push quand l'app est fermée
     registerServiceWorker()?.catch((err) => console.error('Service worker:', err.message))
+
+    // Notification touchée alors que l'app était déjà ouverte : on va vers l'espace concerné
+    const handleMessage = (event) => {
+      if (event.data?.type !== 'open-url') return
+      const target = new URL(event.data.url, window.location.origin)
+      if (target.origin === window.location.origin) window.location.assign(target.href)
+    }
+    navigator.serviceWorker?.addEventListener('message', handleMessage)
+    return () => navigator.serviceWorker?.removeEventListener('message', handleMessage)
   }, [])
 
   useEffect(() => {
