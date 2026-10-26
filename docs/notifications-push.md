@@ -1,7 +1,17 @@
-# Notifications push du suivi de commande
+# Notifications push
 
-Le client est prévenu à chaque étape de sa commande, **même app fermée** :
-paiement reçu, en préparation, prête, en route, livrée, annulée.
+Chacun est prévenu de ce qui le concerne, **même app fermée**. Toucher une
+notification ouvre l'espace qu'elle concerne.
+
+| Qui | Quand | Ouvre |
+|---|---|---|
+| Client | Chaque étape de sa commande : paiement reçu, en préparation, prête, en route, livrée, annulée | `/orders` |
+| Cuisine | Nouvelle commande (en Mobile Money : une fois payée) ; annulation d'une commande à préparer ou en préparation | `/kitchen` |
+| Livreurs | Commande prête, avec le quartier et le montant à encaisser ; dès qu'un livreur la prend, la notification des autres devient « prise en charge », sans sonner ; annulation | `/delivery` |
+| Gérant | Seulement les problèmes : paiement dont le montant ne correspond pas à la commande | `/admin/commandes` |
+
+Seuls les comptes du personnel **actifs** sont prévenus. Une commande a une seule
+notification par personne : chaque étape remplace la précédente.
 Quand l'app est ouverte, les toasts habituels s'affichent aussi.
 
 ## Le parcours
@@ -9,6 +19,8 @@ Quand l'app est ouverte, les toasts habituels s'affichent aussi.
 1. Sur la page **Commandes**, un client qui a une commande en cours voit
    « Suivez votre commande, même app fermée » et touche **Activer**. On peut
    aussi l'activer dans Réglages → Notifications → « Mises à jour de commande ».
+   Le personnel a le même encart sur l'écran cuisine, l'écran livreur et le
+   tableau de bord du gérant : à activer **une fois sur chaque appareil**.
 2. Le navigateur demande la permission. L'appareil est enregistré dans
    `push_subscriptions` et lié au compte du client.
 3. Quand la cuisine, le livreur, le gérant ou le paiement change le statut d'une
@@ -55,7 +67,7 @@ Dans Supabase → **Database → Webhooks** (ou Integrations → Database Webhoo
 |---|---|
 | Name | `push_suivi_commande` |
 | Table | `orders` |
-| Events | **Update** uniquement |
+| Events | **Insert** et **Update** (Insert : pour prévenir la cuisine des nouvelles commandes) |
 | Type | HTTP Request |
 | Method | `POST` |
 | URL | `https://VOTRE-DOMAINE/api/push/order-status` |
@@ -71,10 +83,12 @@ Le webhook n'atteint pas `localhost` : pour tester en local, exposer le serveur
 | `public/sw.js` | Service worker : affiche la notification, ouvre les commandes au toucher |
 | `src/lib/push-client.js` | Navigateur : abonner, désabonner, garder l'appareil lié au compte |
 | `src/lib/push.js` | Serveur : envoi aux appareils d'un client, oubli des appareils expirés |
-| `src/lib/order-status-messages.js` | Les messages, communs aux toasts et aux notifications |
+| `src/lib/order-notifications.js` | Qui prévenir, et de quoi, pour chaque changement de commande |
+| `src/lib/order-status-messages.js` | Les messages du client, communs aux toasts et aux notifications |
+| `src/lib/payment-orders.js` | Alerte le gérant d'un paiement anormal |
 | `src/app/api/push/subscribe/route.js` | Enregistre ou retire un appareil |
-| `src/app/api/push/order-status/route.js` | Reçoit le webhook Supabase et envoie la notification |
-| `src/components/PushOptIn.js` | L'invitation sur la page Commandes |
+| `src/app/api/push/order-status/route.js` | Reçoit le webhook Supabase et envoie les notifications |
+| `src/components/PushOptIn.js` | L'invitation à activer, sur chaque espace |
 
 ## Points de sécurité
 

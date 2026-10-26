@@ -2,12 +2,12 @@
 
 import { createContext, useContext, useState, useEffect } from 'react'
 import { promoApplies } from '@/lib/pricing'
+import { formatPrice } from '@/lib/format'
 
 const CartContext = createContext()
 
-export function formatPrice(value) {
-  return `${Math.round(Number(value) || 0).toLocaleString('fr-FR')} FCFA`
-}
+// Les écrans l'importent d'ici ; le serveur, de lib/format
+export { formatPrice }
 
 function sameCustomizations(a = {}, b = {}) {
   const keys = new Set([...Object.keys(a), ...Object.keys(b)])

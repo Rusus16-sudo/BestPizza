@@ -5,22 +5,10 @@ import { getBrowserClient } from '@/utils/supabase/client'
 import toast from 'react-hot-toast'
 import TrackingMap from '@/components/TrackingMap'
 import ConfirmDialog from '@/components/ConfirmDialog'
+import PushOptIn from '@/components/PushOptIn'
 import { formatPrice } from '@/context/CartContext'
+import { parseAddress, isCash } from '@/lib/delivery-address'
 import styles from './Delivery.module.css'
-
-// "Quartier: X | Tél: Y | Paiement: Z"
-function parseAddress(addressStr) {
-  const out = { quartier: addressStr || 'Adresse non précisée', phone: '', payment: 'Paiement à la livraison' }
-  if (!addressStr || !addressStr.includes('|')) return out
-  addressStr.split('|').map(p => p.trim()).forEach(p => {
-    if (p.startsWith('Quartier:')) out.quartier = p.replace('Quartier:', '').trim()
-    else if (p.startsWith('Tél:')) out.phone = p.replace('Tél:', '').trim()
-    else if (p.startsWith('Paiement:')) out.payment = p.replace('Paiement:', '').trim()
-  })
-  return out
-}
-
-const isCash = (payment) => payment === 'Paiement à la livraison' || /esp[eè]ces/i.test(payment)
 
 export default function DeliveryPage() {
   const [supabase] = useState(() => getBrowserClient())
@@ -160,6 +148,12 @@ export default function DeliveryPage() {
         <h1>Livraisons</h1>
         <p>{mine.length > 0 ? `${mine.length} en cours` : 'Aucune livraison en cours'}</p>
       </header>
+
+      <PushOptIn
+        className={styles.pushOptIn}
+        title="Soyez prévenu des commandes prêtes"
+        description="Une notification dès qu’une commande attend un livreur, même app fermée."
+      />
 
       {loadError && (
         <div className={styles.errorBox} role="alert">

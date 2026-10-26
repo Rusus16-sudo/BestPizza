@@ -1,3 +1,8 @@
+// « 12 500 FCFA »
+export function formatPrice(value) {
+  return `${Math.round(Number(value) || 0).toLocaleString('fr-FR')} FCFA`
+}
+
 // « 45 min », « 1 h 05 », « 11 h »
 export function formatDuration(minutes) {
   const m = Math.max(0, Math.round(minutes))

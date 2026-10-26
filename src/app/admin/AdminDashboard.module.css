@@ -15,6 +15,10 @@
   margin-bottom: 24px;
 }
 
+.pushOptIn {
+  margin-bottom: 24px;
+}
+
 .date {
   margin: 0 0 2px;
   color: var(--color-text-secondary);

@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { getBrowserClient } from '@/utils/supabase/client'
 import { formatPrice } from '@/context/CartContext'
 import BarChart from './BarChart'
+import PushOptIn from '@/components/PushOptIn'
 import { formatDuration } from '@/lib/format'
 import styles from './AdminDashboard.module.css'
 
@@ -203,6 +204,12 @@ export default function AdminDashboard() {
           ))}
         </div>
       </header>
+
+      <PushOptIn
+        className={styles.pushOptIn}
+        title="Alertes en cas de problème"
+        description="Vous êtes prévenu si un paiement ne correspond pas à sa commande. Pas de notification pour l’activité normale."
+      />
 
       <div className={styles.grid}>
         {/* Le chiffre qui compte */}

@@ -87,6 +87,34 @@
   background: var(--color-surface-hover);
 }
 
+/* Écran cuisine, sur fond sombre */
+.dark {
+  background: #211e1b;
+  border-color: #3a3531;
+  box-shadow: none;
+}
+
+.dark .icon {
+  background: rgba(233, 162, 59, 0.14);
+  color: var(--color-crust);
+}
+
+.dark .text strong {
+  color: #f5f2ee;
+}
+
+.dark .text span {
+  color: #b3aaa1;
+}
+
+.dark .closeBtn {
+  color: #b3aaa1;
+}
+
+.dark .closeBtn:hover {
+  background: #2b2724;
+}
+
 @media (max-width: 420px) {
   .card {
     flex-wrap: wrap;

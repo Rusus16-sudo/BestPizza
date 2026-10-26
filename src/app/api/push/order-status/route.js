@@ -1,11 +1,11 @@
 import crypto from 'crypto'
 import { NextResponse } from 'next/server'
-import { sendPushToUser } from '@/lib/push'
-import { ORDER_STATUS_MESSAGES } from '@/lib/order-status-messages'
+import { sendPushToUser, sendPushToRoles } from '@/lib/push'
+import { orderNotifications } from '@/lib/order-notifications'
 
-// Webhook de base de données Supabase : appelé à chaque mise à jour d'une commande,
-// quel que soit l'écran qui l'a faite (cuisine, livreur, gérant, paiement).
-// Il prévient le client sur ses appareils, même app fermée.
+// Webhook de base de données Supabase : appelé à chaque création ou mise à jour
+// d'une commande, quel que soit l'écran qui l'a faite (cuisine, livreur, gérant, paiement).
+// Il prévient le client et le personnel concerné sur leurs appareils, même app fermée.
 function isAuthorized(request) {
   const secret = process.env.PUSH_WEBHOOK_SECRET
   const received = request.headers.get('x-webhook-secret')
@@ -29,24 +29,19 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Corps illisible' }, { status: 400 })
   }
 
-  const order = payload.record
-  const previous = payload.old_record
+  const { type, record: order } = payload
+  const previousStatus = type === 'UPDATE' ? payload.old_record?.status : null
 
-  // Seul un changement de statut intéresse le client
-  if (payload.type !== 'UPDATE' || !order || order.status === previous?.status) {
+  // Seuls une nouvelle commande ou un changement de statut intéressent quelqu'un
+  if ((type !== 'INSERT' && type !== 'UPDATE') || !order || order.status === previousStatus) {
     return NextResponse.json({ skipped: true })
   }
 
-  const message = ORDER_STATUS_MESSAGES[order.status]
-  if (!message) return NextResponse.json({ skipped: true })
+  const results = await Promise.all(
+    orderNotifications(type, order, previousStatus).map((t) => (t.userId
+      ? sendPushToUser(t.userId, t.notification)
+      : sendPushToRoles(t.roles, t.notification, { exceptUserId: t.exceptUserId })))
+  )
 
-  const { sent } = await sendPushToUser(order.user_id, {
-    title: `Commande ${order.short_id || ''}`.trim(),
-    body: `${message.icon} ${message.text}`,
-    url: '/orders',
-    // Une seule notification par commande : chaque étape remplace la précédente
-    tag: `order-${order.id}`,
-  })
-
-  return NextResponse.json({ sent })
+  return NextResponse.json({ sent: results.reduce((n, r) => n + r.sent, 0) })
 }

@@ -1,5 +1,7 @@
-import { createAdminClient } from '@/utils/supabase/admin'
+import { createAdminClient, MANAGER_ROLES } from '@/utils/supabase/admin'
 import { mapPaymentStatus } from '@/lib/notchpay'
+import { sendPushToRoles } from '@/lib/push'
+import { formatPrice } from '@/lib/format'
 
 /**
  * Applique l'état d'un paiement à une commande.
@@ -27,6 +29,13 @@ export async function applyPaymentResult({ order, notchStatus, amount }) {
     // Le montant annoncé doit correspondre à la commande
     if (amount != null && Math.round(Number(amount)) !== Math.round(Number(order.total_amount))) {
       console.error(`Montant payé (${amount}) différent de la commande ${order.short_id} (${order.total_amount})`)
+      // Le gérant doit le savoir : la commande reste bloquée tant que personne ne vérifie
+      await sendPushToRoles(MANAGER_ROLES, {
+        title: `Paiement anormal : ${order.short_id}`,
+        body: `⚠️ Payé ${formatPrice(amount)} au lieu de ${formatPrice(order.total_amount)}. La commande n’est pas partie en cuisine.`,
+        url: '/admin/commandes',
+        tag: `payment-${order.id}`,
+      }).catch((err) => console.error('Alerte paiement anormal:', err.message))
       return { changed: false, paymentStatus: order.payment_status, status, mismatch: true }
     }
     patch.paid_at = new Date().toISOString()

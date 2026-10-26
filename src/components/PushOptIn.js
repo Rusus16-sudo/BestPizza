@@ -5,9 +5,15 @@ import toast from 'react-hot-toast'
 import styles from './PushOptIn.module.css'
 import { getPushState, enablePush } from '@/lib/push-client'
 
-// Invite le client à recevoir le suivi de sa commande même app fermée.
-// Ne s'affiche que s'il peut encore l'activer.
-export default function PushOptIn() {
+// Invite à activer les notifications sur cet appareil : le client pour suivre
+// sa commande, le personnel pour ce qui le concerne. Ne s'affiche que si
+// elles peuvent encore être activées. `dark` : pour l'écran cuisine.
+export default function PushOptIn({
+  title = 'Suivez votre commande, même app fermée',
+  description = 'On vous prévient quand elle passe en cuisine, part en livraison et arrive.',
+  dark = false,
+  className = '',
+}) {
   const [state, setState] = useState(null)
   const [busy, setBusy] = useState(false)
   const [dismissed, setDismissed] = useState(false)
@@ -32,7 +38,7 @@ export default function PushOptIn() {
   }
 
   return (
-    <div className={styles.card}>
+    <div className={`${styles.card} ${dark ? styles.dark : ''} ${className}`}>
       <div className={styles.icon} aria-hidden="true">
         <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round">
           <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
@@ -40,14 +46,14 @@ export default function PushOptIn() {
         </svg>
       </div>
       <div className={styles.text}>
-        <strong>Suivez votre commande, même app fermée</strong>
+        <strong>{title}</strong>
         {state === 'ios-install' ? (
           <span>
             Sur iPhone, ajoutez d’abord Best Pizza à l’écran d’accueil :
             bouton Partager, puis « Sur l’écran d’accueil ».
           </span>
         ) : (
-          <span>On vous prévient quand elle passe en cuisine, part en livraison et arrive.</span>
+          <span>{description}</span>
         )}
       </div>
       <div className={styles.actions}>

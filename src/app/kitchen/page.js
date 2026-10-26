@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { getBrowserClient } from '@/utils/supabase/client'
 import toast from 'react-hot-toast'
 import ConfirmDialog from '@/components/ConfirmDialog'
+import PushOptIn from '@/components/PushOptIn'
 import styles from './Kitchen.module.css'
 import { formatDuration } from '@/lib/format'
 
@@ -178,6 +179,13 @@ export default function KitchenPage() {
       {!soundOn && (
         <p className={styles.soundHint}>Activez le son pour être prévenu à chaque nouvelle commande.</p>
       )}
+
+      <PushOptIn
+        dark
+        className={styles.pushOptIn}
+        title="Ne ratez aucune commande"
+        description="Une notification à chaque nouvelle commande et à chaque annulation, même tablette en veille."
+      />
 
       {loadError && (
         <p className={styles.errorBox} role="alert">Les commandes n’ont pas pu être chargées. Vérifiez la connexion internet de la tablette.</p>

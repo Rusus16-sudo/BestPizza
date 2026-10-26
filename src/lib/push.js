@@ -21,18 +21,20 @@ function configure() {
 }
 
 /**
- * Envoie une notification sur tous les appareils d'un client.
+ * Envoie une notification sur tous les appareils de ces comptes.
  * Les appareils que le service de push ne connaît plus sont oubliés.
+ * `silent` : remplace une notification (même `tag`) sans faire sonner ni vibrer.
  */
-export async function sendPushToUser(userId, { title, body, url = '/orders', tag }) {
-  if (!isPushConfigured() || !userId) return { sent: 0 }
+export async function sendPushToUsers(userIds, { title, body, url = '/orders', tag, silent = false }) {
+  const ids = [...new Set((userIds || []).filter(Boolean))]
+  if (!isPushConfigured() || ids.length === 0) return { sent: 0 }
   configure()
 
   const db = createAdminClient()
   const { data: subscriptions, error } = await db
     .from('push_subscriptions')
     .select('id, endpoint, p256dh, auth')
-    .eq('user_id', userId)
+    .in('user_id', ids)
 
   if (error) {
     console.error('Lecture des abonnements push:', error.message)
@@ -40,7 +42,7 @@ export async function sendPushToUser(userId, { title, body, url = '/orders', tag
   }
   if (!subscriptions?.length) return { sent: 0 }
 
-  const payload = JSON.stringify({ title, body, url, tag })
+  const payload = JSON.stringify({ title, body, url, tag, silent })
   const expired = []
   let sent = 0
 
@@ -64,4 +66,27 @@ export async function sendPushToUser(userId, { title, body, url = '/orders', tag
   }
 
   return { sent }
+}
+
+export function sendPushToUser(userId, notification) {
+  return sendPushToUsers([userId], notification)
+}
+
+/** Prévient tout le personnel actif ayant l'un de ces rôles (cuisine, livreurs, gérants…). */
+export async function sendPushToRoles(roles, notification, { exceptUserId } = {}) {
+  if (!isPushConfigured()) return { sent: 0 }
+
+  const db = createAdminClient()
+  const { data: staff, error } = await db
+    .from('profiles')
+    .select('id')
+    .in('role', roles)
+    .not('is_active', 'is', false)
+
+  if (error) {
+    console.error('Lecture du personnel à prévenir:', error.message)
+    return { sent: 0 }
+  }
+
+  return sendPushToUsers(staff.map((p) => p.id).filter((id) => id !== exceptUserId), notification)
 }

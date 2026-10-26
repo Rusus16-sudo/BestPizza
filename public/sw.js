@@ -13,18 +13,24 @@ self.addEventListener('push', (event) => {
   }
 
   const title = data.title || 'Best Pizza'
-  event.waitUntil(
-    self.registration.showNotification(title, {
-      body: data.body || '',
-      icon: '/icon-192x192.png',
-      badge: '/icon-192x192.png',
-      tag: data.tag,
-      // La nouvelle étape d'une commande refait vibrer le téléphone
-      renotify: Boolean(data.tag),
-      vibrate: [100, 50, 100],
-      data: { url: data.url || '/orders' },
-    })
-  )
+  const options = {
+    body: data.body || '',
+    icon: '/icon-192x192.png',
+    badge: '/icon-192x192.png',
+    tag: data.tag,
+    data: { url: data.url || '/orders' },
+  }
+
+  if (data.silent) {
+    // Simple mise à jour d'une notification déjà affichée : ni son ni vibration
+    options.silent = true
+  } else {
+    // La nouvelle étape d'une commande refait vibrer le téléphone
+    options.renotify = Boolean(data.tag)
+    options.vibrate = [100, 50, 100]
+  }
+
+  event.waitUntil(self.registration.showNotification(title, options))
 })
 
 // Toucher la notification ouvre l'espace qu'elle concerne (data.url),
