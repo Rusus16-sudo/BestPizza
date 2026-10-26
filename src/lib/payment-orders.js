@@ -1,6 +1,6 @@
-import { createAdminClient, MANAGER_ROLES } from '@/utils/supabase/admin'
+import { createAdminClient } from '@/utils/supabase/admin'
 import { mapPaymentStatus } from '@/lib/notchpay'
-import { sendPushToRoles } from '@/lib/push'
+import { sendPushToStaff } from '@/lib/push'
 import { formatPrice } from '@/lib/format'
 
 /**
@@ -29,8 +29,12 @@ export async function applyPaymentResult({ order, notchStatus, amount }) {
     // Le montant annoncé doit correspondre à la commande
     if (amount != null && Math.round(Number(amount)) !== Math.round(Number(order.total_amount))) {
       console.error(`Montant payé (${amount}) différent de la commande ${order.short_id} (${order.total_amount})`)
-      // Le gérant doit le savoir : la commande reste bloquée tant que personne ne vérifie
-      await sendPushToRoles(MANAGER_ROLES, {
+      // Les gérants de l'établissement doivent le savoir : la commande reste bloquée tant que personne ne vérifie
+      await sendPushToStaff({
+        organizationId: order.organization_id,
+        locationId: order.location_id,
+        roles: ['proprietaire', 'gerant'],
+      }, {
         title: `Paiement anormal : ${order.short_id}`,
         body: `⚠️ Payé ${formatPrice(amount)} au lieu de ${formatPrice(order.total_amount)}. La commande n’est pas partie en cuisine.`,
         url: '/admin/commandes',
@@ -64,7 +68,7 @@ export async function findOrderByReferences(references) {
 
   const { data } = await db
     .from('orders')
-    .select('id, short_id, status, total_amount, payment_status, payment_reference, user_id')
+    .select('id, short_id, status, total_amount, payment_status, payment_reference, user_id, organization_id, location_id')
     .or(clean.map((r) => `payment_reference.eq.${r},short_id.eq.${r}`).join(','))
     .limit(1)
 

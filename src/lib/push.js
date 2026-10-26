@@ -72,21 +72,30 @@ export function sendPushToUser(userId, notification) {
   return sendPushToUsers([userId], notification)
 }
 
-/** Prévient tout le personnel actif ayant l'un de ces rôles (cuisine, livreurs, gérants…). */
-export async function sendPushToRoles(roles, notification, { exceptUserId } = {}) {
-  if (!isPushConfigured()) return { sent: 0 }
+/**
+ * Prévient l'équipe active d'un établissement ayant l'un de ces rôles (cuisine, livreurs, gérants…).
+ * Avec `locationId`, seulement ceux de ce point de vente, plus ceux qui travaillent
+ * pour toute l'enseigne. Jamais le personnel d'un autre établissement.
+ */
+export async function sendPushToStaff({ organizationId, locationId, roles }, notification, { exceptUserId } = {}) {
+  if (!isPushConfigured() || !organizationId) return { sent: 0 }
 
   const db = createAdminClient()
-  const { data: staff, error } = await db
-    .from('profiles')
-    .select('id')
+  const { data: members, error } = await db
+    .from('memberships')
+    .select('user_id, location_id')
+    .eq('organization_id', organizationId)
     .in('role', roles)
-    .not('is_active', 'is', false)
+    .eq('is_active', true)
 
   if (error) {
     console.error('Lecture du personnel à prévenir:', error.message)
     return { sent: 0 }
   }
 
-  return sendPushToUsers(staff.map((p) => p.id).filter((id) => id !== exceptUserId), notification)
+  const ids = members
+    .filter((m) => !locationId || !m.location_id || m.location_id === locationId)
+    .map((m) => m.user_id)
+    .filter((id) => id !== exceptUserId)
+  return sendPushToUsers(ids, notification)
 }

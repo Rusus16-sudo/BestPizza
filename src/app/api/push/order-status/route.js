@@ -1,6 +1,6 @@
 import crypto from 'crypto'
 import { NextResponse } from 'next/server'
-import { sendPushToUser, sendPushToRoles } from '@/lib/push'
+import { sendPushToUser, sendPushToStaff } from '@/lib/push'
 import { orderNotifications } from '@/lib/order-notifications'
 
 // Webhook de base de données Supabase : appelé à chaque création ou mise à jour
@@ -37,10 +37,12 @@ export async function POST(request) {
     return NextResponse.json({ skipped: true })
   }
 
+  // Le personnel prévenu est toujours celui du point de vente de la commande
+  const staffOf = { organizationId: order.organization_id, locationId: order.location_id }
   const results = await Promise.all(
     orderNotifications(type, order, previousStatus).map((t) => (t.userId
       ? sendPushToUser(t.userId, t.notification)
-      : sendPushToRoles(t.roles, t.notification, { exceptUserId: t.exceptUserId })))
+      : sendPushToStaff({ ...staffOf, roles: t.roles }, t.notification, { exceptUserId: t.exceptUserId })))
   )
 
   return NextResponse.json({ sent: results.reduce((n, r) => n + r.sent, 0) })
