@@ -16,6 +16,7 @@ relancé sans risque : il ne recrée pas ce qui existe déjà.
 | 3 | `migrations/20260920_profils_automatiques.sql` | Crée le profil de chaque nouveau compte, avec son prénom |
 | 4 | `migrations/20260920_paiements_notchpay.sql` | Paiement Mobile Money : statut « paiement » et suivi du règlement |
 | 5 | `migrations/20261026_notifications_push.sql` | Appareils abonnés aux notifications push du suivi de commande |
+| 6 | `migrations/20261026_tchopi_1_etablissements.sql` | Tchopi : enseignes, points de vente, membres ; Best Pizza devient le premier établissement |
 
 ## Ce que contient la migration principale
 

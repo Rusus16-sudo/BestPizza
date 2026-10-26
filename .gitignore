@@ -47,3 +47,6 @@ next-env.d.ts
 /recover.js
 /fix_alerts.js
 /extract_css.js
+
+# Sauvegardes de la base : données personnelles, jamais dans Git
+/backups/
