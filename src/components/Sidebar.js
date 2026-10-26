@@ -88,6 +88,11 @@ export default function Sidebar() {
   const isLivreur = role === 'livreur'
   const inKitchen = pathname.startsWith('/kitchen')
   const inDelivery = pathname.startsWith('/delivery') || isLivreur
+  // Le personnel a ses propres paramètres ; ceux des clients (adresses, historique) ne le concernent pas
+  const settingsHref = isGerant ? '/admin/parametres'
+    : role === 'cuisinier' || inKitchen ? '/kitchen/settings'
+    : inDelivery ? '/delivery/settings'
+    : '/settings'
 
   const navLink = ({ href, icon, label, match, badge }) => {
     const active = match ? match(pathname) : pathname === href
@@ -141,7 +146,7 @@ export default function Sidebar() {
 
         {!isGerant && !inKitchen && !inDelivery && navLink({ href: "/help", icon: "help", label: "Aide" })}
         {user && (
-          navLink({ href: inKitchen ? '/kitchen/settings' : '/settings', icon: "settings", label: "Paramètres", match: p => p.includes('/settings') })
+          navLink({ href: settingsHref, icon: "settings", label: "Paramètres", match: p => p === settingsHref })
         )}
         {user ? (
           <button onClick={() => setShowLogoutConfirm(true)} className={styles.navItem}>

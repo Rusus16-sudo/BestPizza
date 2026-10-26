@@ -53,9 +53,15 @@ export async function getPushState() {
   if (Notification.permission === 'denied') return 'denied'
   if (Notification.permission !== 'granted' || readOptOut()) return 'disabled'
 
+  // Permission déjà donnée : juste après une reconnexion, l'appareil est en train
+  // d'être réabonné (syncPush). On attend la fin avant de répondre « pas activé ».
+  if (!(await currentSubscription())) await syncPush()
+  return (await currentSubscription()) ? 'enabled' : 'disabled'
+}
+
+async function currentSubscription() {
   const registration = await navigator.serviceWorker.getRegistration('/')
-  const subscription = await registration?.pushManager.getSubscription()
-  return subscription ? 'enabled' : 'disabled'
+  return registration?.pushManager.getSubscription()
 }
 
 async function subscribeDevice() {
@@ -104,16 +110,32 @@ export async function disablePush() {
 }
 
 /**
- * Client connecté qui a déjà accepté les notifications : on s'assure que
- * l'appareil est abonné et lié à son compte (utile après un changement de compte).
+ * Compte connecté qui a déjà accepté les notifications : on s'assure que
+ * l'appareil est abonné et lié à ce compte (après une reconnexion ou un changement de compte).
+ * Les appels simultanés (app + encart) partagent le même abonnement en cours.
  */
-export async function syncPush() {
-  if (!isPushSupported() || Notification.permission !== 'granted' || readOptOut()) return
-  try {
-    await subscribeDevice()
-  } catch (err) {
-    console.error('Abonnement push:', err.message)
+let pendingSync = null
+
+export function syncPush() {
+  if (!isPushSupported() || Notification.permission !== 'granted' || readOptOut()) return Promise.resolve()
+  if (!pendingSync) {
+    pendingSync = subscribeDevice()
+      .catch((err) => console.error('Abonnement push:', err.message))
+      .finally(() => { pendingSync = null })
   }
+  return pendingSync
+}
+
+/** Envoie une notification de test sur les appareils du compte connecté. */
+export async function sendTestPush(url) {
+  const res = await fetch('/api/push/test', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ url }),
+  })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error(data.error || "La notification de test n'a pas pu partir")
+  return data
 }
 
 /** Déconnexion ou refus : l'appareil ne reçoit plus rien pour ce compte. */
