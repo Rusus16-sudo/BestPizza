@@ -7,9 +7,10 @@ import toast from 'react-hot-toast'
 import { getBrowserClient } from '@/utils/supabase/client'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import { getPushState, enablePush, sendTestPush } from '@/lib/push-client'
+import { getStaffMembership, MANAGER_ROLES } from '@/lib/staff'
 import styles from './StaffSettings.module.css'
 
-const ROLE_LABELS = { cuisinier: 'Cuisinier', livreur: 'Livreur', gerant: 'Gérant', admin: 'Gérant' }
+const ROLE_LABELS = { proprietaire: 'Propriétaire', gerant: 'Gérant', cuisinier: 'Cuisinier', livreur: 'Livreur' }
 
 // Ce que l'on dit des notifications sur cet appareil, selon leur état
 const PUSH_STATUS = {
@@ -45,8 +46,8 @@ export default function StaffSettings({ home }) {
         return
       }
       setUser(user)
-      const { data } = await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle()
-      setRole(data?.role || null)
+      const membership = await getStaffMembership(supabase, user.id)
+      setRole(membership?.role || null)
     }
     load()
     getPushState().then(setPushState).catch(() => setPushState('unsupported'))
@@ -115,7 +116,7 @@ export default function StaffSettings({ home }) {
 
   if (!user) return <div className={styles.container}>Chargement…</div>
 
-  const isManager = role === 'gerant' || role === 'admin'
+  const isManager = MANAGER_ROLES.includes(role)
   const status = PUSH_STATUS[pushState]
 
   return (

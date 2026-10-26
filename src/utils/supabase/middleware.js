@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse } from 'next/server'
+import { getStaffMembership, screenRole } from '@/lib/staff'
 
 export async function updateSession(request) {
   let supabaseResponse = NextResponse.next({
@@ -41,25 +42,24 @@ export async function updateSession(request) {
     return NextResponse.redirect(url)
   }
 
-  // Contrôle d'accès basé sur les rôles (RBAC)
+  // Contrôle d'accès : le rôle vient de l'équipe à laquelle appartient le compte
   if (user && isProtectedRoute) {
-    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
-    const role = profile?.role || 'client'
+    const role = screenRole(await getStaffMembership(supabase, user.id))
     const path = request.nextUrl.pathname
 
-    if (path.startsWith('/admin') && !['admin', 'gerant'].includes(role)) {
+    if (path.startsWith('/admin') && role !== 'gerant') {
       const url = request.nextUrl.clone()
       url.pathname = '/'
       return NextResponse.redirect(url)
     }
-    
-    if (path.startsWith('/kitchen') && !['admin', 'gerant', 'cuisinier'].includes(role)) {
+
+    if (path.startsWith('/kitchen') && !['gerant', 'cuisinier'].includes(role)) {
       const url = request.nextUrl.clone()
       url.pathname = '/'
       return NextResponse.redirect(url)
     }
-    
-    if (path.startsWith('/delivery') && !['admin', 'gerant', 'livreur'].includes(role)) {
+
+    if (path.startsWith('/delivery') && !['gerant', 'livreur'].includes(role)) {
       const url = request.nextUrl.clone()
       url.pathname = '/'
       return NextResponse.redirect(url)

@@ -4,13 +4,13 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { getBrowserClient } from '@/utils/supabase/client'
 import Link from 'next/link'
+import { getStaffMembership, screenRole } from '@/lib/staff'
 import styles from './Profile.module.css'
 
 const STAFF_SETTINGS = {
   cuisinier: '/kitchen/settings',
   livreur: '/delivery/settings',
   gerant: '/admin/parametres',
-  admin: '/admin/parametres',
 }
 
 export default function ProfilePage() {
@@ -47,8 +47,7 @@ export default function ProfilePage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
         setUser(user)
-        const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle()
-        setRole(profile?.role || 'client')
+        setRole(screenRole(await getStaffMembership(supabase, user.id)))
         setFormData({
           displayName: user.user_metadata?.display_name || (user.email ? user.email.split('@')[0] : ''),
           phone: user.user_metadata?.phone || '',

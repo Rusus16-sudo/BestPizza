@@ -1,11 +1,10 @@
 import { NextResponse } from 'next/server'
-import { createAdminClient, requireRole, MANAGER_ROLES } from '@/utils/supabase/admin'
-
-const STAFF_ROLES = ['cuisinier', 'livreur']
+import { createAdminClient, requireStaff, MANAGER_ROLES, STAFF_ROLES } from '@/utils/supabase/admin'
 
 export async function POST(request) {
-  const auth = await requireRole(MANAGER_ROLES)
+  const auth = await requireStaff(MANAGER_ROLES)
   if (auth.response) return auth.response
+  const { membership } = auth
 
   try {
     const { userId, newPassword } = await request.json()
@@ -20,10 +19,19 @@ export async function POST(request) {
 
     const supabaseAdmin = createAdminClient()
 
-    // Le gérant ne peut réinitialiser que les comptes du personnel
-    const { data: target } = await supabaseAdmin.from('profiles').select('role').eq('id', userId).single()
-    if (!target || !STAFF_ROLES.includes(target.role)) {
-      return NextResponse.json({ error: 'Ce compte ne fait pas partie du personnel' }, { status: 403 })
+    // Seulement un compte du personnel de SON équipe, et qui n'appartient à aucune autre :
+    // sinon, changer son mot de passe donnerait la main sur son accès ailleurs.
+    const { data: memberships } = await supabaseAdmin
+      .from('memberships')
+      .select('organization_id, role')
+      .eq('user_id', userId)
+    const inMyTeam = memberships?.some((m) => m.organization_id === membership.organization_id && STAFF_ROLES.includes(m.role))
+    const elsewhere = memberships?.some((m) => m.organization_id !== membership.organization_id)
+    if (!inMyTeam) {
+      return NextResponse.json({ error: 'Ce compte ne fait pas partie de votre personnel' }, { status: 403 })
+    }
+    if (elsewhere) {
+      return NextResponse.json({ error: 'Ce compte travaille aussi pour un autre établissement : la personne doit changer son mot de passe elle-même.' }, { status: 403 })
     }
 
     const { error } = await supabaseAdmin.auth.admin.updateUserById(userId, { password: newPassword })

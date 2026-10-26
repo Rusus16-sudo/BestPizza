@@ -1,5 +1,6 @@
 import { createClient } from '@/utils/supabase/server'
 import HomeClient from './HomeClient'
+import { getStaffMembership, screenRole, HOME_BY_ROLE } from '@/lib/staff'
 import { products as mockProducts } from '@/data/products'
 
 export default async function Home() {
@@ -7,16 +8,11 @@ export default async function Home() {
   const { data: { user } } = await supabase.auth.getUser()
   
   if (user) {
-    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
-    if (profile) {
-      if (profile.role === 'livreur') {
-        const { redirect } = await import('next/navigation')
-        redirect('/delivery')
-      }
-      if (profile.role === 'cuisinier') {
-        const { redirect } = await import('next/navigation')
-        redirect('/kitchen')
-      }
+    // La cuisine et les livreurs vont directement à leur écran de travail
+    const role = screenRole(await getStaffMembership(supabase, user.id))
+    if (role === 'livreur' || role === 'cuisinier') {
+      const { redirect } = await import('next/navigation')
+      redirect(HOME_BY_ROLE[role])
     }
   }
 

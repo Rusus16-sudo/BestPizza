@@ -10,6 +10,8 @@ import { fr } from 'date-fns/locale/fr'
 import AdminPageHeader from './AdminPageHeader'
 import styles from './Admin.module.css'
 import ConfirmDialog from '@/components/ConfirmDialog'
+import { getStaffMembership } from '@/lib/staff'
+import { productPhotoPath } from '@/lib/product-photos'
 
 registerLocale('fr', fr)
 
@@ -73,7 +75,20 @@ export default function AdminClient({ section, initialStaff = [] }) {
     setTimeout(() => setToastMessage(''), 3000)
   }
 
+  // L'enseigne que gère ce compte : la carte, les promotions et les avis sont les siens
+  const [organizationId, setOrganizationId] = useState(null)
+
   useEffect(() => {
+    const loadOrganization = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      const membership = await getStaffMembership(supabase, user?.id)
+      setOrganizationId(membership?.organization_id || null)
+    }
+    loadOrganization()
+  }, [supabase])
+
+  useEffect(() => {
+    if (!organizationId) return
     if (activeTab === 'menu') {
       fetchProducts()
     } else if (activeTab === 'offers') {
@@ -81,13 +96,14 @@ export default function AdminClient({ section, initialStaff = [] }) {
     } else if (activeTab === 'reviews') {
       fetchReviews()
     }
-  }, [activeTab])
+  }, [activeTab, organizationId])
 
   const fetchProducts = async () => {
     setMenuLoading(true)
     const { data, error } = await supabase
       .from('products')
       .select('*')
+      .eq('organization_id', organizationId)
       .order('category')
     
     if (!error && data) {
@@ -101,6 +117,7 @@ export default function AdminClient({ section, initialStaff = [] }) {
     const { data, error } = await supabase
       .from('offers')
       .select('*')
+      .eq('organization_id', organizationId)
       .order('created_at', { ascending: false })
     
     if (!error && data) {
@@ -118,6 +135,7 @@ export default function AdminClient({ section, initialStaff = [] }) {
         products(title),
         profiles(email, first_name, last_name)
       `)
+      .eq('organization_id', organizationId)
       .order('created_at', { ascending: false })
     
     if (!error && data) {
@@ -153,8 +171,7 @@ export default function AdminClient({ section, initialStaff = [] }) {
     let finalImageUrl = productForm.image;
     
     if (imageFile) {
-      const fileExt = imageFile.name.split('.').pop()
-      const fileName = `${Date.now()}.${fileExt}`
+      const fileName = await productPhotoPath(supabase, imageFile)
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('products')
         .upload(fileName, imageFile)
@@ -183,7 +200,7 @@ export default function AdminClient({ section, initialStaff = [] }) {
       const { error: err } = await supabase.from('products').update(payload).eq('id', editingProduct.id)
       error = err
     } else {
-      const { error: err } = await supabase.from('products').insert([payload])
+      const { error: err } = await supabase.from('products').insert([{ ...payload, organization_id: organizationId }])
       error = err
     }
 
@@ -255,7 +272,7 @@ export default function AdminClient({ section, initialStaff = [] }) {
       const { error: err } = await supabase.from('offers').update(payload).eq('id', editingOffer.id)
       error = err
     } else {
-      const { error: err } = await supabase.from('offers').insert([payload])
+      const { error: err } = await supabase.from('offers').insert([{ ...payload, organization_id: organizationId }])
       error = err
     }
 

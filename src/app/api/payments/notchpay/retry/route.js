@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { headers } from 'next/headers'
-import { createAdminClient, requireRole } from '@/utils/supabase/admin'
+import { createAdminClient, requireUser } from '@/utils/supabase/admin'
 import { initializePayment, isNotchPayConfigured } from '@/lib/notchpay'
 
 async function siteOrigin() {
@@ -13,7 +13,7 @@ async function siteOrigin() {
 
 // Relance le paiement d'une commande restée impayée
 export async function POST(request) {
-  const auth = await requireRole(null)
+  const auth = await requireUser()
   if (auth.response) return auth.response
 
   if (!isNotchPayConfigured()) {

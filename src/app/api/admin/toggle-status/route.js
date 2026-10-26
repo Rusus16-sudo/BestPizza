@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server'
-import { createAdminClient, requireRole, MANAGER_ROLES } from '@/utils/supabase/admin'
+import { createAdminClient, requireStaff, MANAGER_ROLES, STAFF_ROLES } from '@/utils/supabase/admin'
 
-const STAFF_ROLES = ['cuisinier', 'livreur']
-
+// Suspendre ou réactiver un membre de l'équipe. Seul son accès à CET établissement
+// change : son compte reste utilisable ailleurs (client, autre restaurant).
 export async function POST(request) {
-  const auth = await requireRole(MANAGER_ROLES)
+  const auth = await requireStaff(MANAGER_ROLES)
   if (auth.response) return auth.response
+  const { membership } = auth
 
   try {
     const { userId, isActive } = await request.json()
@@ -16,28 +17,21 @@ export async function POST(request) {
 
     const supabaseAdmin = createAdminClient()
 
-    // Seuls les comptes du personnel peuvent être suspendus
-    const { data: target } = await supabaseAdmin.from('profiles').select('role').eq('id', userId).single()
-    if (!target || !STAFF_ROLES.includes(target.role)) {
-      return NextResponse.json({ error: 'Ce compte ne fait pas partie du personnel' }, { status: 403 })
-    }
-
-    const { error: profileError } = await supabaseAdmin
-      .from('profiles')
+    // Seul le personnel de son équipe : jamais un gérant, ni le membre d'un autre établissement
+    const { data: updated, error } = await supabaseAdmin
+      .from('memberships')
       .update({ is_active: isActive })
-      .eq('id', userId)
+      .eq('user_id', userId)
+      .eq('organization_id', membership.organization_id)
+      .in('role', STAFF_ROLES)
+      .select('user_id')
 
-    if (profileError) {
-      return NextResponse.json({ error: profileError.message }, { status: 400 })
+    if (error) {
+      console.error('Suspension:', error.message)
+      return NextResponse.json({ error: "Le statut n'a pas pu être changé" }, { status: 500 })
     }
-
-    // Bannir ou débannir dans Supabase Auth
-    const { error: authError } = await supabaseAdmin.auth.admin.updateUserById(userId, {
-      ban_duration: isActive ? 'none' : '876000h'
-    })
-
-    if (authError) {
-      return NextResponse.json({ error: authError.message }, { status: 400 })
+    if (!updated.length) {
+      return NextResponse.json({ error: 'Ce compte ne fait pas partie de votre personnel' }, { status: 403 })
     }
 
     return NextResponse.json({ message: isActive ? 'Compte réactivé' : 'Compte suspendu' })

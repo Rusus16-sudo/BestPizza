@@ -7,6 +7,8 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/utils/supabase/client'
 import toast from 'react-hot-toast'
 import { useCart, formatPrice } from '@/context/CartContext'
+import { getStaffMembership, screenRole } from '@/lib/staff'
+import { productPhotoPath } from '@/lib/product-photos'
 
 export default function ProductCard({ id, title, price, image, category = 'Pizza', isSpicy = false, rating = null, prepTime = "25-35 min", variant = 'grid' }) {
   const { addToCart } = useCart()
@@ -36,8 +38,7 @@ export default function ProductCard({ id, title, price, image, category = 'Pizza
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
-        const { data } = await supabase.from('profiles').select('role').eq('id', user.id).single()
-        if (['admin', 'gerant'].includes(data?.role)) {
+        if (screenRole(await getStaffMembership(supabase, user.id)) === 'gerant') {
           setIsGerant(true)
         }
       }
@@ -78,8 +79,7 @@ export default function ProductCard({ id, title, price, image, category = 'Pizza
     let finalImageUrl = editForm.image;
     
     if (imageFile) {
-      const fileExt = imageFile.name.split('.').pop()
-      const fileName = `${Date.now()}.${fileExt}`
+      const fileName = await productPhotoPath(supabase, imageFile)
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('products')
         .upload(fileName, imageFile)

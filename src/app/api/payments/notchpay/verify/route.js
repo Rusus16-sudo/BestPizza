@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server'
 import { fetchPayment, isNotchPayConfigured } from '@/lib/notchpay'
 import { applyPaymentResult, findOrderByReferences } from '@/lib/payment-orders'
-import { requireRole, MANAGER_ROLES } from '@/utils/supabase/admin'
+import { createAdminClient, requireUser, MANAGER_ROLES } from '@/utils/supabase/admin'
 
 // Vérification à la demande, utilisée par la page de retour du client :
 // si le webhook est en retard, le client n'attend pas pour être fixé.
 export async function GET(request) {
-  const auth = await requireRole(null)
+  const auth = await requireUser()
   if (auth.response) return auth.response
 
   if (!isNotchPayConfigured()) {
@@ -23,9 +23,17 @@ export async function GET(request) {
     return NextResponse.json({ error: 'Commande introuvable' }, { status: 404 })
   }
 
-  // Chacun ne consulte que ses propres commandes ; le gérant, toutes
+  // Chacun ne consulte que ses propres commandes ; le gérant, celles de son établissement
   const isOwner = order.user_id === auth.user.id
-  if (!isOwner && !MANAGER_ROLES.includes(auth.profile.role)) {
+  const { data: manager } = isOwner ? { data: null } : await createAdminClient()
+    .from('memberships')
+    .select('id')
+    .eq('user_id', auth.user.id)
+    .eq('organization_id', order.organization_id)
+    .eq('is_active', true)
+    .in('role', MANAGER_ROLES)
+    .maybeSingle()
+  if (!isOwner && !manager) {
     return NextResponse.json({ error: 'Accès refusé' }, { status: 403 })
   }
 

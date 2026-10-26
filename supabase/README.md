@@ -19,6 +19,7 @@ relancé sans risque : il ne recrée pas ce qui existe déjà.
 | 6 | `migrations/20261026_tchopi_1_etablissements.sql` | Tchopi : enseignes, points de vente, membres ; Best Pizza devient le premier établissement |
 | 6b | `migrations/20261026_tchopi_1b_correctif.sql` | Corrige l'étape 6 : l'ajout d'un plat, d'une offre ou d'un avis échouait |
 | 7 | `migrations/20261026_tchopi_2_securite.sql` | Tchopi : chacun ne voit que son établissement (retour arrière : `20261026_tchopi_2_retour_arriere.sql`) |
+| 8 | `migrations/20261026_tchopi_3_fin_transition.sql` | Tchopi : fin de la transition (établissement obligatoire, codes promo par enseigne, photos par dossier). **Après** le déploiement du code des équipes |
 
 Après l'étape 7, `node scripts/test-isolation.js` vérifie qu'aucun établissement ne voit
 les données d'un autre (il crée deux faux restaurants, sans envoyer d'email, puis les efface).

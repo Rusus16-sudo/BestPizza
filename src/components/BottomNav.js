@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/utils/supabase/client'
 import { useCart } from '@/context/CartContext'
 import ConfirmDialog from './ConfirmDialog'
+import { getStaffMembership, screenRole } from '@/lib/staff'
 
 const svg = (children, filled) => (
   <svg viewBox="0 0 24 24" width="24" height="24" fill={filled ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={filled ? 0 : 2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -47,8 +48,7 @@ export default function BottomNav() {
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
         setUser(user)
-        const { data } = await supabase.from('profiles').select('role').eq('id', user.id).single()
-        if (data) setRole(data.role)
+        setRole(screenRole(await getStaffMembership(supabase, user.id)))
       }
     }
     checkRole()
@@ -94,7 +94,7 @@ export default function BottomNav() {
     )
   }
 
-  const isGerant = role === 'admin' || role === 'gerant'
+  const isGerant = role === 'gerant'
   const close = () => setShowMenu(false)
 
   return (

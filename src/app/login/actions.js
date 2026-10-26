@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { headers } from 'next/headers'
 import { createClient } from '@/utils/supabase/server'
+import { HOME_BY_ROLE, screenRole } from '@/lib/staff'
 
 // Adresse réelle du site (utile pour les liens envoyés par email)
 async function siteOrigin() {
@@ -14,9 +15,8 @@ async function siteOrigin() {
   return `${proto}://${host}`
 }
 
-// Chacun arrive sur son espace ; la page recharge cette adresse pour
-// que le navigateur reparte avec la nouvelle session.
-const HOME_BY_ROLE = { cuisinier: '/kitchen', livreur: '/delivery', admin: '/admin', gerant: '/admin' }
+// Chacun arrive sur son espace (HOME_BY_ROLE) ; la page recharge cette adresse
+// pour que le navigateur reparte avec la nouvelle session.
 
 export async function login(formData) {
   const supabase = await createClient()
@@ -33,17 +33,26 @@ export async function login(formData) {
   if (authData?.user) {
     const { data: profile } = await supabase
       .from('profiles')
-      .select('role, is_active')
+      .select('is_active')
       .eq('id', authData.user.id)
       .single()
 
-    if (profile?.is_active === false) {
+    // Toutes ses appartenances, actives ou non (la RLS ne montre que les siennes)
+    const { data: memberships } = await supabase
+      .from('memberships')
+      .select('organization_id, location_id, role, is_active')
+      .eq('user_id', authData.user.id)
+      .order('created_at')
+    const active = memberships?.find((m) => m.is_active) || null
+
+    // Compte suspendu, ou membre du personnel dont tous les accès sont suspendus
+    if (profile?.is_active === false || (memberships?.length && !active)) {
       await supabase.auth.signOut()
       return { error: "Ce compte est suspendu. Contactez le gérant." }
     }
 
     revalidatePath('/', 'layout')
-    return { redirectTo: HOME_BY_ROLE[profile?.role] || '/' }
+    return { redirectTo: HOME_BY_ROLE[screenRole(active)] || '/' }
   }
 
   revalidatePath('/', 'layout')

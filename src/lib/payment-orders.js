@@ -60,16 +60,25 @@ export async function applyPaymentResult({ order, notchStatus, amount }) {
   return { changed: true, paymentStatus, status }
 }
 
-/** Retrouve une commande à partir des références connues de Notch Pay. */
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+/**
+ * Retrouve une commande à partir des références connues de Notch Pay :
+ * la référence du paiement, ou l'identifiant de la commande, que nous lui
+ * donnons comme référence. Jamais le numéro court : deux restaurants
+ * peuvent avoir le même.
+ */
 export async function findOrderByReferences(references) {
   const db = createAdminClient()
-  const clean = [...new Set(references.filter(Boolean).map(String))]
+  // Uniquement des caractères sûrs : ces valeurs entrent dans un filtre de requête
+  const clean = [...new Set(references.filter(Boolean).map(String))].filter((r) => /^[A-Za-z0-9_.-]{1,100}$/.test(r))
   if (clean.length === 0) return null
 
+  const filters = clean.flatMap((r) => [`payment_reference.eq.${r}`, ...(UUID.test(r) ? [`id.eq.${r}`] : [])])
   const { data } = await db
     .from('orders')
     .select('id, short_id, status, total_amount, payment_status, payment_reference, user_id, organization_id, location_id')
-    .or(clean.map((r) => `payment_reference.eq.${r},short_id.eq.${r}`).join(','))
+    .or(filters.join(','))
     .limit(1)
 
   return data?.[0] || null

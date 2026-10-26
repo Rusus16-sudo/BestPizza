@@ -8,6 +8,7 @@ import { createClient } from '@/utils/supabase/client'
 import { useCart } from '@/context/CartContext'
 import BrandMark from './BrandMark'
 import ConfirmDialog from './ConfirmDialog'
+import { getStaffMembership, screenRole } from '@/lib/staff'
 
 const Icon = ({ children }) => (
   <svg className={styles.icon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -52,9 +53,9 @@ export default function Sidebar() {
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
         setUser(user)
-        const { data } = await supabase.from('profiles').select('role').eq('id', user.id).single()
-        if (data) setRole(data.role)
-        if (data && ['admin', 'gerant'].includes(data.role)) {
+        const staffRole = screenRole(await getStaffMembership(supabase, user.id))
+        setRole(staffRole)
+        if (staffRole === 'gerant') {
           const { count } = await supabase
             .from('orders')
             .select('id', { count: 'exact', head: true })
@@ -84,7 +85,7 @@ export default function Sidebar() {
     router.push('/login')
   }
 
-  const isGerant = role === 'admin' || role === 'gerant'
+  const isGerant = role === 'gerant'
   const isLivreur = role === 'livreur'
   const inKitchen = pathname.startsWith('/kitchen')
   const inDelivery = pathname.startsWith('/delivery') || isLivreur

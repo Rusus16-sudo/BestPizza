@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
-import { createAdminClient, requireRole } from '@/utils/supabase/admin'
+import { createAdminClient, requireUser } from '@/utils/supabase/admin'
+import { resolveStorefront } from '@/lib/storefront'
 import { computeUnitPrice, isPizzaCategory, SIZES, promoApplies, isOfferValid } from '@/lib/pricing'
 import { initializePayment, isNotchPayConfigured } from '@/lib/notchpay'
 import { headers } from 'next/headers'
@@ -20,7 +21,7 @@ const PAYMENTS = ['Paiement à la livraison', 'MTN / Orange Money']
 // Création d'une commande : les prix sont recalculés ici depuis la base,
 // jamais repris du navigateur.
 export async function POST(request) {
-  const auth = await requireRole(null)
+  const auth = await requireUser()
   if (auth.response) return auth.response
   const { user, profile } = auth
 
@@ -55,19 +56,40 @@ export async function POST(request) {
 
   const db = createAdminClient()
 
-  // 1. Plats demandés, tels qu'ils sont en base
+  // 0. Le restaurant et le point de vente qui reçoivent la commande
+  const storefront = await resolveStorefront(db, body.organization, body.location)
+  if (storefront.error) {
+    return NextResponse.json({ error: storefront.error }, { status: storefront.status })
+  }
+  const { organization, location } = storefront
+
+  // 1. Plats demandés, tels qu'ils sont en base : uniquement ceux de CE restaurant
   const ids = [...new Set(items.map(i => String(i.productId)))]
   const validIds = ids.filter(id => UUID.test(id))
-  const { data: products, error: productsError } = validIds.length
-    ? await db.from('products').select('id, title, price, category, customizations, is_available').in('id', validIds)
-    : { data: [], error: null }
+  const [{ data: products, error: productsError }, { data: localRules }] = validIds.length
+    ? await Promise.all([
+      db.from('products').select('id, title, price, category, customizations, is_available')
+        .eq('organization_id', organization.id).in('id', validIds),
+      db.from('product_locations').select('product_id, is_available, price_override')
+        .eq('location_id', location.id).in('product_id', validIds),
+    ])
+    : [{ data: [], error: null }, { data: [] }]
 
   if (productsError) {
     console.error('Lecture des produits:', productsError.message)
     return NextResponse.json({ error: 'La carte est momentanément indisponible. Réessayez dans un instant.' }, { status: 503 })
   }
 
-  const byId = new Map(products.map(p => [String(p.id), p]))
+  // Rupture ou prix propre à ce point de vente
+  const localRule = new Map((localRules || []).map(r => [String(r.product_id), r]))
+  const byId = new Map(products.map(p => {
+    const rule = localRule.get(String(p.id))
+    return [String(p.id), {
+      ...p,
+      is_available: p.is_available !== false && rule?.is_available !== false,
+      price: rule?.price_override ?? p.price,
+    }]
+  }))
   const unavailable = ids.filter(id => !byId.get(id) || byId.get(id).is_available === false)
   if (unavailable.length > 0) {
     return NextResponse.json({
@@ -79,7 +101,8 @@ export async function POST(request) {
   // 2. Code promo (vérifié ici aussi)
   let offer = null
   if (promoCode) {
-    const { data } = await db.from('offers').select('*').eq('code', String(promoCode).trim()).maybeSingle()
+    const { data } = await db.from('offers').select('*')
+      .eq('organization_id', organization.id).eq('code', String(promoCode).trim()).maybeSingle()
     if (data && isOfferValid(data)) offer = data
   }
 
@@ -110,6 +133,8 @@ export async function POST(request) {
   const { data: order, error: orderError } = await db
     .from('orders')
     .insert({
+      organization_id: organization.id,
+      location_id: location.id,
       short_id: shortId,
       user_id: user.id,
       status: payOnline ? 'paiement' : 'en_attente',
@@ -158,7 +183,7 @@ export async function POST(request) {
     const payment = await initializePayment({
       amount: total,
       reference: order.id,
-      description: `Commande ${order.short_id} – Best Pizza`,
+      description: `Commande ${order.short_id} – ${organization.name}`,
       callback: `${origin}/paiement/retour`,
       customer: {
         name: profile.email?.split('@')[0] || 'Client',

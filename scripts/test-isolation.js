@@ -48,7 +48,15 @@ async function cleanup() {
   const users = (list?.users || []).filter((u) => u.email?.startsWith(EMAIL_PREFIX))
   const userIds = users.map((u) => u.id)
 
+  // Une photo déposée hors dossier, si la règle l'a laissée passer
+  const { data: loose } = await admin.storage.from('products').list('', { limit: 1000, search: 'test-isolation' })
+  if (loose?.length) await admin.storage.from('products').remove(loose.filter((f) => f.id).map((f) => f.name))
+
   if (orgIds.length) {
+    for (const id of orgIds) {
+      const { data: files } = await admin.storage.from('products').list(id)
+      if (files?.length) await admin.storage.from('products').remove(files.map((f) => `${id}/${f.name}`))
+    }
     const { data: orders } = await admin.from('orders').select('id').in('organization_id', orgIds)
     const orderIds = (orders || []).map((o) => o.id)
     if (orderIds.length) await admin.from('order_items').delete().in('order_id', orderIds)
@@ -238,6 +246,29 @@ async function run() {
   {
     const { error } = await as.ownerA.from('product_locations').insert({ product_id: A.product.id, location_id: A.location.id, is_available: false })
     check('Le propriétaire A peut mettre son plat en rupture dans son point de vente', !error, error?.message)
+  }
+
+  console.log('\n— Photos des plats (un dossier par enseigne)')
+  {
+    // Une image PNG d'un pixel
+    const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/x8AAwMCAO+ip1sAAAAASUVORK5CYII=', 'base64')
+    const upload = (client, path) => client.storage.from('products').upload(path, png, { contentType: 'image/png', upsert: true })
+    const own = await upload(as.ownerA, `${A.org.id}/test-isolation.png`)
+    check('Le propriétaire A peut déposer une photo dans le dossier de A', !own.error, own.error?.message)
+    const other = await upload(as.ownerA, `${B.org.id}/test-isolation.png`)
+    check('Le propriétaire A ne peut pas déposer une photo dans le dossier de B', Boolean(other.error))
+    const loose = await upload(as.ownerA, `test-isolation-${Date.now()}.png`)
+    check('Une photo hors du dossier d’une enseigne est refusée', Boolean(loose.error))
+    const cook = await upload(as.cookA, `${A.org.id}/test-cuisine.png`)
+    check('La cuisine ne peut pas déposer de photo', Boolean(cook.error))
+  }
+
+  console.log('\n— Codes promo')
+  {
+    const code = 'TCHOPI-TEST-10'
+    const a = await as.ownerA.from('offers').insert({ organization_id: A.org.id, title: 'Test', code, discount_percentage: 10, target_type: 'all' })
+    const b = await as.ownerB.from('offers').insert({ organization_id: B.org.id, title: 'Test', code, discount_percentage: 10, target_type: 'all' })
+    check('Deux restaurants peuvent avoir le même code promo', !a.error && !b.error, a.error?.message || b.error?.message)
   }
 
   console.log('\n— Avis')

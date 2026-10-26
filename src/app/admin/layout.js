@@ -1,17 +1,17 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/utils/supabase/server'
-import { MANAGER_ROLES } from '@/utils/supabase/admin'
+import { getStaffMembership, MANAGER_ROLES } from '@/lib/staff'
 
-// Toutes les pages /admin/* sont réservées au gérant
+// Toutes les pages /admin/* sont réservées aux gérants d'un établissement
 export default async function AdminLayout({ children }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+  const membership = await getStaffMembership(supabase, user.id)
 
-  if (!profile || !MANAGER_ROLES.includes(profile.role)) {
+  if (!membership || !MANAGER_ROLES.includes(membership.role)) {
     return (
       <div style={{ padding: '48px 20px', textAlign: 'center', maxWidth: '420px', margin: '0 auto' }}>
         <h2>Accès réservé au gérant</h2>
