@@ -3,13 +3,20 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/utils/supabase/client'
 import toast from 'react-hot-toast'
+import { ORDER_STATUS_MESSAGES } from '@/lib/order-status-messages'
+import { registerServiceWorker, syncPush, forgetDevice } from '@/lib/push-client'
 
 export default function GlobalNotifications() {
   const [userId, setUserId] = useState(null)
 
   useEffect(() => {
+    // Le service worker reçoit les notifications push quand l'app est fermée
+    registerServiceWorker()?.catch((err) => console.error('Service worker:', err.message))
+  }, [])
+
+  useEffect(() => {
     const supabase = createClient()
-    
+
     // 1. Récupérer l'utilisateur courant
     const fetchUser = async () => {
       const { data: { user } } = await supabase.auth.getUser()
@@ -27,6 +34,8 @@ export default function GlobalNotifications() {
       } else {
         setUserId(null)
       }
+      // Après déconnexion, cet appareil ne reçoit plus les notifications du compte
+      if (event === 'SIGNED_OUT') forgetDevice().catch(() => {})
     })
 
     return () => {
@@ -37,6 +46,9 @@ export default function GlobalNotifications() {
   useEffect(() => {
     // 2. Si pas d'utilisateur, on ne s'abonne à rien
     if (!userId) return
+
+    // L'appareil reste lié au compte connecté, si le client a accepté les notifications
+    syncPush()
 
     const supabase = createClient()
 
@@ -68,36 +80,11 @@ export default function GlobalNotifications() {
   }, [userId])
 
   const triggerNotification = (status, orderId) => {
-    let message = ''
-    let icon = ''
-    let duration = 4000
+    const entry = ORDER_STATUS_MESSAGES[status]
+    if (!entry) return // Ne rien afficher pour les autres statuts
 
-    switch (status) {
-      case 'en_preparation':
-        message = "La cuisine prépare votre commande !"
-        icon = '🧑‍🍳'
-        break
-      case 'prete':
-        message = "Votre commande est prête, un livreur va la récupérer."
-        icon = '🍕'
-        break
-      case 'en_route':
-        message = "Votre livreur est en route !"
-        icon = '🛵'
-        duration = 5000
-        break
-      case 'livre':
-        message = "Votre commande a été livrée. Bon appétit !"
-        icon = '🎉'
-        duration = 6000
-        break
-      case 'annule':
-        message = "Votre commande a été annulée."
-        icon = '❌'
-        break
-      default:
-        return // Ne rien afficher pour les autres statuts
-    }
+    const { icon, text: message } = entry
+    const duration = status === 'livre' ? 6000 : status === 'en_route' ? 5000 : 4000
 
     toast(
       (t) => (

@@ -7,6 +7,7 @@ import styles from './Orders.module.css'
 import { createClient } from '@/utils/supabase/client'
 import ClientTrackingMap from '@/components/ClientTrackingMap'
 import SkeletonList from '@/components/SkeletonList'
+import PushOptIn from '@/components/PushOptIn'
 import { useCart } from '@/context/CartContext'
 
 export default function OrdersPage() {
@@ -278,6 +279,8 @@ export default function OrdersPage() {
       </div>
 
       <div className={styles.ordersList}>
+        {activeTab === 'en_cours' && activeOrders.length > 0 && <PushOptIn />}
+
         {ordersToDisplay.length === 0 ? (
           <div className={styles.emptyState}>
             <svg className={styles.emptyIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
