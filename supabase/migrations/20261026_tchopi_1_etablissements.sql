@@ -180,11 +180,15 @@ begin
   if new.organization_id is null then
     select id into new.organization_id from public.organizations where slug = 'best-pizza';
   end if;
-  if tg_table_name = 'orders' and new.location_id is null then
-    select id into new.location_id from public.locations
-    where organization_id = new.organization_id
-    order by created_at
-    limit 1;
+  -- Deux conditions séparées : PL/pgSQL évaluerait new.location_id même pour
+  -- une table qui n'a pas ce champ (voir le correctif 1b)
+  if tg_table_name = 'orders' then
+    if new.location_id is null then
+      select id into new.location_id from public.locations
+      where organization_id = new.organization_id
+      order by created_at
+      limit 1;
+    end if;
   end if;
   return new;
 end $$;
