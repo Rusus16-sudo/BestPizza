@@ -265,3 +265,39 @@
     width: 100%;
   }
 }
+
+/* Starter : les jours d'ouverture, en pastilles */
+.groupTitle {
+  margin: 18px 0 8px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+}
+
+.dayToggles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.dayToggle {
+  min-width: 56px;
+  height: 42px;
+  padding: 0 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  background: var(--color-surface);
+  color: var(--color-text-tertiary);
+  font-family: var(--font-heading);
+  font-weight: 700;
+  text-decoration: line-through;
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast);
+}
+
+.dayToggleOn {
+  border-color: var(--color-primary);
+  background: var(--color-primary-dim);
+  color: var(--color-primary-hover);
+  text-decoration: none;
+}

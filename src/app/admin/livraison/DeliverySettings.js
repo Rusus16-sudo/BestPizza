@@ -47,6 +47,8 @@ export default function DeliverySettings() {
   const [loading, setLoading] = useState(true)
 
   const full = hasFullDelivery(plan)
+  // Starter : la plage commune est celle du premier jour ouvert
+  const sharedRange = hours ? hours[WEEK_ORDER.find((d) => hours[d].open) ?? 1].ranges[0] : null
   const location = locations.find((l) => l.id === locationId)
 
   useEffect(() => {
@@ -115,8 +117,11 @@ export default function DeliverySettings() {
 
   const save = async (e) => {
     e.preventDefault()
-    // Starter : une seule plage, la même tous les jours
-    const toSave = full ? hours : Object.fromEntries(Object.keys(hours).map((d) => [d, { open: true, ranges: [hours[1].ranges[0]] }]))
+    // Starter : une seule plage, la même pour tous les jours ouverts
+    const toSave = full ? hours : Object.fromEntries(Object.keys(hours).map((d) => [d, { open: hours[d].open, ranges: [sharedRange] }]))
+    if (!Object.values(toSave).some((day) => day.open)) {
+      return toast.error('Gardez au moins un jour d’ouverture, ou utilisez « Fermer maintenant ».')
+    }
 
     for (const d of Object.keys(toSave)) {
       const day = toSave[d]
@@ -242,12 +247,26 @@ export default function DeliverySettings() {
             </div>
           ) : (
             <>
-              <p className={styles.help}>Les mêmes horaires tous les jours.</p>
+              <p className={styles.help}>Les mêmes horaires pour tous vos jours d’ouverture.</p>
               <span className={styles.range}>
-                <TimePicker value={hours[1].ranges[0][0]} onChange={(v) => setEveryDay(0, 0, v)} label="Ouverture" />
+                <TimePicker value={sharedRange[0]} onChange={(v) => setEveryDay(0, 0, v)} label="Ouverture" />
                 <span>–</span>
-                <TimePicker value={hours[1].ranges[0][1]} onChange={(v) => setEveryDay(0, 1, v)} label="Fermeture" />
+                <TimePicker value={sharedRange[1]} onChange={(v) => setEveryDay(0, 1, v)} label="Fermeture" />
               </span>
+              <p className={styles.groupTitle}>Jours d’ouverture</p>
+              <div className={styles.dayToggles}>
+                {WEEK_ORDER.map((d) => (
+                  <button
+                    key={d}
+                    type="button"
+                    className={`${styles.dayToggle} ${hours[d].open ? styles.dayToggleOn : ''}`}
+                    onClick={() => setDay(d, { open: !hours[d].open })}
+                    aria-pressed={hours[d].open}
+                  >
+                    {DAYS[d].slice(0, 3)}
+                  </button>
+                ))}
+              </div>
               <p className={styles.upsell}>Horaires différents selon les jours et coupure le midi : offre Pro.</p>
             </>
           )}
