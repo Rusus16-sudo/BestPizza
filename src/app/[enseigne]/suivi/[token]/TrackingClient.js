@@ -139,8 +139,9 @@ export default function TrackingClient({ initialOrder, token, isLoggedIn }) {
       {!isLoggedIn && !order.hasAccount && (
         <section className={styles.signup}>
           <div>
-            <strong>Inscris-toi sur Tchopi pour suivre ta commande</strong>
-            <span>Retrouve toutes tes commandes, chez tous tes restaurants, sur n’importe quel appareil.</span>
+            {/* Sans compte, le client suit déjà tout ici : le compte sert à garder ses commandes */}
+            <strong>Garde tes commandes avec un compte Tchopi</strong>
+            <span>Tu suis déjà ta commande ici. Avec un compte, tu la retrouves sur tous tes appareils, même si tu changes de téléphone, et tes prochaines commandes vont plus vite.</span>
           </div>
           <Link href={signupHref} className={styles.primaryBtn}>Créer mon compte</Link>
         </section>
