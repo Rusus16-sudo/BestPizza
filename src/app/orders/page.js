@@ -29,13 +29,14 @@ export default function OrdersPage() {
   const [payingOrder, setPayingOrder] = useState(null)
 
   // Reprendre un paiement interrompu
-  const resumePayment = async (shortId) => {
-    setPayingOrder(shortId)
+  // Par le lien de suivi : deux restaurants peuvent avoir le même numéro de commande
+  const resumePayment = async (order) => {
+    setPayingOrder(order.uuid)
     try {
       const res = await fetch('/api/payments/notchpay/retry', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ shortId }),
+        body: JSON.stringify({ trackingToken: order.trackingToken }),
       })
       const data = await res.json()
       if (data.paymentUrl) {
@@ -127,6 +128,7 @@ export default function OrdersPage() {
           restaurant: storeOf.get(o.organization_id)?.name || 'Restaurant',
           storefront: storeOf.get(o.organization_id)?.slug || null,
           trackingUrl: storeOf.get(o.organization_id) ? `/${storeOf.get(o.organization_id).slug}/suivi/${o.tracking_token}` : null,
+          trackingToken: o.tracking_token,
           items: o.order_items.map(item => ({
             productId: item.product_id,
             name: item.product_name,
@@ -364,7 +366,7 @@ export default function OrdersPage() {
           ordersToDisplay.map(order => {
             const statusInfo = getStatusDisplay(order.status)
             return (
-              <div key={order.id} className={styles.orderCard}>
+              <div key={order.uuid} className={styles.orderCard}>
                 <div className={styles.orderHeader}>
                   <div>
                     <div className={styles.orderId}>{order.id}</div>
@@ -417,13 +419,13 @@ export default function OrdersPage() {
                     ) : (
                     <button
                       className={styles.reorderBtn}
-                      onClick={() => resumePayment(order.id)}
-                      disabled={payingOrder === order.id}
+                      onClick={() => resumePayment(order)}
+                      disabled={payingOrder === order.uuid}
                     >
                       <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round">
                         <rect x="2" y="6" width="20" height="12" rx="2" /><path d="M2 11h20" />
                       </svg>
-                      {payingOrder === order.id ? 'Un instant…' : 'Finaliser le paiement'}
+                      {payingOrder === order.uuid ? 'Un instant…' : 'Finaliser le paiement'}
                     </button>
                     )
                   )}

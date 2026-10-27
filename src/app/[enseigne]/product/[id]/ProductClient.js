@@ -172,6 +172,7 @@ export default function ProductClient({ product }) {
               {reviews.map(review => (
                 <li key={review.id} className={styles.review}>
                   <div className={styles.reviewHead}>
+                    {review.author_name && <strong className={styles.reviewAuthor}>{review.author_name}</strong>}
                     <span className={styles.reviewStars} aria-label={`${review.rating} sur 5`}>
                       {'★'.repeat(review.rating)}<span className={styles.reviewStarsOff}>{'★'.repeat(5 - review.rating)}</span>
                     </span>

@@ -10,6 +10,7 @@ import PageHeader from '@/components/PageHeader'
 import { useStorefront } from '@/context/StorefrontContext'
 import { rememberOrder } from '@/lib/guest-orders'
 import { deliveryQuote } from '@/lib/delivery'
+import { loadDeliveryDetails, saveDeliveryDetails, joinAddress, splitAddress } from '@/lib/delivery-memory'
 import { describeOpening } from '@/lib/opening-hours'
 import { useOpening } from '@/components/OpeningBadge'
 import Select from '@/components/Select'
@@ -24,7 +25,14 @@ export default function CheckoutPage() {
   const router = useRouter()
   const { cartItems, cartTotal, discountAmount, finalTotal, appliedPromo, clearCart, removeFromCart, isMounted } = useCart()
   const { slug, name: restaurantName, plan, location, href } = useStorefront()
-  const [zoneId, setZoneId] = useState('')
+  const [instructions, setInstructions] = useState('')
+  // L'adresse en deux temps : le quartier (ou le quartier desservi choisi), puis un repère
+  const [quarter, setQuarter] = useState('')
+  const [landmark, setLandmark] = useState('')
+  const [pickedZoneId, setZoneId] = useState('')
+  // Tant que le client n'a rien choisi, son quartier habituel est présélectionné s'il est desservi
+  const rememberedZone = location?.zones?.find(z => quarter && z.name.toLowerCase() === quarter.trim().toLowerCase())
+  const zoneId = pickedZoneId || (rememberedZone ? String(rememberedZone.id) : '')
   // Frais de livraison recalculés à chaque changement (le serveur refait le calcul et fait foi)
   const quote = deliveryQuote({ location, zones: location?.zones || [], plan, zoneId, subtotal: finalTotal })
   const deliveryFee = quote.usesZones && !quote.zone ? 0 : quote.fee
@@ -32,8 +40,6 @@ export default function CheckoutPage() {
   // En dehors des horaires, on ne peut pas commander
   const opening = useOpening()
   const closed = Boolean(opening && !opening.open)
-  const [instructions, setInstructions] = useState('')
-  const [deliveryAddress, setDeliveryAddress] = useState('')
   const [phone, setPhone] = useState('')
   const [name, setName] = useState('')
   // Sans compte, le nom est obligatoire : c'est lui que le livreur demande à la porte
@@ -44,25 +50,38 @@ export default function CheckoutPage() {
   const [orderSuccess, setOrderSuccess] = useState(null)
   const payOnline = paymentMethod === 'MTN / Orange Money'
 
-  // Pré-remplit le nom et le téléphone si le client est connecté
+  // Pré-remplit ce que l'on connaît déjà : la dernière livraison depuis cet appareil,
+  // sinon le profil du compte connecté
   useEffect(() => {
-    const fetchUser = async () => {
+    const prefill = async () => {
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
       setIsGuest(!user)
-      if (user?.user_metadata?.phone) setPhone(user.user_metadata.phone)
-      const known = user?.user_metadata?.display_name || user?.user_metadata?.first_name || user?.user_metadata?.full_name
+      const saved = loadDeliveryDetails()
+      let profile = null
+      if (user) {
+        const { data } = await supabase.from('profiles').select('first_name, phone, address').eq('id', user.id).maybeSingle()
+        profile = data
+      }
+      const fromProfile = splitAddress(profile?.address)
+      const known = saved?.name || profile?.first_name || user?.user_metadata?.display_name || user?.user_metadata?.first_name || user?.user_metadata?.full_name
       if (known) setName(known)
+      const knownPhone = saved?.phone || profile?.phone || user?.user_metadata?.phone
+      if (knownPhone) setPhone(knownPhone)
+      setQuarter(saved?.quarter || fromProfile.quarter)
+      setLandmark(saved?.landmark || fromProfile.landmark)
     }
-    fetchUser()
+    prefill()
   }, [])
+
 
   const validate = () => {
     const next = {}
     if (isGuest && name.trim().length < 2) next.name = 'Indiquez votre nom, pour que le livreur vous trouve.'
     if (phone.replace(/\D/g, '').length < 8) next.phone = 'Entrez un numéro joignable par le livreur.'
     if (quote.usesZones && !quote.zone) next.zone = 'Choisissez votre quartier.'
-    if (deliveryAddress.trim().length < 3) next.address = quote.usesZones ? 'Indiquez un repère (ex : face pharmacie).' : 'Indiquez votre quartier et un repère.'
+    if (!quote.usesZones && quarter.trim().length < 2) next.quarter = 'Indiquez votre quartier.'
+    if (quote.usesZones && landmark.trim().length < 3) next.address = 'Indiquez un repère (ex : face pharmacie).'
     setErrors(next)
     return Object.keys(next).length === 0
   }
@@ -92,7 +111,8 @@ export default function CheckoutPage() {
           })),
           name: name.trim(),
           phone: phone.trim(),
-          address: deliveryAddress.trim(),
+          // Avec des quartiers desservis, le quartier vient de la liste : le serveur l'ajoute
+          address: quote.usesZones ? landmark.trim() : joinAddress(quarter, landmark),
           zoneId: quote.zone?.id || null,
           paymentMethod,
           instructions,
@@ -116,6 +136,8 @@ export default function CheckoutPage() {
       }
 
       clearCart()
+      // Pour la prochaine commande, depuis cet appareil
+      saveDeliveryDetails({ name: name.trim(), phone: phone.trim(), quarter: quote.zone?.name || quarter.trim(), landmark: landmark.trim() })
       // Le lien de suivi reste sur l'appareil : sans compte, c'est le seul moyen de retrouver la commande
       rememberOrder({ token: data.trackingToken, slug, shortId: data.shortId, claimed: !isGuest })
 
@@ -208,20 +230,39 @@ export default function CheckoutPage() {
                 {errors.zone && <p id="zone-error" className={styles.error}>{errors.zone}</p>}
               </div>
             )}
+            {!quote.usesZones && (
+              <div className={styles.field}>
+                <label htmlFor="quarter">Quartier</label>
+                <input
+                  id="quarter"
+                  type="text"
+                  autoComplete="address-level3"
+                  className={styles.input}
+                  placeholder="Ex : Bonamoussadi"
+                  value={quarter}
+                  onChange={(e) => { setQuarter(e.target.value); setErrors(er => ({ ...er, quarter: undefined })) }}
+                  aria-invalid={!!errors.quarter}
+                  aria-describedby={errors.quarter ? 'quarter-error' : undefined}
+                />
+                {errors.quarter && <p id="quarter-error" className={styles.error}>{errors.quarter}</p>}
+              </div>
+            )}
             <div className={styles.field}>
-              <label htmlFor="address">{quote.usesZones ? 'Adresse précise' : 'Adresse'}</label>
+              <label htmlFor="address">Repère{quote.usesZones ? '' : ' (facultatif)'}</label>
               <input
                 id="address"
                 type="text"
                 autoComplete="street-address"
                 className={styles.input}
-                placeholder={quote.usesZones ? 'Rue, repère (ex : face pharmacie)' : 'Quartier, repère (ex : Bonamoussadi, face pharmacie)'}
-                value={deliveryAddress}
-                onChange={(e) => { setDeliveryAddress(e.target.value); setErrors(er => ({ ...er, address: undefined })) }}
+                placeholder="Ex : face pharmacie, portail bleu"
+                value={landmark}
+                onChange={(e) => { setLandmark(e.target.value); setErrors(er => ({ ...er, address: undefined })) }}
                 aria-invalid={!!errors.address}
-                aria-describedby={errors.address ? 'address-error' : undefined}
+                aria-describedby={errors.address ? 'address-error' : 'address-hint'}
               />
-              {errors.address && <p id="address-error" className={styles.error}>{errors.address}</p>}
+              {errors.address
+                ? <p id="address-error" className={styles.error}>{errors.address}</p>
+                : <p id="address-hint" className={styles.hint}>Ce qui aide le livreur à trouver la porte.</p>}
             </div>
           </section>
 

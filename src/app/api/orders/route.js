@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createAdminClient, requireUser } from '@/utils/supabase/admin'
 import { resolveStorefront } from '@/lib/storefront'
 import { deliveryQuote } from '@/lib/delivery'
+import { joinAddress } from '@/lib/delivery-memory'
 import { promoApplies, isOfferValid } from '@/lib/pricing'
 import { normalizeSelection, legacySelection, selectionLines, unitPriceFor, singleLabels } from '@/lib/options'
 import { initializePayment, isNotchPayConfigured } from '@/lib/notchpay'
@@ -49,7 +50,7 @@ export async function POST(request) {
   if (String(phone || '').replace(/\D/g, '').length < 8) {
     return NextResponse.json({ error: 'Numéro de téléphone invalide.' }, { status: 400 })
   }
-  if (String(address || '').trim().length < 3) {
+  if (String(address || '').trim().length < 2) {
     return NextResponse.json({ error: 'Adresse de livraison manquante.' }, { status: 400 })
   }
   if (!PAYMENTS.includes(paymentMethod)) {
@@ -143,7 +144,6 @@ export async function POST(request) {
   const total = itemsTotal + delivery.fee
 
   // 5. Enregistrement
-  const shortId = `CMD-${Math.floor(10000 + Math.random() * 90000)}`
   const cleanAddress = String(address).replace(/\|/g, ' ').trim().slice(0, 200)
   const cleanPhone = String(phone).replace(/\|/g, ' ').trim().slice(0, 30)
 
@@ -152,7 +152,8 @@ export async function POST(request) {
     .insert({
       organization_id: organization.id,
       location_id: location.id,
-      short_id: shortId,
+      // Le numéro (#1, #2…) est attribué par la base, dans l'ordre des commandes du restaurant
+      short_id: null,
       user_id: user?.id ?? null,
       status: payOnline ? 'paiement' : 'en_attente',
       payment_method: payOnline ? 'mobile_money' : 'especes',
@@ -191,6 +192,13 @@ export async function POST(request) {
     console.error('Articles de la commande:', itemsError.message)
     await db.from('orders').delete().eq('id', order.id)
     return NextResponse.json({ error: "La commande n'a pas pu être enregistrée. Réessayez dans un instant." }, { status: 500 })
+  }
+
+  // Le compte du client retient son téléphone et son adresse, pour la commande suivante
+  if (user) {
+    const savedAddress = delivery.zone ? joinAddress(delivery.zone.name, cleanAddress) : cleanAddress
+    const { error: profileError } = await db.from('profiles').update({ phone: cleanPhone, address: savedAddress }).eq('id', user.id)
+    if (profileError) console.error('Coordonnées du client:', profileError.message)
   }
 
   if (!payOnline) {

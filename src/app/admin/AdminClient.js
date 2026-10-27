@@ -146,8 +146,7 @@ export default function AdminClient({ section, initialStaff = [] }) {
       .from('reviews')
       .select(`
         *,
-        products(title),
-        profiles(email, first_name, last_name)
+        products(title)
       `)
       .eq('organization_id', organizationId)
       .order('created_at', { ascending: false })
@@ -824,10 +823,10 @@ export default function AdminClient({ section, initialStaff = [] }) {
                   <div className={styles.reviewHeader}>
                     <div className={styles.reviewUser}>
                       <div className={styles.userAvatar}>
-                        {([review.profiles?.first_name, review.profiles?.last_name].filter(Boolean).join(' ') || review.profiles?.email || 'A')[0].toUpperCase()}
+                        {(review.author_name || 'C')[0].toUpperCase()}
                       </div>
                       <div>
-                        <strong>{[review.profiles?.first_name, review.profiles?.last_name].filter(Boolean).join(' ') || review.profiles?.email?.split('@')[0] || 'Client'}</strong>
+                        <strong>{review.author_name || 'Client'}</strong>
                         <div className={styles.reviewDate}>{new Date(review.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</div>
                       </div>
                     </div>

@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation'
 import { loadStorefront } from '@/lib/storefront-data'
 import { brandColorVars } from '@/lib/brand'
 import { StorefrontProvider } from '@/context/StorefrontContext'
+import styles from './Storefront.module.css'
 
 // La vitrine d'un restaurant : tchopi.cm/<enseigne>/…
 // Les pages de l'application (/admin, /login…) ont des adresses fixes, prioritaires
@@ -29,6 +30,12 @@ export default async function StorefrontLayout({ children, params }) {
       {/* La couleur est posée ici dès le rendu serveur, sans attendre le navigateur */}
       <div style={brandColorVars(storefront.primary_color)}>
         {children}
+        {/* En offre Starter, la vitrine dit qu'elle est faite avec Tchopi (retiré en Pro et Business) */}
+        {storefront.plan === 'starter' && (
+          <footer className={styles.poweredBy}>
+            Propulsé par <strong>Tchopi</strong>
+          </footer>
+        )}
       </div>
     </StorefrontProvider>
   )

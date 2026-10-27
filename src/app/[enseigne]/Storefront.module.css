@@ -1,0 +1,12 @@
+/* « Propulsé par Tchopi », discret, en bas des vitrines Starter */
+.poweredBy {
+  padding: 28px 16px 20px;
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--color-text-tertiary);
+}
+
+.poweredBy strong {
+  font-family: var(--font-heading);
+  color: var(--color-text-secondary);
+}
