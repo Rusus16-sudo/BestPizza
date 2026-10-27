@@ -8,6 +8,7 @@ import { DAYS, WEEK_ORDER, openingState, describeOpening } from '@/lib/opening-h
 import { hasFullDelivery } from '@/lib/delivery'
 import { formatPrice } from '@/lib/format'
 import AdminPageHeader from '../AdminPageHeader'
+import TimePicker from '@/components/TimePicker'
 import styles from './DeliverySettings.module.css'
 
 const TIME = /^([01]\d|2[0-3]):[0-5]\d$/
@@ -219,9 +220,9 @@ export default function DeliverySettings() {
                     <div className={styles.ranges}>
                       {hours[d].ranges.map((r, i) => (
                         <span key={i} className={styles.range}>
-                          <input type="time" className={styles.time} value={r[0]} onChange={(e) => setRange(d, i, 0, e.target.value)} aria-label={`${DAYS[d]}, ouverture`} />
+                          <TimePicker value={r[0]} onChange={(v) => setRange(d, i, 0, v)} label={`${DAYS[d]}, ouverture`} />
                           <span>–</span>
-                          <input type="time" className={styles.time} value={r[1]} onChange={(e) => setRange(d, i, 1, e.target.value)} aria-label={`${DAYS[d]}, fermeture`} />
+                          <TimePicker value={r[1]} onChange={(v) => setRange(d, i, 1, v)} label={`${DAYS[d]}, fermeture`} />
                           {i === 1 && (
                             <button type="button" className={styles.linkBtn} onClick={() => setDay(d, { ranges: [hours[d].ranges[0]] })}>Retirer</button>
                           )}
@@ -243,9 +244,9 @@ export default function DeliverySettings() {
             <>
               <p className={styles.help}>Les mêmes horaires tous les jours.</p>
               <span className={styles.range}>
-                <input type="time" className={styles.time} value={hours[1].ranges[0][0]} onChange={(e) => setEveryDay(0, 0, e.target.value)} aria-label="Ouverture" />
+                <TimePicker value={hours[1].ranges[0][0]} onChange={(v) => setEveryDay(0, 0, v)} label="Ouverture" />
                 <span>–</span>
-                <input type="time" className={styles.time} value={hours[1].ranges[0][1]} onChange={(e) => setEveryDay(0, 1, e.target.value)} aria-label="Fermeture" />
+                <TimePicker value={hours[1].ranges[0][1]} onChange={(v) => setEveryDay(0, 1, v)} label="Fermeture" />
               </span>
               <p className={styles.upsell}>Horaires différents selon les jours et coupure le midi : offre Pro.</p>
             </>

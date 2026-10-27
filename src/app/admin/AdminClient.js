@@ -99,7 +99,7 @@ export default function AdminClient({ section, initialStaff = [] }) {
     }
   }, [activeTab, organizationId])
 
-  const fetchProducts = async () => {
+  async function fetchProducts() {
     setMenuLoading(true)
     const { data, error } = await supabase
       .from('products')
@@ -113,7 +113,7 @@ export default function AdminClient({ section, initialStaff = [] }) {
     setMenuLoading(false)
   }
 
-  const fetchOffers = async () => {
+  async function fetchOffers() {
     setOffersLoading(true)
     const { data, error } = await supabase
       .from('offers')
@@ -127,7 +127,7 @@ export default function AdminClient({ section, initialStaff = [] }) {
     setOffersLoading(false)
   }
 
-  const fetchReviews = async () => {
+  async function fetchReviews() {
     setReviewsLoading(true)
     const { data, error } = await supabase
       .from('reviews')

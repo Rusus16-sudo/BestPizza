@@ -1,0 +1,244 @@
+.wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+/* La pastille */
+.trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 42px;
+  padding: 0 16px 0 13px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  font-family: var(--font-heading);
+  font-size: 1rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  box-shadow: var(--shadow-soft);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
+}
+
+.trigger svg {
+  color: var(--color-primary);
+}
+
+.trigger:hover {
+  border-color: var(--color-primary);
+}
+
+.trigger:active {
+  transform: scale(0.97);
+}
+
+.triggerOpen {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 4px var(--color-primary-dim);
+}
+
+.value {
+  letter-spacing: 0.02em;
+}
+
+/* Le panneau : sous la pastille sur ordinateur */
+.backdrop {
+  display: none;
+}
+
+.panel {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 0;
+  z-index: 60;
+  width: 340px;
+  padding: 18px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-medium);
+  animation: pop var(--transition-normal);
+  transform-origin: top left;
+}
+
+.grabber {
+  display: none;
+}
+
+.head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.caption {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--color-text-tertiary);
+}
+
+.preview {
+  font-family: var(--font-heading);
+  font-size: 2.4rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-primary);
+}
+
+.colon {
+  color: var(--color-primary);
+  margin: 0 1px;
+}
+
+.groupLabel {
+  margin: 4px 0 8px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+}
+
+.hours {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.minutes {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 18px;
+}
+
+.chip {
+  height: 40px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  background: var(--color-background);
+  color: var(--color-text-primary);
+  font-family: var(--font-heading);
+  font-size: 0.95rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast), transform var(--transition-fast);
+}
+
+.chip:hover {
+  background: var(--color-primary-dim);
+  color: var(--color-primary-hover);
+}
+
+.chip:active {
+  transform: scale(0.94);
+}
+
+.minuteChip {
+  flex: 1;
+}
+
+.chipActive,
+.chipActive:hover {
+  background: var(--color-primary);
+  color: white;
+  box-shadow: var(--shadow-glow);
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+}
+
+.cancel,
+.confirm {
+  flex: 1;
+  height: 46px;
+  border-radius: var(--radius-full);
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+.cancel {
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+}
+
+.confirm {
+  flex: 1.6;
+  border: none;
+  background: var(--color-primary);
+  color: white;
+}
+
+.confirm:hover {
+  background: var(--color-primary-hover);
+}
+
+@keyframes pop {
+  from { opacity: 0; transform: translateY(-6px) scale(0.97); }
+  to { opacity: 1; transform: none; }
+}
+
+/* Sur téléphone : le panneau monte du bas de l'écran */
+@media (max-width: 600px) {
+  .backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 59;
+    background: rgba(31, 29, 27, 0.45);
+    backdrop-filter: blur(2px);
+    animation: fade var(--transition-fast);
+  }
+
+  .panel {
+    position: fixed;
+    top: auto;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: auto;
+    padding: 10px 20px calc(20px + env(safe-area-inset-bottom));
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    border-bottom: none;
+    animation: rise var(--transition-normal);
+  }
+
+  .grabber {
+    display: block;
+    width: 40px;
+    height: 4px;
+    margin: 0 auto 14px;
+    border-radius: var(--radius-full);
+    background: var(--color-border);
+  }
+
+  .chip {
+    height: 46px;
+  }
+
+  .preview {
+    font-size: 2.8rem;
+  }
+}
+
+@keyframes rise {
+  from { transform: translateY(100%); }
+  to { transform: none; }
+}
+
+@keyframes fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}

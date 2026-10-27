@@ -174,8 +174,9 @@ export default function KitchenPage() {
 
   // Nombre de commandes à préparer dans l'onglet du navigateur
   const waiting = orders.filter(o => o.status === 'en_attente').length
-  waitingRef.current = waiting
   useEffect(() => {
+    // Lu par le rappel sonore, qui tourne en dehors du rendu
+    waitingRef.current = waiting
     document.title = waiting > 0 ? `(${waiting}) Cuisine · Tchopi` : 'Cuisine · Tchopi'
   }, [waiting])
 
