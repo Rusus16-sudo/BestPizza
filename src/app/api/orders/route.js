@@ -19,11 +19,14 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 const PAYMENTS = ['Paiement à la livraison', 'MTN / Orange Money']
 
 // Création d'une commande : les prix sont recalculés ici depuis la base,
-// jamais repris du navigateur.
+// jamais repris du navigateur. Un compte n'est pas nécessaire : le client sans compte
+// donne son nom, et suit sa commande grâce au lien secret renvoyé.
 export async function POST(request) {
   const auth = await requireUser()
-  if (auth.response) return auth.response
-  const { user, profile } = auth
+  // Pas connecté : commande sans compte. Un compte suspendu, lui, est refusé.
+  if (auth.response && auth.response.status !== 401) return auth.response
+  const user = auth.response ? null : auth.user
+  const profile = auth.response ? null : auth.profile
 
   let body
   try {
@@ -32,10 +35,14 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Requête invalide' }, { status: 400 })
   }
 
-  const { items, phone, address, paymentMethod, instructions, promoCode } = body || {}
+  const { items, phone, address, paymentMethod, instructions, promoCode, name } = body || {}
+  const customerName = String(name || '').replace(/\|/g, ' ').trim().slice(0, 60)
 
   if (!Array.isArray(items) || items.length === 0 || items.length > 50) {
     return NextResponse.json({ error: 'Votre panier est vide.' }, { status: 400 })
+  }
+  if (!user && customerName.length < 2) {
+    return NextResponse.json({ error: 'Indiquez votre nom, pour que le livreur vous trouve.' }, { status: 400 })
   }
   if (String(phone || '').replace(/\D/g, '').length < 8) {
     return NextResponse.json({ error: 'Numéro de téléphone invalide.' }, { status: 400 })
@@ -136,7 +143,7 @@ export async function POST(request) {
       organization_id: organization.id,
       location_id: location.id,
       short_id: shortId,
-      user_id: user.id,
+      user_id: user?.id ?? null,
       status: payOnline ? 'paiement' : 'en_attente',
       payment_method: payOnline ? 'mobile_money' : 'especes',
       payment_status: payOnline ? 'en_attente' : 'a_la_livraison',
@@ -145,9 +152,9 @@ export async function POST(request) {
       promo_code: offer?.code || null,
       special_instructions: String(instructions || '').slice(0, 500) || null,
       delivery_address: `Quartier: ${cleanAddress} | Tél: ${cleanPhone} | Paiement: ${paymentMethod}`,
-      customer_name: profile.email?.split('@')[0] || 'Client',
+      customer_name: customerName || profile?.email?.split('@')[0] || 'Client',
     })
-    .select('id, short_id')
+    .select('id, short_id, tracking_token')
     .single()
 
   if (orderError) {
@@ -173,7 +180,7 @@ export async function POST(request) {
   }
 
   if (!payOnline) {
-    return NextResponse.json({ shortId: order.short_id, total, discount })
+    return NextResponse.json({ shortId: order.short_id, total, discount, trackingToken: order.tracking_token })
   }
 
   // Paiement en ligne : on ouvre le paiement chez Notch Pay et on renvoie
@@ -184,10 +191,11 @@ export async function POST(request) {
       amount: total,
       reference: order.id,
       description: `Commande ${order.short_id} – ${organization.name}`,
-      callback: `${origin}/paiement/retour`,
+      // Le lien de suivi revient avec le client : sans compte, c'est sa preuve
+      callback: `${origin}/paiement/retour?suivi=${order.tracking_token}`,
       customer: {
-        name: profile.email?.split('@')[0] || 'Client',
-        email: profile.email || user.email,
+        name: customerName || profile?.email?.split('@')[0] || 'Client',
+        email: profile?.email || user?.email || undefined,
         phone: cleanPhone,
       },
     })
@@ -202,6 +210,7 @@ export async function POST(request) {
       shortId: order.short_id,
       total,
       discount,
+      trackingToken: order.tracking_token,
       paymentUrl: payment.authorizationUrl,
       paymentReference: payment.reference,
     })

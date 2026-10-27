@@ -2,14 +2,12 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/utils/supabase/server'
 import { createAdminClient } from '@/utils/supabase/admin'
 
-// Enregistre l'appareil du client connecté pour les notifications push.
-// Si l'appareil était lié à un autre compte, il passe au compte actuel.
+// Enregistre l'appareil pour les notifications push :
+// - d'un compte connecté (si l'appareil était lié à un autre compte, il passe à celui-ci) ;
+// - et/ou d'une commande, depuis son lien de suivi (`trackingToken`), même sans compte.
 export async function POST(request) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
-    return NextResponse.json({ error: 'Connexion requise' }, { status: 401 })
-  }
 
   let body
   try {
@@ -26,9 +24,30 @@ export async function POST(request) {
   }
 
   const db = createAdminClient()
+
+  // Connaître le lien secret de la commande suffit pour suivre ses étapes
+  let orderId = null
+  if (body.trackingToken) {
+    const { data: order } = await db
+      .from('orders')
+      .select('id')
+      .eq('tracking_token', String(body.trackingToken))
+      .maybeSingle()
+    if (!order) return NextResponse.json({ error: 'Commande introuvable' }, { status: 404 })
+    orderId = order.id
+  }
+
+  if (!user && !orderId) {
+    return NextResponse.json({ error: 'Connexion requise' }, { status: 401 })
+  }
+
   const { error } = await db
     .from('push_subscriptions')
-    .upsert({ user_id: user.id, endpoint, p256dh, auth }, { onConflict: 'endpoint' })
+    .upsert({
+      endpoint, p256dh, auth,
+      ...(user ? { user_id: user.id } : {}),
+      ...(orderId ? { order_id: orderId } : {}),
+    }, { onConflict: 'endpoint' })
 
   if (error) {
     console.error('Enregistrement abonnement push:', error.message)

@@ -9,11 +9,13 @@ import { getPushState, enablePush } from '@/lib/push-client'
 // sa commande, le personnel pour ce qui le concerne. `dark` : pour l'écran cuisine.
 // `required` (personnel) : pas de croix, et l'encart reste tant que ce n'est pas
 // activé, y compris pour expliquer quoi faire si c'est bloqué ou impossible.
+// `trackingToken` (page de suivi) : l'appareil suit cette commande, même sans compte.
 export default function PushOptIn({
   title = 'Suivez votre commande, même app fermée',
   description = 'On vous prévient quand elle passe en cuisine, part en livraison et arrive.',
   dark = false,
   required = false,
+  trackingToken = null,
   className = '',
 }) {
   const [state, setState] = useState(null)
@@ -21,8 +23,8 @@ export default function PushOptIn({
   const [dismissed, setDismissed] = useState(false)
 
   useEffect(() => {
-    getPushState().then(setState).catch(() => setState('unsupported'))
-  }, [])
+    getPushState(trackingToken).then(setState).catch(() => setState('unsupported'))
+  }, [trackingToken])
 
   const visibleStates = required
     ? ['disabled', 'ios-install', 'denied', 'unsupported']
@@ -32,7 +34,7 @@ export default function PushOptIn({
   const handleEnable = async () => {
     setBusy(true)
     try {
-      const next = await enablePush()
+      const next = await enablePush(trackingToken)
       setState(next)
       if (next === 'enabled') toast.success('Notifications activées')
       else if (next === 'denied') toast.error('Notifications bloquées dans le navigateur')

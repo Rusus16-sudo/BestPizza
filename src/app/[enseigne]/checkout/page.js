@@ -8,6 +8,7 @@ import { createClient } from '@/utils/supabase/client'
 import toast from 'react-hot-toast'
 import PageHeader from '@/components/PageHeader'
 import { useStorefront } from '@/context/StorefrontContext'
+import { rememberOrder } from '@/lib/guest-orders'
 import styles from './Checkout.module.css'
 
 const PAYMENT_METHODS = [
@@ -22,24 +23,31 @@ export default function CheckoutPage() {
   const [instructions, setInstructions] = useState('')
   const [deliveryAddress, setDeliveryAddress] = useState('')
   const [phone, setPhone] = useState('')
+  const [name, setName] = useState('')
+  // Sans compte, le nom est obligatoire : c'est lui que le livreur demande à la porte
+  const [isGuest, setIsGuest] = useState(false)
   const [paymentMethod, setPaymentMethod] = useState(PAYMENT_METHODS[0].value)
   const [errors, setErrors] = useState({})
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [orderSuccess, setOrderSuccess] = useState(null)
   const payOnline = paymentMethod === 'MTN / Orange Money'
 
-  // Pré-remplit le téléphone si l'utilisateur est connecté
+  // Pré-remplit le nom et le téléphone si le client est connecté
   useEffect(() => {
     const fetchUser = async () => {
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
+      setIsGuest(!user)
       if (user?.user_metadata?.phone) setPhone(user.user_metadata.phone)
+      const known = user?.user_metadata?.display_name || user?.user_metadata?.first_name || user?.user_metadata?.full_name
+      if (known) setName(known)
     }
     fetchUser()
   }, [])
 
   const validate = () => {
     const next = {}
+    if (isGuest && name.trim().length < 2) next.name = 'Indiquez votre nom, pour que le livreur vous trouve.'
     if (phone.replace(/\D/g, '').length < 8) next.phone = 'Entrez un numéro joignable par le livreur.'
     if (deliveryAddress.trim().length < 3) next.address = 'Indiquez votre quartier et un repère.'
     setErrors(next)
@@ -67,6 +75,7 @@ export default function CheckoutPage() {
             size: item.size,
             customizations: item.customizations || {},
           })),
+          name: name.trim(),
           phone: phone.trim(),
           address: deliveryAddress.trim(),
           paymentMethod,
@@ -75,12 +84,6 @@ export default function CheckoutPage() {
         }),
       })
       const data = await res.json().catch(() => ({}))
-
-      if (res.status === 401) {
-        toast.error('Connectez-vous pour passer commande.')
-        router.push('/login')
-        return
-      }
 
       if (res.status === 409 && Array.isArray(data.unavailable)) {
         // Retire du panier les plats qui ne sont plus à la carte
@@ -97,6 +100,8 @@ export default function CheckoutPage() {
       }
 
       clearCart()
+      // Le lien de suivi reste sur l'appareil : sans compte, c'est le seul moyen de retrouver la commande
+      rememberOrder({ token: data.trackingToken, slug, shortId: data.shortId, claimed: !isGuest })
 
       if (data.paymentUrl) {
         // Paiement en ligne : on confie la suite à Notch Pay
@@ -104,8 +109,8 @@ export default function CheckoutPage() {
         return
       }
 
-      setOrderSuccess(data.shortId)
-      setTimeout(() => router.push('/orders'), 2600)
+      setOrderSuccess({ shortId: data.shortId, trackingUrl: href(`/suivi/${data.trackingToken}`) })
+      setTimeout(() => router.push(href(`/suivi/${data.trackingToken}`)), 2600)
     } catch (err) {
       toast.error("Pas de connexion. Vérifiez votre réseau et réessayez.")
     } finally {
@@ -138,6 +143,21 @@ export default function CheckoutPage() {
         <div className={styles.main}>
           <section className={styles.section} aria-labelledby="delivery-title">
             <h2 id="delivery-title">Livraison</h2>
+            <div className={styles.field}>
+              <label htmlFor="name">Nom</label>
+              <input
+                id="name"
+                type="text"
+                autoComplete="name"
+                className={styles.input}
+                placeholder="Votre nom"
+                value={name}
+                onChange={(e) => { setName(e.target.value); setErrors(er => ({ ...er, name: undefined })) }}
+                aria-invalid={!!errors.name}
+                aria-describedby={errors.name ? 'name-error' : undefined}
+              />
+              {errors.name && <p id="name-error" className={styles.error}>{errors.name}</p>}
+            </div>
             <div className={styles.field}>
               <label htmlFor="phone">Téléphone</label>
               <input
@@ -259,8 +279,8 @@ export default function CheckoutPage() {
               </svg>
             </div>
             <h2 id="success-title">Commande envoyée</h2>
-            <p>La cuisine a reçu votre commande <strong>{orderSuccess}</strong>. Vous pouvez la suivre dans Commandes.</p>
-            <Link href="/orders" className="btn btn-primary">Suivre ma commande</Link>
+            <p>La cuisine a reçu votre commande <strong>{orderSuccess.shortId}</strong>. Suivez-la en direct, étape par étape.</p>
+            <Link href={orderSuccess.trackingUrl} className="btn btn-primary">Suivre ma commande</Link>
           </div>
         </div>
       )}

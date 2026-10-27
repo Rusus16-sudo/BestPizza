@@ -77,7 +77,7 @@ export async function findOrderByReferences(references) {
   const filters = clean.flatMap((r) => [`payment_reference.eq.${r}`, ...(UUID.test(r) ? [`id.eq.${r}`] : [])])
   const { data } = await db
     .from('orders')
-    .select('id, short_id, status, total_amount, payment_status, payment_reference, user_id, organization_id, location_id')
+    .select('id, short_id, status, total_amount, payment_status, payment_reference, user_id, organization_id, location_id, tracking_token')
     .or(filters.join(','))
     .limit(1)
 

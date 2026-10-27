@@ -18,6 +18,12 @@ async function siteOrigin() {
 // Chacun arrive sur son espace (HOME_BY_ROLE) ; la page recharge cette adresse
 // pour que le navigateur reparte avec la nouvelle session.
 
+// Page où revenir après la connexion (champ caché « next ») : seulement une page du site
+function safeNext(formData) {
+  const next = String(formData?.get?.('next') || '')
+  return next.startsWith('/') && !next.startsWith('//') ? next : null
+}
+
 export async function login(formData) {
   const supabase = await createClient()
 
@@ -52,11 +58,12 @@ export async function login(formData) {
     }
 
     revalidatePath('/', 'layout')
-    return { redirectTo: HOME_BY_ROLE[screenRole(active)] || '/' }
+    // Le personnel va à son écran de travail ; un client revient où il était (ex. son suivi)
+    return { redirectTo: (active && HOME_BY_ROLE[screenRole(active)]) || safeNext(formData) || '/' }
   }
 
   revalidatePath('/', 'layout')
-  return { redirectTo: '/' }
+  return { redirectTo: safeNext(formData) || '/' }
 }
 
 export async function signup(formData) {
@@ -68,7 +75,7 @@ export async function signup(formData) {
     password: formData.get('password'),
     options: {
       data: { first_name: firstName },
-      emailRedirectTo: `${await siteOrigin()}/auth/callback`,
+      emailRedirectTo: `${await siteOrigin()}/auth/callback${safeNext(formData) ? `?next=${encodeURIComponent(safeNext(formData))}` : ''}`,
     },
   })
 
@@ -88,7 +95,7 @@ export async function signup(formData) {
   }
 
   revalidatePath('/', 'layout')
-  return { redirectTo: '/' }
+  return { redirectTo: safeNext(formData) || '/' }
 }
 
 export async function requestPasswordReset(formData) {
@@ -106,12 +113,12 @@ export async function requestPasswordReset(formData) {
   return { info: `Si un compte existe pour ${email}, un lien de réinitialisation vient d'y être envoyé.` }
 }
 
-export async function signInWithGoogle() {
+export async function signInWithGoogle(formData) {
   const supabase = await createClient()
 
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
-    options: { redirectTo: `${await siteOrigin()}/auth/callback` },
+    options: { redirectTo: `${await siteOrigin()}/auth/callback${safeNext(formData) ? `?next=${encodeURIComponent(safeNext(formData))}` : ''}` },
   })
 
   if (error) {

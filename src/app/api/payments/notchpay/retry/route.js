@@ -11,30 +11,32 @@ async function siteOrigin() {
   return `${proto}://${host}`
 }
 
-// Relance le paiement d'une commande restée impayée
+// Relance le paiement d'une commande restée impayée : depuis mes commandes (compte),
+// ou depuis le lien de suivi (`trackingToken`, client sans compte)
 export async function POST(request) {
   const auth = await requireUser()
-  if (auth.response) return auth.response
+  if (auth.response && auth.response.status !== 401) return auth.response
+  const user = auth.response ? null : auth.user
 
   if (!isNotchPayConfigured()) {
     return NextResponse.json({ error: 'Paiement en ligne non configuré' }, { status: 503 })
   }
 
-  const { shortId } = await request.json().catch(() => ({}))
-  if (!shortId) return NextResponse.json({ error: 'Commande manquante' }, { status: 400 })
+  const { shortId, trackingToken } = await request.json().catch(() => ({}))
+  if (!shortId && !trackingToken) return NextResponse.json({ error: 'Commande manquante' }, { status: 400 })
+  if (!trackingToken && !user) return NextResponse.json({ error: 'Connexion requise' }, { status: 401 })
 
   const db = createAdminClient()
-  const { data: order } = await db
+  let query = db
     .from('orders')
-    .select('id, short_id, status, total_amount, payment_status, user_id, organization_id')
-    .eq('short_id', shortId)
+    .select('id, short_id, status, total_amount, payment_status, user_id, organization_id, tracking_token')
+  query = trackingToken
+    ? query.eq('tracking_token', String(trackingToken))
     // Deux restaurants peuvent avoir le même numéro : seulement les commandes de ce client
-    .eq('user_id', auth.user.id)
-    .order('created_at', { ascending: false })
-    .limit(1)
-    .maybeSingle()
+    : query.eq('short_id', shortId).eq('user_id', user.id).order('created_at', { ascending: false }).limit(1)
+  const { data: order } = await query.maybeSingle()
 
-  if (!order || order.user_id !== auth.user.id) {
+  if (!order) {
     return NextResponse.json({ error: 'Commande introuvable' }, { status: 404 })
   }
   if (order.payment_status === 'paye') {
@@ -52,8 +54,11 @@ export async function POST(request) {
       amount: order.total_amount,
       reference: `${order.id}-${Date.now().toString(36)}`,
       description: `Commande ${order.short_id} – ${store?.name || 'Tchopi'}`,
-      callback: `${origin}/paiement/retour`,
-      customer: { name: auth.profile.email?.split('@')[0] || 'Client', email: auth.profile.email },
+      callback: `${origin}/paiement/retour?suivi=${order.tracking_token}`,
+      customer: {
+        name: auth.profile?.email?.split('@')[0] || 'Client',
+        email: auth.profile?.email || undefined,
+      },
     })
 
     if (!payment.authorizationUrl) throw new Error('Pas de page de paiement renvoyée')

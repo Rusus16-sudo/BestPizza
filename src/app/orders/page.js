@@ -9,6 +9,8 @@ import ClientTrackingMap from '@/components/ClientTrackingMap'
 import SkeletonList from '@/components/SkeletonList'
 import PushOptIn from '@/components/PushOptIn'
 import { useCart } from '@/context/CartContext'
+import Link from 'next/link'
+import { rememberedOrders } from '@/lib/guest-orders'
 
 export default function OrdersPage() {
   const router = useRouter()
@@ -52,8 +54,30 @@ export default function OrdersPage() {
       const { data: { user: currentUser } } = await supabase.auth.getUser()
       if (currentUser) setUser(currentUser)
 
+      // Sans compte : les commandes passées depuis cet appareil, retrouvées par leur lien de suivi
       if (!currentUser) {
-        setOrders([])
+        const tracked = await Promise.all(rememberedOrders().map(async (r) => {
+          try {
+            const res = await fetch(`/api/suivi/${r.token}`, { cache: 'no-store' })
+            return res.ok ? { ...(await res.json()), token: r.token } : null
+          } catch {
+            return null
+          }
+        }))
+        setOrders(tracked.filter(Boolean).map(o => ({
+          id: o.shortId,
+          uuid: o.id,
+          date: o.createdAt,
+          status: o.status,
+          paymentStatus: o.paymentStatus,
+          paymentMethod: o.paymentMethod,
+          total: o.total,
+          restaurant: o.restaurant?.name || 'Restaurant',
+          storefront: o.restaurant?.slug || null,
+          trackingUrl: o.restaurant ? `/${o.restaurant.slug}/suivi/${o.token}` : null,
+          guest: true,
+          items: o.items.map(item => ({ name: item.name, quantity: item.quantity, price: item.price, size: item.size })),
+        })))
         setIsLoaded(true)
         return
       }
@@ -69,6 +93,7 @@ export default function OrdersPage() {
           payment_method,
           created_at,
           organization_id,
+          tracking_token,
           order_items (
             product_id,
             product_name,
@@ -99,6 +124,7 @@ export default function OrdersPage() {
           total: o.total_amount,
           restaurant: storeOf.get(o.organization_id)?.name || 'Restaurant',
           storefront: storeOf.get(o.organization_id)?.slug || null,
+          trackingUrl: storeOf.get(o.organization_id) ? `/${storeOf.get(o.organization_id).slug}/suivi/${o.tracking_token}` : null,
           items: o.order_items.map(item => ({
             productId: item.product_id,
             name: item.product_name,
@@ -289,6 +315,13 @@ export default function OrdersPage() {
         <h1>Commandes</h1>
       </header>
 
+      {isLoaded && !user && (
+        <div className={styles.guestNote}>
+          <p>Voici les commandes passées depuis cet appareil.</p>
+          <Link href="/login?mode=signup&next=/orders">Inscris-toi sur Tchopi pour les retrouver partout</Link>
+        </div>
+      )}
+
       <div className={styles.tabsContainer}>
         <button 
           className={`${styles.tab} ${activeTab === 'en_cours' ? styles.active : ''}`}
@@ -305,7 +338,8 @@ export default function OrdersPage() {
       </div>
 
       <div className={styles.ordersList}>
-        {activeTab === 'en_cours' && activeOrders.length > 0 && <PushOptIn />}
+        {/* Sans compte, les notifications s'activent depuis le suivi de chaque commande */}
+        {activeTab === 'en_cours' && activeOrders.length > 0 && user && <PushOptIn />}
 
         {ordersToDisplay.length === 0 ? (
           <div className={styles.emptyState}>
@@ -363,7 +397,14 @@ export default function OrdersPage() {
                     <span className={styles.totalPrice}>{order.total} FCFA</span>
                   </div>
                   
+                  {order.trackingUrl && !['livre', 'annule'].includes(order.status) && order.status !== 'paiement' && (
+                    <Link href={order.trackingUrl} className={styles.reorderBtn}>Suivre</Link>
+                  )}
+
                   {order.status === 'paiement' && (
+                    order.guest ? (
+                      <Link href={order.trackingUrl} className={styles.reorderBtn}>Finaliser le paiement</Link>
+                    ) : (
                     <button
                       className={styles.reorderBtn}
                       onClick={() => resumePayment(order.id)}
@@ -374,9 +415,10 @@ export default function OrdersPage() {
                       </svg>
                       {payingOrder === order.id ? 'Un instant…' : 'Finaliser le paiement'}
                     </button>
+                    )
                   )}
 
-                  {activeTab === 'historique' && order.status === 'livre' && (
+                  {activeTab === 'historique' && order.status === 'livre' && !order.guest && (
                     <button className={styles.reorderBtn} onClick={() => handleReorder(order)}>
                       <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="2" fill="none">
                         <polyline points="1 4 1 10 7 10"></polyline>

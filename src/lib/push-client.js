@@ -47,7 +47,11 @@ export function registerServiceWorker() {
 }
 
 /** 'unsupported' | 'ios-install' | 'denied' | 'enabled' | 'disabled' */
-export async function getPushState() {
+/**
+ * `trackingToken` : depuis le lien de suivi d'une commande, l'appareil déjà abonné
+ * est aussi lié à cette commande (utile sans compte).
+ */
+export async function getPushState(trackingToken = null) {
   if (needsInstallForPush()) return 'ios-install'
   if (!isPushSupported()) return 'unsupported'
   if (Notification.permission === 'denied') return 'denied'
@@ -55,7 +59,7 @@ export async function getPushState() {
 
   // Permission déjà donnée : juste après une reconnexion, l'appareil est en train
   // d'être réabonné (syncPush). On attend la fin avant de répondre « pas activé ».
-  if (!(await currentSubscription())) await syncPush()
+  if (trackingToken || !(await currentSubscription())) await syncPush(trackingToken)
   return (await currentSubscription()) ? 'enabled' : 'disabled'
 }
 
@@ -64,7 +68,7 @@ async function currentSubscription() {
   return registration?.pushManager.getSubscription()
 }
 
-async function subscribeDevice() {
+async function subscribeDevice(trackingToken = null) {
   const registration = (await navigator.serviceWorker.getRegistration('/')) || (await registerServiceWorker())
   await navigator.serviceWorker.ready
   const options = {
@@ -86,20 +90,20 @@ async function subscribeDevice() {
   const res = await fetch('/api/push/subscribe', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(subscription.toJSON()),
+    body: JSON.stringify({ ...subscription.toJSON(), trackingToken }),
   })
   if (!res.ok) throw new Error("L'appareil n'a pas pu être enregistré")
 }
 
 /** À appeler depuis un clic : le navigateur demande alors la permission. */
-export async function enablePush() {
+export async function enablePush(trackingToken = null) {
   if (!isPushSupported()) return getPushState()
 
   const permission = await Notification.requestPermission()
   if (permission !== 'granted') return getPushState()
 
   writeOptOut(false)
-  await subscribeDevice()
+  await subscribeDevice(trackingToken)
   return 'enabled'
 }
 
@@ -114,16 +118,18 @@ export async function disablePush() {
  * l'appareil est abonné et lié à ce compte (après une reconnexion ou un changement de compte).
  * Les appels simultanés (app + encart) partagent le même abonnement en cours.
  */
-let pendingSync = null
+// Un abonnement en cours par commande suivie (ou pour le compte seul : clé vide)
+const pendingSync = new Map()
 
-export function syncPush() {
+export function syncPush(trackingToken = null) {
   if (!isPushSupported() || Notification.permission !== 'granted' || readOptOut()) return Promise.resolve()
-  if (!pendingSync) {
-    pendingSync = subscribeDevice()
+  const key = trackingToken || ''
+  if (!pendingSync.has(key)) {
+    pendingSync.set(key, subscribeDevice(trackingToken)
       .catch((err) => console.error('Abonnement push:', err.message))
-      .finally(() => { pendingSync = null })
+      .finally(() => pendingSync.delete(key)))
   }
-  return pendingSync
+  return pendingSync.get(key)
 }
 
 /** Envoie une notification de test sur les appareils du compte connecté. */

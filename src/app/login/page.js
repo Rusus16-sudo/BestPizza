@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { login, signup, requestPasswordReset, signInWithGoogle } from './actions'
 import BrandMark from '@/components/BrandMark'
@@ -17,6 +17,16 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [message, setMessage] = useState(null) // { type: 'error' | 'info', text }
   const [isLoading, setIsLoading] = useState(false)
+  // Page où revenir après la connexion (ex. le suivi d'une commande passée sans compte)
+  const [next, setNext] = useState('')
+
+  // ?mode=signup ouvre directement la création de compte ; ?next=… indique où revenir
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('mode') === 'signup') setMode('signup')
+    const target = params.get('next') || ''
+    if (target.startsWith('/') && !target.startsWith('//')) setNext(target)
+  }, [])
 
   const switchMode = (next) => {
     setMode(next)
@@ -54,7 +64,7 @@ export default function LoginPage() {
         <img src="/promo-pizza.png" alt="" className={styles.photo} />
         <div className={styles.visualContent}>
           <BrandMark size="lg" />
-          <p className={styles.tagline}>Sortie du four,<br />livrée chez vous.</p>
+          <p className={styles.tagline}>Vos restaurants,<br />livrés chez vous.</p>
         </div>
       </aside>
 
@@ -72,6 +82,7 @@ export default function LoginPage() {
           )}
 
           <form onSubmit={handleSubmit} className={styles.form}>
+            <input type="hidden" name="next" value={next} />
             {mode === 'signup' && (
               <div className={styles.field}>
                 <label htmlFor="first_name">Prénom</label>
@@ -130,6 +141,7 @@ export default function LoginPage() {
               <div className={styles.divider}><span>ou</span></div>
 
               <form action={signInWithGoogle}>
+                <input type="hidden" name="next" value={next} />
                 <button type="submit" className={styles.google}>
                   <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
                     <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />

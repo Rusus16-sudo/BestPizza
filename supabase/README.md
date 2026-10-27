@@ -22,6 +22,7 @@ relancé sans risque : il ne recrée pas ce qui existe déjà.
 | 8 | `migrations/20261026_tchopi_3_fin_transition.sql` | Tchopi : fin de la transition (établissement obligatoire, codes promo par enseigne, photos par dossier). **Après** le déploiement du code des équipes |
 | 9 | `migrations/20261027_plats_nouveaux.sql` | Le gérant marque un plat « Nouveau » (30 jours) |
 | 10 | `migrations/20261027_tchopi_4_vitrines.sql` | Tchopi : partie publique des restaurants pour les vitrines (nom, logo, couleur), adresses réservées |
+| 11 | `migrations/20261027_tchopi_5_commande_sans_compte.sql` | Tchopi : commande sans compte (lien de suivi secret, notifications par commande) |
 
 Après l'étape 7, `node scripts/test-isolation.js` vérifie qu'aucun établissement ne voit
 les données d'un autre (il crée deux faux restaurants, sans envoyer d'email, puis les efface).

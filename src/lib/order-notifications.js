@@ -3,22 +3,27 @@ import { parseAddress, isCash } from '@/lib/delivery-address'
 import { formatPrice } from '@/lib/format'
 
 // Qui prévenir, et de quoi, quand une commande est créée ou change de statut.
-// Chaque cible est soit un compte ({ userId }), soit des rôles ({ roles, exceptUserId }).
+// Chaque cible est soit le client de la commande ({ customer }), soit un compte ({ userId }),
+// soit des rôles ({ roles, exceptUserId }).
 // Le `tag` regroupe les notifications d'une même commande : la suivante remplace la précédente.
 const KITCHEN = ['cuisinier']
 const DRIVERS = ['livreur']
 
-export function orderNotifications(type, order, previousStatus) {
+/**
+ * `customerUrl` : la page de suivi de la commande, où mène la notification du client.
+ */
+export function orderNotifications(type, order, previousStatus, { customerUrl = '/orders' } = {}) {
   const targets = []
   const title = `Commande ${order.short_id || ''}`.trim()
   const { status } = order
 
-  // Le client suit sa commande (à la création, il est déjà devant l'écran)
+  // Le client suit sa commande (à la création, il est déjà devant l'écran) : les appareils
+  // de son compte, ou, sans compte, ceux abonnés depuis son lien de suivi
   const message = ORDER_STATUS_MESSAGES[status]
-  if (type === 'UPDATE' && message && order.user_id) {
+  if (type === 'UPDATE' && message) {
     targets.push({
-      userId: order.user_id,
-      notification: { title, body: `${message.icon} ${message.text}`, url: '/orders', tag: `order-${order.id}` },
+      customer: true,
+      notification: { title, body: `${message.icon} ${message.text}`, url: customerUrl, tag: `order-${order.id}` },
     })
   }
 

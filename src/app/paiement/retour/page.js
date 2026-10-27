@@ -11,13 +11,15 @@ const MAX_TRIES = 8 // ~24 s : le temps qu'une validation USSD aboutisse
 function Contenu() {
   const params = useSearchParams()
   const reference = params.get('reference') || params.get('trxref') || params.get('payment_reference')
+  // Lien de suivi de la commande, ajouté à l'adresse de retour : la preuve d'un client sans compte
+  const suivi = params.get('suivi')
 
   const [state, setState] = useState({ phase: reference ? 'checking' : 'unknown' })
   const [retrying, setRetrying] = useState(false)
 
   const check = useCallback(async (tries = 0) => {
     try {
-      const res = await fetch(`/api/payments/notchpay/verify?reference=${encodeURIComponent(reference)}`)
+      const res = await fetch(`/api/payments/notchpay/verify?reference=${encodeURIComponent(reference)}${suivi ? `&suivi=${encodeURIComponent(suivi)}` : ''}`)
       const data = await res.json()
 
       if (!res.ok) {
@@ -41,7 +43,7 @@ function Contenu() {
     } catch {
       setState({ phase: 'unknown' })
     }
-  }, [reference])
+  }, [reference, suivi])
 
   useEffect(() => {
     if (reference) check(0)
@@ -52,7 +54,7 @@ function Contenu() {
     const res = await fetch('/api/payments/notchpay/retry', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ shortId: state.shortId }),
+      body: JSON.stringify(suivi ? { trackingToken: suivi } : { shortId: state.shortId }),
     })
     const data = await res.json()
     setRetrying(false)
@@ -82,7 +84,7 @@ function Contenu() {
               Votre commande <strong>{state.shortId}</strong> est partie en cuisine.
               {state.amount ? ` Montant réglé : ${formatPrice(state.amount)}.` : ''}
             </p>
-            <Link href="/orders" className={styles.primary}>Suivre ma commande</Link>
+            <Link href={state.trackingUrl || '/orders'} className={styles.primary}>Suivre ma commande</Link>
           </>
         )}
 
@@ -94,12 +96,12 @@ function Contenu() {
             <h1>Paiement non abouti</h1>
             <p>
               Rien n’a été débité. La commande <strong>{state.shortId}</strong> vous attend :
-              vous pouvez réessayer, ou appeler la pizzeria pour payer à la livraison.
+              vous pouvez réessayer, ou appeler le restaurant pour payer à la livraison.
             </p>
             <button className={styles.primary} onClick={retry} disabled={retrying}>
               {retrying ? 'Un instant…' : 'Réessayer le paiement'}
             </button>
-            <Link href="/orders" className={styles.secondary}>Voir mes commandes</Link>
+            <Link href={state.trackingUrl || '/orders'} className={styles.secondary}>Voir ma commande</Link>
           </>
         )}
 
@@ -111,9 +113,9 @@ function Contenu() {
             <h1>Paiement en attente</h1>
             <p>
               Votre opérateur met plus de temps que d’habitude. Dès que le paiement est validé,
-              la commande <strong>{state.shortId}</strong> part en cuisine : vous le verrez dans vos commandes.
+              la commande <strong>{state.shortId}</strong> part en cuisine : vous le verrez sur sa page de suivi.
             </p>
-            <Link href="/orders" className={styles.primary}>Voir mes commandes</Link>
+            <Link href={state.trackingUrl || '/orders'} className={styles.primary}>Suivre ma commande</Link>
           </>
         )}
 

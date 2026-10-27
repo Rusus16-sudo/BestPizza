@@ -5,6 +5,7 @@ import { createClient } from '@/utils/supabase/client'
 import toast from 'react-hot-toast'
 import { ORDER_STATUS_MESSAGES } from '@/lib/order-status-messages'
 import { registerServiceWorker, syncPush, forgetDevice } from '@/lib/push-client'
+import { claimRememberedOrders } from '@/lib/guest-orders'
 
 export default function GlobalNotifications() {
   const [userId, setUserId] = useState(null)
@@ -58,6 +59,11 @@ export default function GlobalNotifications() {
 
     // L'appareil reste lié au compte connecté, si le client a accepté les notifications
     syncPush()
+
+    // Les commandes passées sans compte sur cet appareil rejoignent le compte
+    claimRememberedOrders().then((claimed) => {
+      if (claimed > 0) toast.success(claimed > 1 ? `${claimed} commandes ajoutées à votre compte` : 'Votre commande est ajoutée à votre compte')
+    })
 
     const supabase = createClient()
 
