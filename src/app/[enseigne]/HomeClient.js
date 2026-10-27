@@ -6,6 +6,7 @@ import { useCart } from '@/context/CartContext'
 import styles from './page.module.css'
 import ProductCard from '@/components/ProductCard'
 import BrandMark from '@/components/BrandMark'
+import { useStorefront } from '@/context/StorefrontContext'
 
 const CATEGORIES = [
   { id: 'all', label: 'Tout', aliases: [] },
@@ -27,6 +28,7 @@ function describeOffer(offer) {
 
 export default function HomeClient({ user, products, latestOffer }) {
   const { totalItems } = useCart()
+  const { name, logo_url: logoUrl, href } = useStorefront()
   const [activeCategory, setActiveCategory] = useState('all')
   const [searchQuery, setSearchQuery] = useState('')
   const menuRef = useRef(null)
@@ -40,8 +42,10 @@ export default function HomeClient({ user, products, latestOffer }) {
   const currentCat = categories.find(c => c.id === activeCategory) || categories[0]
 
   const rated = products.filter(p => p.rating).sort((a, b) => Number(b.rating) - Number(a.rating))
-  const featured = (rated.length >= 3 ? rated : products.filter(p => inCategory(p, CATEGORIES[1]))).slice(0, 8)
-  const featuredTitle = rated.length >= 3 ? 'Les plus appréciées' : 'Nos pizzas'
+  const featured = (rated.length >= 3 ? rated : products).slice(0, 8)
+  const featuredTitle = rated.length >= 3 ? 'Les plus appréciés' : 'À la carte'
+  // L'illustration d'accueil : la photo d'un plat du restaurant
+  const heroImage = products.find(p => p.image)?.image || '/margherita.png'
 
   const visibleProducts = isSearching
     ? products.filter(p => p.title.toLowerCase().includes(query) || String(p.category).toLowerCase().includes(query))
@@ -69,8 +73,8 @@ export default function HomeClient({ user, products, latestOffer }) {
     <div className={styles.appContainer}>
       <header className={styles.header}>
         <div className={styles.headerRow}>
-          <Link href="/" className={styles.mobileBrand} aria-label="Best Pizza, accueil">
-            <BrandMark />
+          <Link href={href('/')} className={styles.mobileBrand} aria-label={`${name}, accueil`}>
+            <BrandMark name={name} logoUrl={logoUrl} />
           </Link>
 
           <div className={styles.searchWrapper} role="search">
@@ -96,7 +100,7 @@ export default function HomeClient({ user, products, latestOffer }) {
           </div>
 
           <div className={styles.headerActions}>
-            <Link href="/cart" className={styles.iconBtn} aria-label={`Panier, ${totalItems} article${totalItems > 1 ? 's' : ''}`}>
+            <Link href={href('/cart')} className={styles.iconBtn} aria-label={`Panier, ${totalItems} article${totalItems > 1 ? 's' : ''}`}>
               <svg viewBox="0 0 24 24" width="21" height="21" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
                 <line x1="3" y1="6" x2="21" y2="6"></line>
@@ -135,27 +139,33 @@ export default function HomeClient({ user, products, latestOffer }) {
         <>
           <section className={styles.hero}>
             <div className={styles.heroText}>
-              <h1>Sortie du four,<br />livrée chez vous.</h1>
-              <p>Choisissez votre pizza, on s’occupe du reste.</p>
+              <h1>{name},<br />livré chez vous.</h1>
+              <p>Choisissez vos plats, on s’occupe du reste.</p>
               <div className={styles.heroActions}>
                 <button className="btn btn-primary" onClick={scrollToMenu}>Voir la carte</button>
                 {latestOffer && (
-                  <Link href="/offers" className={styles.offerPill}>
+                  <Link href={href('/offers')} className={styles.offerPill}>
                     <strong>-{latestOffer.discount_percentage}%</strong> {describeOffer(latestOffer)}
                   </Link>
                 )}
               </div>
             </div>
             <div className={styles.heroPizza} aria-hidden="true">
-              <img src="/margherita.png" alt="" />
+              <img src={heroImage} alt="" />
             </div>
           </section>
+
+          {products.length === 0 && (
+            <div className={styles.emptyState}>
+              <p>La carte de {name} arrive bientôt. Revenez dans quelques jours !</p>
+            </div>
+          )}
 
           {featured.length > 0 && (
             <section className={styles.section}>
               <div className={styles.sectionHeader}>
                 <h2>{featuredTitle}</h2>
-                <Link href="/menu" className={styles.seeAll}>Tout voir</Link>
+                <Link href={href('/menu')} className={styles.seeAll}>Tout voir</Link>
               </div>
               <div className={`${styles.rail} no-scrollbar`}>
                 {featured.map(item => renderCard(item, 'rail'))}

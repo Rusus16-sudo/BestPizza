@@ -8,7 +8,7 @@ import GlobalNotifications from '@/components/GlobalNotifications'
 import InstallPrompt from '@/components/InstallPrompt'
 
 // Mêmes écrans que BottomNav : pas de barre du bas, donc pas de marge réservée
-const NO_BOTTOM_NAV = [/^\/kitchen/, /^\/product\//, /^\/checkout/]
+const NO_BOTTOM_NAV = [/^\/kitchen/, /^\/[a-z0-9-]+\/(product\/|checkout)/]
 
 export default function LayoutWrapper({ children }) {
   const pathname = usePathname() || ''

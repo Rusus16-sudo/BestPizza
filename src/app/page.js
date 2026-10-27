@@ -1,37 +1,21 @@
+import { cookies } from 'next/headers'
+import { redirect } from 'next/navigation'
 import { createClient } from '@/utils/supabase/server'
-import HomeClient from './HomeClient'
 import { getStaffMembership, screenRole, HOME_BY_ROLE } from '@/lib/staff'
-import { products as mockProducts } from '@/data/products'
+import { DEFAULT_STOREFRONT, LAST_STOREFRONT_COOKIE } from '@/lib/storefront-paths'
 
+// tchopi.cm : chacun est envoyé où il doit être. En attendant la page d'accueil
+// de Tchopi (phase 6), un client revient sur le dernier restaurant visité.
 export default async function Home() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  
+
   if (user) {
     // La cuisine et les livreurs vont directement à leur écran de travail
     const role = screenRole(await getStaffMembership(supabase, user.id))
-    if (role === 'livreur' || role === 'cuisinier') {
-      const { redirect } = await import('next/navigation')
-      redirect(HOME_BY_ROLE[role])
-    }
+    if (role === 'livreur' || role === 'cuisinier') redirect(HOME_BY_ROLE[role])
   }
 
-  const { data: productsData, error } = await supabase.from('products').select('*, reviews(rating)')
-  
-  let products = productsData
-  if (products) {
-    products = products.map(p => {
-      const avg = p.reviews && p.reviews.length > 0 ? (p.reviews.reduce((a, b) => a + b.rating, 0) / p.reviews.length).toFixed(1) : null
-      return { ...p, rating: avg }
-    })
-  }
-
-  const finalProducts = (products && products.length > 0) ? products : mockProducts
-
-  const { data: offers } = await supabase.from('offers').select('*').order('created_at', { ascending: false })
-  const now = new Date()
-  const activeOffers = offers ? offers.filter(o => !o.valid_until || new Date(o.valid_until) >= now) : []
-  const latestOffer = activeOffers.length > 0 ? activeOffers[0] : null
-
-  return <HomeClient user={user} products={finalProducts} latestOffer={latestOffer} />
+  const last = (await cookies()).get(LAST_STOREFRONT_COOKIE)?.value
+  redirect(`/${/^[a-z0-9]+(-[a-z0-9]+)*$/.test(last || '') ? last : DEFAULT_STOREFRONT}`)
 }

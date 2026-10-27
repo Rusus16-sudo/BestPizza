@@ -3,29 +3,26 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/utils/supabase/client'
-import { products as mockProducts } from '@/data/products'
+import { useStorefront } from '@/context/StorefrontContext'
 import styles from './Categories.module.css'
 import ProductCard from '@/components/ProductCard'
 import SkeletonCard from '@/components/SkeletonCard'
 
 export default function CategoriesPage() {
   const router = useRouter()
+  const { id: organizationId, href } = useStorefront()
   const [productsList, setProductsList] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const fetchProducts = async () => {
       const supabase = createClient()
-      const { data } = await supabase.from('products').select('*')
-      if (data && data.length > 0) {
-        setProductsList(data)
-      } else {
-        setProductsList(mockProducts)
-      }
+      const { data } = await supabase.from('products').select('*').eq('organization_id', organizationId)
+      setProductsList(data || [])
       setLoading(false)
     }
     fetchProducts()
-  }, [])
+  }, [organizationId])
   
   // Extract unique categories from products
   const uniqueCategories = [...new Set(productsList.map(p => p.category))]
@@ -53,7 +50,7 @@ export default function CategoriesPage() {
   return (
     <div className={styles.container}>
       <header className={styles.header}>
-        <button className={styles.backBtn} onClick={() => router.push('/')}>
+        <button className={styles.backBtn} onClick={() => router.push(href('/'))}>
           <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" strokeWidth="2" fill="none">
             <polyline points="15 18 9 12 15 6"></polyline>
           </svg>

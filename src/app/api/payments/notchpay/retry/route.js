@@ -26,8 +26,12 @@ export async function POST(request) {
   const db = createAdminClient()
   const { data: order } = await db
     .from('orders')
-    .select('id, short_id, status, total_amount, payment_status, user_id')
+    .select('id, short_id, status, total_amount, payment_status, user_id, organization_id')
     .eq('short_id', shortId)
+    // Deux restaurants peuvent avoir le même numéro : seulement les commandes de ce client
+    .eq('user_id', auth.user.id)
+    .order('created_at', { ascending: false })
+    .limit(1)
     .maybeSingle()
 
   if (!order || order.user_id !== auth.user.id) {
@@ -40,12 +44,14 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Cette commande ne peut plus être payée en ligne.' }, { status: 409 })
   }
 
+  const { data: store } = await db.from('organizations').select('name').eq('id', order.organization_id).maybeSingle()
+
   try {
     const origin = await siteOrigin()
     const payment = await initializePayment({
       amount: order.total_amount,
       reference: `${order.id}-${Date.now().toString(36)}`,
-      description: `Commande ${order.short_id} – Best Pizza`,
+      description: `Commande ${order.short_id} – ${store?.name || 'Tchopi'}`,
       callback: `${origin}/paiement/retour`,
       customer: { name: auth.profile.email?.split('@')[0] || 'Client', email: auth.profile.email },
     })

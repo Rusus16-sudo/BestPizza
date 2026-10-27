@@ -10,10 +10,12 @@ import { useCart, formatPrice } from '@/context/CartContext'
 import { getStaffMembership, screenRole } from '@/lib/staff'
 import { productPhotoPath } from '@/lib/product-photos'
 import { isNewProduct, newUntilFor, NEW_FOR_DAYS } from '@/lib/product-badges'
+import { useStorefrontHref } from '@/context/StorefrontContext'
 
 export default function ProductCard({ id, title, price, image, category = 'Pizza', isSpicy = false, newUntil = null, rating = null, prepTime = "25-35 min", variant = 'grid' }) {
   const isNew = isNewProduct({ new_until: newUntil })
   const { addToCart } = useCart()
+  const shop = useStorefrontHref()
   const [justAdded, setJustAdded] = useState(false)
   const isPizza = ['pizza', 'pizzas'].includes(String(category).toLowerCase())
   const [showDropdown, setShowDropdown] = useState(false)
@@ -134,7 +136,7 @@ export default function ProductCard({ id, title, price, image, category = 'Pizza
   return (
     <>
     <div className={`${styles.card} ${variant === 'rail' ? styles.rail : ''}`}>
-      <Link href={`/product/${id}`} className={styles.link}>
+      <Link href={shop(`/product/${id}`)} className={styles.link}>
         <div className={styles.imageContainer}>
           <Image src={image} alt="" fill className={styles.productImage} sizes={variant === 'rail' ? '208px' : '(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw'} />
           {isSpicy && (

@@ -3,7 +3,7 @@ import { createAdminClient } from '@/utils/supabase/admin'
 import { createClient } from '@/utils/supabase/server'
 import { getStaffMembership, STAFF_ROLES } from '@/lib/staff'
 
-export const metadata = { title: 'Équipe · Best Pizza' }
+export const metadata = { title: 'Équipe · Tchopi' }
 
 export default async function AdminStaffPage() {
   // Le layout /admin a déjà vérifié que c'est un gérant ; on ne montre que SON équipe

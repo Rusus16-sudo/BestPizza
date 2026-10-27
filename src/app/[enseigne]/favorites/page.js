@@ -3,13 +3,14 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/utils/supabase/client'
-import { products as mockProducts } from '@/data/products'
+import { useStorefront } from '@/context/StorefrontContext'
 import styles from './Favorites.module.css'
 import ProductCard from '@/components/ProductCard'
 import SkeletonCard from '@/components/SkeletonCard'
 
 export default function FavoritesPage() {
   const router = useRouter()
+  const { id: organizationId, href } = useStorefront()
   const [favoriteProducts, setFavoriteProducts] = useState([])
   const [loading, setLoading] = useState(true)
 
@@ -35,33 +36,22 @@ export default function FavoritesPage() {
         return
       }
 
-      // Separate UUIDs (real DB products) and mock IDs (from data/products.js)
+      // Seuls les favoris de CE restaurant (les anciens plats de démonstration sont ignorés)
       const uuidFavs = favIds.filter(id => String(id).length > 10)
-      const mockFavs = favIds.filter(id => String(id).length <= 10)
+      const { data } = uuidFavs.length > 0
+        ? await supabase.from('products').select('*').eq('organization_id', organizationId).in('id', uuidFavs)
+        : { data: [] }
 
-      let dbProducts = []
-      if (uuidFavs.length > 0) {
-        const { data } = await supabase.from('products').select('*').in('id', uuidFavs)
-        if (data) dbProducts = data
-      }
-
-      // Merge with mock products
-      let localProducts = []
-      if (mockFavs.length > 0) {
-        const { products: mockProductsList } = await import('@/data/products')
-        localProducts = mockProductsList.filter(p => mockFavs.includes(p.id) || mockFavs.includes(String(p.id)))
-      }
-      
-      setFavoriteProducts([...dbProducts, ...localProducts])
+      setFavoriteProducts(data || [])
       setLoading(false)
     }
     fetchFavorites()
-  }, [])
+  }, [organizationId])
 
   return (
     <div className={styles.container}>
       <header className={styles.header}>
-        <button className={styles.backBtn} onClick={() => router.push('/')}>
+        <button className={styles.backBtn} onClick={() => router.push(href('/'))}>
           <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" strokeWidth="2" fill="none">
             <polyline points="15 18 9 12 15 6"></polyline>
           </svg>

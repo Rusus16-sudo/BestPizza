@@ -7,6 +7,7 @@ import { useCart, formatPrice } from '@/context/CartContext'
 import { createClient } from '@/utils/supabase/client'
 import toast from 'react-hot-toast'
 import PageHeader from '@/components/PageHeader'
+import { useStorefront } from '@/context/StorefrontContext'
 import styles from './Checkout.module.css'
 
 const PAYMENT_METHODS = [
@@ -17,6 +18,7 @@ const PAYMENT_METHODS = [
 export default function CheckoutPage() {
   const router = useRouter()
   const { cartItems, cartTotal, discountAmount, finalTotal, appliedPromo, clearCart, removeFromCart, isMounted } = useCart()
+  const { slug, location, href } = useStorefront()
   const [instructions, setInstructions] = useState('')
   const [deliveryAddress, setDeliveryAddress] = useState('')
   const [phone, setPhone] = useState('')
@@ -56,6 +58,9 @@ export default function CheckoutPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          // Le restaurant et le point de vente qui reçoivent la commande
+          organization: slug,
+          location: location?.slug,
           items: cartItems.map(item => ({
             productId: item.productId,
             quantity: item.quantity,
@@ -119,7 +124,7 @@ export default function CheckoutPage() {
         <div className={styles.empty}>
           <h2>Rien à commander pour l’instant</h2>
           <p>Votre panier est vide. Choisissez vos plats sur la carte.</p>
-          <Link href="/menu" className="btn btn-primary">Voir la carte</Link>
+          <Link href={href('/menu')} className="btn btn-primary">Voir la carte</Link>
         </div>
       </div>
     )

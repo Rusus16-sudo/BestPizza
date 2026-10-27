@@ -1,6 +1,6 @@
 import AdminClient from '../AdminClient'
 
-export const metadata = { title: 'Avis clients · Best Pizza' }
+export const metadata = { title: 'Avis clients · Tchopi' }
 
 export default function Page() {
   return <AdminClient section="reviews" />

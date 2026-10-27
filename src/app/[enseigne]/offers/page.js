@@ -3,10 +3,12 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/utils/supabase/client'
+import { useStorefront } from '@/context/StorefrontContext'
 import styles from './Offers.module.css'
 
 export default function OffersPage() {
   const router = useRouter()
+  const { id: organizationId, href } = useStorefront()
   const [copiedId, setCopiedId] = useState(null)
   const [offers, setOffers] = useState([])
   const [loading, setLoading] = useState(true)
@@ -17,6 +19,7 @@ export default function OffersPage() {
       const { data, error } = await supabase
         .from('offers')
         .select('*')
+        .eq('organization_id', organizationId)
         .order('created_at', { ascending: false })
       
       if (!error && data) {
@@ -27,7 +30,7 @@ export default function OffersPage() {
       setLoading(false)
     }
     fetchOffers()
-  }, [])
+  }, [organizationId])
 
   const handleCopy = (offer) => {
     navigator.clipboard.writeText(offer.code)
@@ -40,7 +43,7 @@ export default function OffersPage() {
   return (
     <div className={styles.container}>
       <header className={styles.header}>
-        <button className={styles.backBtn} onClick={() => router.push('/')}>
+        <button className={styles.backBtn} onClick={() => router.push(href('/'))}>
           <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" strokeWidth="2" fill="none">
             <polyline points="15 18 9 12 15 6"></polyline>
           </svg>

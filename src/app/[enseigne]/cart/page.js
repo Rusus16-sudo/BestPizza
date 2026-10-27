@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useCart, formatPrice } from '@/context/CartContext'
 import { createClient } from '@/utils/supabase/client'
 import PageHeader from '@/components/PageHeader'
+import { useStorefront } from '@/context/StorefrontContext'
 import styles from './Cart.module.css'
 
 function describeOptions(item) {
@@ -20,6 +21,7 @@ export default function CartPage() {
     cartItems, updateQuantity, removeFromCart, totalItems, cartTotal,
     appliedPromo, setAppliedPromo, discountAmount, finalTotal, isMounted
   } = useCart()
+  const { id: organizationId, href } = useStorefront()
 
   const [promoCode, setPromoCode] = useState('')
   const [promoError, setPromoError] = useState('')
@@ -33,7 +35,7 @@ export default function CartPage() {
     setPromoError('')
 
     const supabase = createClient()
-    const { data: offers, error } = await supabase.from('offers').select('*').eq('code', code)
+    const { data: offers, error } = await supabase.from('offers').select('*').eq('organization_id', organizationId).eq('code', code)
     setPromoLoading(false)
 
     if (error || !offers || offers.length === 0) {
@@ -69,7 +71,7 @@ export default function CartPage() {
           </div>
           <h2>Votre panier est vide</h2>
           <p>Ajoutez une pizza depuis la carte, elle apparaîtra ici.</p>
-          <Link href="/menu" className="btn btn-primary">Voir la carte</Link>
+          <Link href={href('/menu')} className="btn btn-primary">Voir la carte</Link>
         </div>
       </div>
     )
@@ -162,7 +164,7 @@ export default function CartPage() {
             </div>
           </dl>
 
-          <Link href="/checkout" className={styles.checkoutBtn}>
+          <Link href={href('/checkout')} className={styles.checkoutBtn}>
             <span>Commander</span>
             <span className="price">{formatPrice(finalTotal)}</span>
           </Link>

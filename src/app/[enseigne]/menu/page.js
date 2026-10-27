@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { createClient } from '@/utils/supabase/client'
-import { products as mockProducts } from '@/data/products'
+import { useStorefront } from '@/context/StorefrontContext'
 import ProductCard from '@/components/ProductCard'
 import PageHeader from '@/components/PageHeader'
 import styles from './Menu.module.css'
@@ -20,25 +20,22 @@ const labelFor = (category) => CATEGORY_LABELS[String(category).toLowerCase()] |
 const slug = (label) => label.toLowerCase().normalize('NFD').replace(/[^a-z]/g, '')
 
 export default function MenuPage() {
+  const { id: organizationId } = useStorefront()
   const [productsList, setProductsList] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const fetchProducts = async () => {
       const supabase = createClient()
-      const { data } = await supabase.from('products').select('*, reviews(rating)')
-      if (data && data.length > 0) {
-        setProductsList(data.map(p => ({
-          ...p,
-          rating: p.reviews?.length ? (p.reviews.reduce((a, r) => a + r.rating, 0) / p.reviews.length).toFixed(1) : null
-        })))
-      } else {
-        setProductsList(mockProducts)
-      }
+      const { data } = await supabase.from('products').select('*, reviews(rating)').eq('organization_id', organizationId)
+      setProductsList((data || []).map(p => ({
+        ...p,
+        rating: p.reviews?.length ? (p.reviews.reduce((a, r) => a + r.rating, 0) / p.reviews.length).toFixed(1) : null
+      })))
       setLoading(false)
     }
     fetchProducts()
-  }, [])
+  }, [organizationId])
 
   // Regroupe par catégorie, dans un ordre fixe
   const grouped = productsList.reduce((acc, product) => {

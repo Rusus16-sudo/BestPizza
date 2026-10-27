@@ -2,10 +2,12 @@
 
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/utils/supabase/client'
+import { useStorefrontHref } from '@/context/StorefrontContext'
 import styles from './Settings.module.css'
 
 export default function SettingsPage() {
   const router = useRouter()
+  const shop = useStorefrontHref()
 
   const settingsOptions = [
     {
@@ -75,7 +77,7 @@ export default function SettingsPage() {
             <div key={option.id} className={styles.settingItem} onClick={() => {
               if (option.id === 'addresses') router.push('/profile')
               else if (option.id === 'orders') router.push('/orders')
-              else if (option.id === 'help') router.push('/help')
+              else if (option.id === 'help') router.push(shop('/help'))
               else if (option.id === 'notifications') router.push('/notifications')
             }}>
               <div className={styles.iconBox}>

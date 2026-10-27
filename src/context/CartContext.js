@@ -1,6 +1,8 @@
 'use client'
 
 import { createContext, useContext, useState, useEffect } from 'react'
+import { usePathname } from 'next/navigation'
+import { storefrontSlugFromPath, lastStorefrontSlug, DEFAULT_STOREFRONT } from '@/lib/storefront-paths'
 import { promoApplies } from '@/lib/pricing'
 import { formatPrice } from '@/lib/format'
 
@@ -15,33 +17,66 @@ function sameCustomizations(a = {}, b = {}) {
   return true
 }
 
+// Un panier par restaurant, gardé sur l'appareil : passer d'une vitrine à l'autre
+// ne mélange pas les plats.
+const cartKey = (slug) => `tchopi_panier:${slug}`
+const promoKey = (slug) => `tchopi_promo:${slug}`
+
+function readJSON(key) {
+  try {
+    const raw = localStorage.getItem(key)
+    return raw ? JSON.parse(raw) : null
+  } catch {
+    return null
+  }
+}
+
+// Avant les vitrines, il n'y avait qu'un panier : celui de Best Pizza
+function migrateOldCart() {
+  try {
+    const old = localStorage.getItem('pizza_cart')
+    if (old && !localStorage.getItem(cartKey(DEFAULT_STOREFRONT))) {
+      localStorage.setItem(cartKey(DEFAULT_STOREFRONT), old)
+      const promo = localStorage.getItem('pizza_promo')
+      if (promo) localStorage.setItem(promoKey(DEFAULT_STOREFRONT), promo)
+    }
+    localStorage.removeItem('pizza_cart')
+    localStorage.removeItem('pizza_promo')
+  } catch {}
+}
+
 export function CartProvider({ children }) {
+  const pathname = usePathname() || ''
+  // Le restaurant de la page, ou le dernier visité pour les pages communes (mes commandes…)
+  const [slug, setSlug] = useState(DEFAULT_STOREFRONT)
   const [cartItems, setCartItems] = useState([])
   const [appliedPromo, setAppliedPromo] = useState(null)
   const [isMounted, setIsMounted] = useState(false)
+  // Le panier affiché appartient-il bien à ce restaurant ? (sinon, on ne l'enregistre pas sous son nom)
+  const [loadedSlug, setLoadedSlug] = useState(null)
 
-  // Chargement depuis le stockage local
   useEffect(() => {
+    setSlug(storefrontSlugFromPath(pathname) || lastStorefrontSlug() || DEFAULT_STOREFRONT)
+  }, [pathname])
+
+  // Chargement du panier de ce restaurant
+  useEffect(() => {
+    migrateOldCart()
+    setCartItems(readJSON(cartKey(slug)) || [])
+    setAppliedPromo(readJSON(promoKey(slug)))
+    setLoadedSlug(slug)
     setIsMounted(true)
-    try {
-      const saved = localStorage.getItem('pizza_cart')
-      if (saved) setCartItems(JSON.parse(saved))
-      const promo = localStorage.getItem('pizza_promo')
-      if (promo) setAppliedPromo(JSON.parse(promo))
-    } catch (e) {
-      console.error('Failed to parse cart')
-    }
-  }, [])
+  }, [slug])
 
   // Sauvegarde à chaque changement
   useEffect(() => {
-    if (!isMounted) return
+    if (!isMounted || loadedSlug !== slug) return
     try {
-      localStorage.setItem('pizza_cart', JSON.stringify(cartItems))
-      if (appliedPromo) localStorage.setItem('pizza_promo', JSON.stringify(appliedPromo))
-      else localStorage.removeItem('pizza_promo')
-    } catch (e) {}
-  }, [cartItems, appliedPromo, isMounted])
+      localStorage.setItem(cartKey(slug), JSON.stringify(cartItems))
+      if (appliedPromo) localStorage.setItem(promoKey(slug), JSON.stringify(appliedPromo))
+      else localStorage.removeItem(promoKey(slug))
+    } catch {}
+  }, [cartItems, appliedPromo, isMounted, loadedSlug, slug])
 
   const addToCart = (product, quantity, size, customizations, totalPrice) => {
     const unitPrice = totalPrice / quantity
@@ -70,6 +105,31 @@ export function CartProvider({ children }) {
         customizations
       }]
     })
+  }
+
+  // Ajoute des plats au panier d'un restaurant, même hors de sa vitrine
+  // (« Recommander » depuis mes commandes, qui regroupent tous les restaurants)
+  const addToStorefrontCart = (targetSlug, entries) => {
+    if (targetSlug === slug) {
+      entries.forEach(e => addToCart(e.product, e.quantity, e.size, e.customizations, e.totalPrice))
+      return
+    }
+    const items = readJSON(cartKey(targetSlug)) || []
+    entries.forEach((e, i) => items.push({
+      id: `${Date.now()}-${i}`,
+      productId: e.product.id,
+      title: e.product.title,
+      category: e.product.category,
+      price: e.totalPrice,
+      unitPrice: e.totalPrice / e.quantity,
+      image: e.product.image,
+      quantity: e.quantity,
+      size: e.size,
+      customizations: e.customizations,
+    }))
+    try {
+      localStorage.setItem(cartKey(targetSlug), JSON.stringify(items))
+    } catch {}
   }
 
   const updateQuantity = (cartItemId, quantity) => {
@@ -101,9 +161,9 @@ export function CartProvider({ children }) {
 
   return (
     <CartContext.Provider value={{
-      cartItems, addToCart, updateQuantity, removeFromCart, clearCart,
+      cartItems, addToCart, addToStorefrontCart, updateQuantity, removeFromCart, clearCart,
       totalItems, cartTotal, appliedPromo, setAppliedPromo,
-      discountAmount: Math.round(discountAmount), finalTotal, isMounted
+      discountAmount: Math.round(discountAmount), finalTotal, isMounted, storefront: slug
     }}>
       {children}
     </CartContext.Provider>

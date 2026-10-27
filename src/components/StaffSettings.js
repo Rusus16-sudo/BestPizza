@@ -17,7 +17,7 @@ const PUSH_STATUS = {
   enabled: { tone: 'ok', text: 'Activées sur cet appareil. Vous êtes prévenu même app fermée.' },
   disabled: { tone: 'warn', text: 'Pas encore activées sur cet appareil.' },
   denied: { tone: 'warn', text: 'Bloquées. Touchez le cadenas à gauche de l’adresse du site, autorisez les notifications, puis rechargez la page.' },
-  'ios-install': { tone: 'warn', text: 'Sur iPhone, ajoutez d’abord Best Pizza à l’écran d’accueil (bouton Partager, puis « Sur l’écran d’accueil »), et ouvrez l’app depuis son icône.' },
+  'ios-install': { tone: 'warn', text: 'Sur iPhone, ajoutez d’abord l’app à l’écran d’accueil (bouton Partager, puis « Sur l’écran d’accueil »), et ouvrez l’app depuis son icône.' },
   unsupported: { tone: 'warn', text: 'Ce navigateur ne reçoit pas les notifications. Ouvrez le site dans Chrome ou Safari à jour.' },
 }
 

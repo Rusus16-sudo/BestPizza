@@ -9,6 +9,7 @@ import { useCart } from '@/context/CartContext'
 import BrandMark from './BrandMark'
 import ConfirmDialog from './ConfirmDialog'
 import { getStaffMembership, screenRole } from '@/lib/staff'
+import { useStorefrontHref, useStorefrontInfo } from '@/context/StorefrontContext'
 
 const Icon = ({ children }) => (
   <svg className={styles.icon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -46,6 +47,9 @@ export default function Sidebar() {
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
   const [latestOffer, setLatestOffer] = useState(null)
   const [activeOrders, setActiveOrders] = useState(0)
+  // Le restaurant visité (ou le dernier visité) : ses pages, son nom, ses offres
+  const shop = useStorefrontHref()
+  const store = useStorefrontInfo()
 
   useEffect(() => {
     const load = async () => {
@@ -63,20 +67,27 @@ export default function Sidebar() {
           setActiveOrders(count || 0)
         }
       }
+    }
+    load()
+  }, [])
 
-      const { data: offersData, error } = await supabase
+  // La dernière offre en cours de CE restaurant
+  useEffect(() => {
+    if (!store?.id) return
+    const loadOffer = async () => {
+      const { data: offersData, error } = await createClient()
         .from('offers')
         .select('*')
+        .eq('organization_id', store.id)
         .order('created_at', { ascending: false })
 
       if (!error && offersData) {
         const now = new Date()
-        const active = offersData.filter(o => !o.valid_until || new Date(o.valid_until) >= now)
-        if (active.length > 0) setLatestOffer(active[0])
+        setLatestOffer(offersData.find(o => !o.valid_until || new Date(o.valid_until) >= now) || null)
       }
     }
-    load()
-  }, [])
+    loadOffer()
+  }, [store?.id])
 
   const handleLogout = async () => {
     const supabase = createClient()
@@ -108,8 +119,8 @@ export default function Sidebar() {
 
   return (
     <div className={styles.sidebar}>
-      <Link href="/" className={styles.logo} aria-label="Best Pizza, accueil">
-        <BrandMark size="lg" />
+      <Link href={shop('/')} className={styles.logo} aria-label={`${store?.name || 'Accueil'}, accueil`}>
+        <BrandMark size="lg" name={store?.name} logoUrl={store?.logo_url} />
       </Link>
 
       <nav className={styles.nav} aria-label="Navigation principale">
@@ -126,7 +137,7 @@ export default function Sidebar() {
             <span className={styles.groupLabel}>Opérations</span>
             {navLink({ href: '/kitchen', icon: 'flame', label: 'Écran cuisine', match: p => p.startsWith('/kitchen') })}
             {navLink({ href: '/delivery', icon: 'truck', label: 'Livraisons' })}
-            {navLink({ href: '/', icon: 'store', label: 'Voir la boutique', match: () => false })}
+            {navLink({ href: shop('/'), icon: 'store', label: 'Voir la boutique', match: () => false })}
           </>
         ) : inKitchen ? (
           navLink({ href: "/kitchen", icon: "grid", label: "Cuisine" })
@@ -134,18 +145,18 @@ export default function Sidebar() {
           navLink({ href: "/delivery", icon: "truck", label: "Mes livraisons" })
         ) : (
           <>
-            {navLink({ href: "/", icon: "home", label: "Accueil" })}
-            {navLink({ href: "/menu", icon: "menu", label: "La carte", match: p => p === '/menu' || p === '/categories' })}
-            {navLink({ href: "/cart", icon: "cart", label: "Panier", badge: totalItems, match: p => p === '/cart' || p === '/checkout' })}
+            {navLink({ href: shop('/'), icon: "home", label: "Accueil" })}
+            {navLink({ href: shop('/menu'), icon: "menu", label: "La carte", match: p => p === shop('/menu') || p === shop('/categories') })}
+            {navLink({ href: shop('/cart'), icon: "cart", label: "Panier", badge: totalItems, match: p => p === shop('/cart') || p === shop('/checkout') })}
             {navLink({ href: "/orders", icon: "orders", label: "Commandes" })}
-            {navLink({ href: "/favorites", icon: "heart", label: "Favoris" })}
-            {navLink({ href: "/offers", icon: "tag", label: "Offres" })}
+            {navLink({ href: shop('/favorites'), icon: "heart", label: "Favoris" })}
+            {navLink({ href: shop('/offers'), icon: "tag", label: "Offres" })}
           </>
         )}
 
         <div className={styles.divider} />
 
-        {!isGerant && !inKitchen && !inDelivery && navLink({ href: "/help", icon: "help", label: "Aide" })}
+        {!isGerant && !inKitchen && !inDelivery && navLink({ href: shop('/help'), icon: "help", label: "Aide" })}
         {user && (
           navLink({ href: settingsHref, icon: "settings", label: "Paramètres", match: p => p === settingsHref })
         )}
@@ -160,7 +171,7 @@ export default function Sidebar() {
       </nav>
 
       {!isGerant && !inKitchen && !inDelivery && latestOffer && (
-        <Link href="/offers" className={styles.promoCard}>
+        <Link href={shop('/offers')} className={styles.promoCard}>
           <span className={styles.promoTitle}>{latestOffer.title || `-${latestOffer.discount_percentage}%`}</span>
           {latestOffer.description && <span className={styles.promoText}>{latestOffer.description}</span>}
           <span className={styles.promoCode}>

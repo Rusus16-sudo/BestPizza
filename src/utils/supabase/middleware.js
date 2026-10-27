@@ -34,7 +34,9 @@ export async function updateSession(request) {
 
   // Protection des routes (ex: /profile ou /checkout nécessitent une connexion)
   const protectedRoutes = ['/profile', '/checkout', '/orders', '/delivery', '/kitchen', '/admin']
-  const isProtectedRoute = protectedRoutes.some(route => request.nextUrl.pathname.startsWith(route))
+  // La commande dans la vitrine d'un restaurant : /best-pizza/checkout
+  const isStorefrontCheckout = /^\/[a-z0-9-]+\/checkout(\/|$)/.test(request.nextUrl.pathname)
+  const isProtectedRoute = isStorefrontCheckout || protectedRoutes.some(route => request.nextUrl.pathname.startsWith(route))
 
   if (!user && isProtectedRoute) {
     const url = request.nextUrl.clone()

@@ -1,9 +1,12 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useStorefrontInfo } from '@/context/StorefrontContext'
 import styles from './InstallPrompt.module.css'
 
 export default function InstallPrompt({ hidden = false }) {
+  // L'app installée est celle du restaurant visité
+  const store = useStorefrontInfo()
   const [deferredPrompt, setDeferredPrompt] = useState(null)
   const [showPrompt, setShowPrompt] = useState(false)
 
@@ -73,10 +76,10 @@ export default function InstallPrompt({ hidden = false }) {
       <div className={styles.promptContent}>
         <div className={styles.leftSection}>
           <div className={styles.iconWrapper}>
-            <img src="/icon-192x192.png" alt="Best Pizza" className={styles.appIcon} />
+            <img src={store?.logo_url || '/icon-192x192.png'} alt="" className={styles.appIcon} />
           </div>
           <div className={styles.promptText}>
-            <div className={styles.promptTitle}>L'app Best Pizza</div>
+            <div className={styles.promptTitle}>L'app {store?.name || 'Tchopi'}</div>
             <div className={styles.promptDesc}>Commandez depuis votre écran d’accueil</div>
           </div>
         </div>

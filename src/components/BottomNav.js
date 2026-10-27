@@ -8,6 +8,7 @@ import { createClient } from '@/utils/supabase/client'
 import { useCart } from '@/context/CartContext'
 import ConfirmDialog from './ConfirmDialog'
 import { getStaffMembership, screenRole } from '@/lib/staff'
+import { useStorefrontHref } from '@/context/StorefrontContext'
 
 const svg = (children, filled) => (
   <svg viewBox="0 0 24 24" width="24" height="24" fill={filled ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={filled ? 0 : 2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -31,12 +32,14 @@ const tabIcons = {
 }
 
 // Écrans où la barre du bas gêne : ils ont leur propre action principale en bas
-const HIDDEN_ON = [/^\/kitchen/, /^\/product\//, /^\/checkout/]
+const HIDDEN_ON = [/^\/kitchen/, /^\/[a-z0-9-]+\/(product\/|checkout)/]
 
 export default function BottomNav() {
   const pathname = usePathname() || ''
   const router = useRouter()
   const { totalItems } = useCart()
+  // Pages de la vitrine du restaurant visité (ou du dernier visité)
+  const shop = useStorefrontHref()
   const [user, setUser] = useState(null)
   const [role, setRole] = useState(null)
   const [showMenu, setShowMenu] = useState(false)
@@ -105,13 +108,13 @@ export default function BottomNav() {
             {tab({ href: '/admin', icon: 'chart', label: 'Tableau' })}
             {tab({ href: '/admin/commandes', icon: 'orders', label: 'Commandes' })}
             {tab({ href: '/admin/carte', icon: 'menu', label: 'Carte' })}
-            {tab({ href: '/', icon: 'store', label: 'Boutique' })}
+            {tab({ href: shop('/'), icon: 'store', label: 'Boutique' })}
           </>
         ) : (
           <>
-            {tab({ href: "/", icon: "home", label: "Accueil" })}
-            {tab({ href: "/menu", icon: "menu", label: "Carte", match: p => p === '/menu' || p === '/categories' })}
-            {tab({ href: "/cart", icon: "cart", label: "Panier", badge: totalItems })}
+            {tab({ href: shop('/'), icon: "home", label: "Accueil" })}
+            {tab({ href: shop('/menu'), icon: "menu", label: "Carte", match: p => p === shop('/menu') || p === shop('/categories') })}
+            {tab({ href: shop('/cart'), icon: "cart", label: "Panier", badge: totalItems })}
             {tab({ href: "/orders", icon: "orders", label: "Commandes" })}
           </>
         )}
@@ -158,10 +161,10 @@ export default function BottomNav() {
                 </>
               ) : (
                 <>
-                  <Link href="/favorites" className={styles.menuItem} onClick={close}>Favoris</Link>
-                  <Link href="/offers" className={styles.menuItem} onClick={close}>Offres et codes promo</Link>
+                  <Link href={shop('/favorites')} className={styles.menuItem} onClick={close}>Favoris</Link>
+                  <Link href={shop('/offers')} className={styles.menuItem} onClick={close}>Offres et codes promo</Link>
                   {user && <Link href="/settings" className={styles.menuItem} onClick={close}>Paramètres</Link>}
-                  <Link href="/help" className={styles.menuItem} onClick={close}>Aide</Link>
+                  <Link href={shop('/help')} className={styles.menuItem} onClick={close}>Aide</Link>
                 </>
               )}
               {user && (

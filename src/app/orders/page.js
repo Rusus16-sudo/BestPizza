@@ -12,7 +12,7 @@ import { useCart } from '@/context/CartContext'
 
 export default function OrdersPage() {
   const router = useRouter()
-  const { addToCart } = useCart()
+  const { addToStorefrontCart } = useCart()
   const [activeTab, setActiveTab] = useState('en_cours') // 'en_cours' or 'historique'
   const [orders, setOrders] = useState([])
   const [isLoaded, setIsLoaded] = useState(false)
@@ -68,15 +68,25 @@ export default function OrdersPage() {
           payment_status,
           payment_method,
           created_at,
+          organization_id,
           order_items (
             product_id,
             product_name,
             quantity,
-            price
+            price,
+            size,
+            customizations
           )
         `)
         .eq('user_id', currentUser.id)
         .order('created_at', { ascending: false })
+
+      // Le nom et l'adresse de la vitrine de chaque restaurant commandé
+      const orgIds = [...new Set((data || []).map(o => o.organization_id))]
+      const { data: stores } = orgIds.length
+        ? await supabase.from('storefronts').select('id, slug, name').in('id', orgIds)
+        : { data: [] }
+      const storeOf = new Map((stores || []).map(s => [s.id, s]))
 
       if (data && data.length > 0) {
         const formattedOrders = data.map(o => ({
@@ -87,12 +97,15 @@ export default function OrdersPage() {
           paymentStatus: o.payment_status,
           paymentMethod: o.payment_method,
           total: o.total_amount,
-          restaurant: 'Best Pizza',
+          restaurant: storeOf.get(o.organization_id)?.name || 'Restaurant',
+          storefront: storeOf.get(o.organization_id)?.slug || null,
           items: o.order_items.map(item => ({
             productId: item.product_id,
             name: item.product_name,
             quantity: item.quantity,
-            price: item.price
+            price: item.price,
+            size: item.size,
+            customizations: item.customizations || {}
           }))
         }))
         setOrders(formattedOrders)
@@ -110,23 +123,36 @@ export default function OrdersPage() {
 
   const ordersToDisplay = activeTab === 'en_cours' ? activeOrders : historyOrders
 
-  const handleReorder = (order) => {
-    let addedCount = 0;
-    for (const item of order.items) {
-      const product = {
-        id: item.productId || Date.now().toString() + Math.random(),
-        title: item.name,
-        image: '/margherita.png'
-      };
-      
-      addToCart(product, item.quantity, 'Moyenne', {}, item.price);
-      addedCount++;
+  // Remet les plats d'une commande dans le panier de SON restaurant, avec les mêmes
+  // tailles et options. Les plats retirés de la carte depuis sont laissés de côté.
+  const handleReorder = async (order) => {
+    if (!order.storefront) {
+      toast.error("Ce restaurant n'est plus disponible.")
+      return
     }
-    
-    if (addedCount > 0) {
-      toast.success('Plats ajoutés au panier !')
-      router.push('/cart')
+    const ids = order.items.map(item => item.productId).filter(Boolean)
+    const { data: products } = ids.length
+      ? await createClient().from('products').select('id, title, image, category, is_available').in('id', ids)
+      : { data: [] }
+    const byId = new Map((products || []).filter(p => p.is_available !== false).map(p => [p.id, p]))
+
+    const entries = order.items
+      .filter(item => byId.has(item.productId))
+      .map(item => ({
+        product: byId.get(item.productId),
+        quantity: item.quantity,
+        size: item.size || 'Standard',
+        customizations: item.customizations,
+        totalPrice: item.price,
+      }))
+
+    if (entries.length === 0) {
+      toast.error("Ces plats ne sont plus à la carte.")
+      return
     }
+    addToStorefrontCart(order.storefront, entries)
+    toast.success(entries.length < order.items.length ? 'Plats encore à la carte ajoutés au panier' : 'Plats ajoutés au panier !')
+    router.push(`/${order.storefront}/cart`)
   }
 
   const getStatusDisplay = (status) => {

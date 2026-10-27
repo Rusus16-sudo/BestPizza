@@ -1,7 +1,7 @@
 {
-  "name": "Best Pizza",
-  "short_name": "BestPizza",
-  "description": "Application de livraison pour la pizzeria Best Pizza",
+  "name": "Tchopi",
+  "short_name": "Tchopi",
+  "description": "Commandez chez vos restaurants et suivez votre livraison",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",

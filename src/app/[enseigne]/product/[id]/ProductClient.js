@@ -9,11 +9,13 @@ import toast from 'react-hot-toast'
 import styles from './Product.module.css'
 import { SIZES, isPizzaCategory, computeUnitPrice } from '@/lib/pricing'
 import { isNewProduct } from '@/lib/product-badges'
+import { useStorefront } from '@/context/StorefrontContext'
 
 
 export default function ProductClient({ product }) {
   const router = useRouter()
   const { addToCart, totalItems } = useCart()
+  const { href } = useStorefront()
   const [quantity, setQuantity] = useState(1)
   const [size, setSize] = useState('Moyenne')
   const [isFavorite, setIsFavorite] = useState(false)
@@ -196,7 +198,7 @@ export default function ProductClient({ product }) {
             </button>
           </div>
           {justAdded && totalItems > 0 ? (
-            <Link href="/cart" className={`${styles.addBtn} ${styles.addBtnDone}`}>
+            <Link href={href('/cart')} className={`${styles.addBtn} ${styles.addBtnDone}`}>
               <span>Voir le panier</span>
               <span className={styles.addPrice}>{totalItems} article{totalItems > 1 ? 's' : ''}</span>
             </Link>

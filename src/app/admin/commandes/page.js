@@ -1,7 +1,7 @@
 import AdminPageHeader from '../AdminPageHeader'
 import AdminOrders from '../AdminOrders'
 
-export const metadata = { title: 'Commandes · Best Pizza' }
+export const metadata = { title: 'Commandes · Tchopi' }
 
 export default function AdminOrdersPage() {
   return (

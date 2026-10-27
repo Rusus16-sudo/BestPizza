@@ -54,7 +54,7 @@ export default function PushOptIn({
         <strong>{title}</strong>
         {state === 'ios-install' ? (
           <span>
-            Sur iPhone, ajoutez d’abord Best Pizza à l’écran d’accueil :
+            Sur iPhone, ajoutez d’abord l’app à l’écran d’accueil :
             bouton Partager, puis « Sur l’écran d’accueil ».
           </span>
         ) : state === 'denied' ? (

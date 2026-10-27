@@ -16,7 +16,7 @@ export async function POST(request) {
   const url = typeof body.url === 'string' && body.url.startsWith('/') && !body.url.startsWith('//') ? body.url : '/'
 
   const { sent } = await sendPushToUser(user.id, {
-    title: 'Best Pizza',
+    title: 'Tchopi',
     body: '🔔 Les notifications marchent sur cet appareil.',
     url,
     tag: 'test',
