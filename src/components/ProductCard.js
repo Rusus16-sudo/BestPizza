@@ -12,6 +12,8 @@ import { productPhotoPath } from '@/lib/product-photos'
 import { defaultSelection, selectionLines, unitPriceFor } from '@/lib/options'
 import { isNewProduct, newUntilFor, NEW_FOR_DAYS } from '@/lib/product-badges'
 import { useStorefrontHref } from '@/context/StorefrontContext'
+import CategoryPicker from '@/components/CategoryPicker'
+import { categoriesOf } from '@/lib/categories'
 
 export default function ProductCard({ id, title, price, image, category = 'Pizza', optionGroups = [], isSpicy = false, newUntil = null, rating = null, prepTime = "25-35 min", variant = 'grid' }) {
   const isNew = isNewProduct({ new_until: newUntil })
@@ -20,6 +22,7 @@ export default function ProductCard({ id, title, price, image, category = 'Pizza
   const [justAdded, setJustAdded] = useState(false)
   const [showDropdown, setShowDropdown] = useState(false)
   const [isGerant, setIsGerant] = useState(false)
+  const [categories, setCategories] = useState([])
   const [editModalOpen, setEditModalOpen] = useState(false)
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
@@ -43,8 +46,12 @@ export default function ProductCard({ id, title, price, image, category = 'Pizza
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
-        if (screenRole(await getStaffMembership(supabase, user.id)) === 'gerant') {
+        const membership = await getStaffMembership(supabase, user.id)
+        if (screenRole(membership) === 'gerant') {
           setIsGerant(true)
+          // Les catégories du restaurant, pour le formulaire de modification
+          const { data } = await supabase.from('products').select('category').eq('organization_id', membership.organization_id)
+          setCategories(categoriesOf(data || []))
         }
       }
     }
@@ -266,12 +273,11 @@ export default function ProductCard({ id, title, price, image, category = 'Pizza
               </div>
               <div className={styles.inputGroup}>
                 <label>Catégorie</label>
-                <select className={styles.formInput} value={editForm.category} onChange={(e) => setEditForm({...editForm, category: e.target.value})}>
-                  <option value="Pizza">Pizza</option>
-                  <option value="Burgers">Burgers</option>
-                  <option value="Desserts">Desserts</option>
-                  <option value="Drinks">Boissons</option>
-                </select>
+                <CategoryPicker
+                  value={editForm.category}
+                  categories={categories}
+                  onChange={(category) => setEditForm({ ...editForm, category })}
+                />
               </div>
             </div>
             

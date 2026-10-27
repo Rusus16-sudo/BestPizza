@@ -1,0 +1,42 @@
+.newRow {
+  display: flex;
+  gap: 8px;
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  min-height: 48px;
+  padding: 0 14px;
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  box-shadow: 0 0 0 4px var(--color-primary-dim);
+  font-size: 0.98rem;
+  color: var(--color-text-primary);
+}
+
+.input:focus {
+  outline: none;
+}
+
+.ok,
+.cancel {
+  flex-shrink: 0;
+  padding: 0 16px;
+  border-radius: var(--radius-md);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.ok {
+  border: none;
+  background: var(--color-primary);
+  color: white;
+}
+
+.cancel {
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+}

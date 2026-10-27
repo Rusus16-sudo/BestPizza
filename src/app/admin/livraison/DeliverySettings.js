@@ -9,6 +9,7 @@ import { hasFullDelivery } from '@/lib/delivery'
 import { formatPrice } from '@/lib/format'
 import AdminPageHeader from '../AdminPageHeader'
 import TimePicker from '@/components/TimePicker'
+import Select from '@/components/Select'
 import styles from './DeliverySettings.module.css'
 
 const TIME = /^([01]\d|2[0-3]):[0-5]\d$/
@@ -193,9 +194,13 @@ export default function DeliverySettings() {
       {locations.length > 1 && (
         <div className={styles.locationPicker}>
           <label htmlFor="location">Point de vente</label>
-          <select id="location" className={styles.input} value={locationId} onChange={(e) => setLocationId(e.target.value)}>
-            {locations.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
-          </select>
+          <Select
+            id="location"
+            label="Point de vente"
+            value={locationId}
+            onChange={setLocationId}
+            options={locations.map((l) => ({ value: l.id, label: l.name, hint: l.is_open ? null : 'Fermé' }))}
+          />
         </div>
       )}
 

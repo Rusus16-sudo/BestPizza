@@ -14,6 +14,16 @@ import { getStaffMembership } from '@/lib/staff'
 import { productPhotoPath } from '@/lib/product-photos'
 import { isNewProduct, newUntilFor, NEW_FOR_DAYS } from '@/lib/product-badges'
 import OptionGroupsEditor, { cleanOptionGroups } from '@/components/OptionGroupsEditor'
+import Select from '@/components/Select'
+import CategoryPicker from '@/components/CategoryPicker'
+import { categoriesOf, categoryLabel } from '@/lib/categories'
+
+// Couleurs des cartes de promotion
+const OFFER_THEMES = [
+  { value: 'orange', label: 'Orange', gradient: 'linear-gradient(135deg, #f97316, #e11d48)' },
+  { value: 'blue', label: 'Bleu', gradient: 'linear-gradient(135deg, #3b82f6, #6366f1)' },
+  { value: 'purple', label: 'Violet', gradient: 'linear-gradient(135deg, #8b5cf6, #d946ef)' },
+]
 
 registerLocale('fr', fr)
 
@@ -95,6 +105,8 @@ export default function AdminClient({ section, initialStaff = [] }) {
       fetchProducts()
     } else if (activeTab === 'offers') {
       fetchOffers()
+      // Pour cibler une promotion sur un plat ou une catégorie
+      fetchProducts()
     } else if (activeTab === 'reviews') {
       fetchReviews()
     }
@@ -267,6 +279,10 @@ export default function AdminClient({ section, initialStaff = [] }) {
 
   const handleSaveOffer = async (e) => {
     e.preventDefault()
+    if (offerForm.target_type !== 'all' && !offerForm.target_value) {
+      toast.error(offerForm.target_type === 'product' ? 'Choisissez le plat en promotion.' : 'Choisissez la catégorie en promotion.')
+      return
+    }
     setFormLoading(true)
 
     const payload = {
@@ -406,12 +422,15 @@ export default function AdminClient({ section, initialStaff = [] }) {
             <form onSubmit={handleCreateUser}>
               <div className={styles.inputGroup}>
                 <label>Rôle</label>
-                <div className={styles.dropdownContainer}>
-                  <select className={styles.formInput} value={role} onChange={(e) => setRole(e.target.value)}>
-                    <option value="cuisinier">Cuisinier</option>
-                    <option value="livreur">Livreur</option>
-                  </select>
-                </div>
+                <Select
+                  label="Rôle"
+                  value={role}
+                  onChange={setRole}
+                  options={[
+                    { value: 'cuisinier', label: 'Cuisinier', hint: 'Écran cuisine' },
+                    { value: 'livreur', label: 'Livreur', hint: 'Livraisons' },
+                  ]}
+                />
               </div>
               <div className={styles.inputGroup}>
                 <label>Adresse Email</label>
@@ -560,15 +579,11 @@ export default function AdminClient({ section, initialStaff = [] }) {
               <div className={styles.productFormGrid}>
                 <div className={styles.inputGroup}>
                   <label>Catégorie</label>
-                  <div className={styles.dropdownContainer}>
-                    <select className={styles.formInput} value={productForm.category} onChange={(e) => setProductForm({...productForm, category: e.target.value})}>
-                      <option value="Pizzas">Pizzas</option>
-                      <option value="Burgers">Burgers</option>
-                      <option value="Tacos">Tacos</option>
-                      <option value="Boissons">Boissons</option>
-                      <option value="Desserts">Desserts</option>
-                    </select>
-                  </div>
+                  <CategoryPicker
+                    value={productForm.category}
+                    categories={categoriesOf(products)}
+                    onChange={(category) => setProductForm({ ...productForm, category })}
+                  />
                 </div>
                 <div className={styles.inputGroup}>
                   <label>Prix (FCFA)</label>
@@ -677,7 +692,7 @@ export default function AdminClient({ section, initialStaff = [] }) {
                     <div style={{ marginTop: '12px', fontSize: '0.85rem', opacity: 0.9 }}>
                       <div><strong>Réduction:</strong> -{offer.discount_percentage}%</div>
                       <div><strong>Valable jusqu'au:</strong> {offer.valid_until ? new Date(offer.valid_until).toLocaleDateString('fr-FR') : 'Non défini'}</div>
-                      <div><strong>Cible:</strong> {offer.target_type === 'all' ? 'Tout le menu' : offer.target_type === 'category' ? `Catégorie: ${offer.target_value}` : `Produit ID: ${offer.target_value}`}</div>
+                      <div><strong>Cible:</strong> {offer.target_type === 'all' ? 'Toute la carte' : offer.target_type === 'category' ? `Catégorie : ${categoryLabel(offer.target_value)}` : `Plat : ${products.find(p => p.id === offer.target_value)?.title || 'plat retiré de la carte'}`}</div>
                     </div>
                   </div>
                   <div className={styles.metricBgDeco}></div>
@@ -724,26 +739,40 @@ export default function AdminClient({ section, initialStaff = [] }) {
               </div>
               <div className={styles.inputGroup}>
                 <label>Cible de la réduction</label>
-                <div className={styles.dropdownContainer}>
-                  <select className={styles.formInput} value={offerForm.target_type} onChange={(e) => setOfferForm({...offerForm, target_type: e.target.value})}>
-                    <option value="all">Tout le menu (Toutes les commandes)</option>
-                    <option value="category">Une catégorie spécifique</option>
-                    <option value="product">Un produit spécifique</option>
-                  </select>
-                </div>
+                <Select
+                  label="Cible de la réduction"
+                  value={offerForm.target_type}
+                  onChange={(target_type) => setOfferForm({ ...offerForm, target_type, target_value: '' })}
+                  options={[
+                    { value: 'all', label: 'Toute la carte' },
+                    { value: 'category', label: 'Une catégorie' },
+                    { value: 'product', label: 'Un plat' },
+                  ]}
+                />
               </div>
               
               {offerForm.target_type === 'category' && (
                 <div className={styles.inputGroup}>
-                  <label>Nom de la catégorie (ex: Pizzas, Burgers)</label>
-                  <input type="text" className={styles.formInput} value={offerForm.target_value} onChange={(e) => setOfferForm({...offerForm, target_value: e.target.value})} placeholder="Pizzas" required />
+                  <label>Catégorie</label>
+                  <CategoryPicker
+                    allowNew={false}
+                    value={offerForm.target_value}
+                    categories={categoriesOf(products)}
+                    onChange={(target_value) => setOfferForm({ ...offerForm, target_value })}
+                  />
                 </div>
               )}
 
               {offerForm.target_type === 'product' && (
                 <div className={styles.inputGroup}>
-                  <label>ID du produit (Trouvable dans la section Menu)</label>
-                  <input type="text" className={styles.formInput} value={offerForm.target_value} onChange={(e) => setOfferForm({...offerForm, target_value: e.target.value})} placeholder="ID-du-produit" required />
+                  <label>Plat</label>
+                  <Select
+                    label="Plat"
+                    placeholder="Choisir un plat"
+                    value={offerForm.target_value}
+                    onChange={(target_value) => setOfferForm({ ...offerForm, target_value })}
+                    options={products.map(p => ({ value: p.id, label: p.title, hint: categoryLabel(p.category) }))}
+                  />
                 </div>
               )}
 
@@ -753,12 +782,20 @@ export default function AdminClient({ section, initialStaff = [] }) {
               </div>
               <div className={styles.inputGroup}>
                 <label>Couleur du Thème</label>
-                <div className={styles.dropdownContainer}>
-                  <select className={styles.formInput} value={offerForm.theme} onChange={(e) => setOfferForm({...offerForm, theme: e.target.value})}>
-                    <option value="orange">Orange (Dégradé)</option>
-                    <option value="blue">Bleu (Dégradé)</option>
-                    <option value="purple">Violet (Dégradé)</option>
-                  </select>
+                <div className={styles.swatches} role="radiogroup" aria-label="Couleur du thème">
+                  {OFFER_THEMES.map(t => (
+                    <button
+                      key={t.value}
+                      type="button"
+                      role="radio"
+                      aria-checked={offerForm.theme === t.value}
+                      className={`${styles.swatch} ${offerForm.theme === t.value ? styles.swatchOn : ''}`}
+                      onClick={() => setOfferForm({ ...offerForm, theme: t.value })}
+                    >
+                      <span className={styles.swatchColor} style={{ background: t.gradient }} aria-hidden="true" />
+                      {t.label}
+                    </button>
+                  ))}
                 </div>
               </div>
               <div className={styles.modalActions}>

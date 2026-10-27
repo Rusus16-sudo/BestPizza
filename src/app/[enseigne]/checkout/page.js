@@ -12,6 +12,7 @@ import { rememberOrder } from '@/lib/guest-orders'
 import { deliveryQuote } from '@/lib/delivery'
 import { describeOpening } from '@/lib/opening-hours'
 import { useOpening } from '@/components/OpeningBadge'
+import Select from '@/components/Select'
 import styles from './Checkout.module.css'
 
 const PAYMENT_METHODS = [
@@ -194,19 +195,16 @@ export default function CheckoutPage() {
             {quote.usesZones && (
               <div className={styles.field}>
                 <label htmlFor="zone">Quartier</label>
-                <select
+                <Select
                   id="zone"
-                  className={styles.input}
+                  label="Votre quartier"
+                  placeholder="Choisissez votre quartier"
                   value={zoneId}
-                  onChange={(e) => { setZoneId(e.target.value); setErrors(er => ({ ...er, zone: undefined })) }}
-                  aria-invalid={!!errors.zone}
-                  aria-describedby={errors.zone ? 'zone-error' : undefined}
-                >
-                  <option value="">Choisissez votre quartier</option>
-                  {location.zones.map(z => (
-                    <option key={z.id} value={z.id}>{z.name} · {Number(z.fee) > 0 ? formatPrice(z.fee) : 'livraison offerte'}</option>
-                  ))}
-                </select>
+                  onChange={(v) => { setZoneId(v); setErrors(er => ({ ...er, zone: undefined })) }}
+                  invalid={!!errors.zone}
+                  describedBy={errors.zone ? 'zone-error' : undefined}
+                  options={location.zones.map(z => ({ value: z.id, label: z.name, hint: Number(z.fee) > 0 ? formatPrice(z.fee) : 'Offerte' }))}
+                />
                 {errors.zone && <p id="zone-error" className={styles.error}>{errors.zone}</p>}
               </div>
             )}

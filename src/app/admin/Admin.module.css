@@ -1432,3 +1432,37 @@
   font-size: 0.82rem;
   color: var(--color-text-tertiary);
 }
+
+/* Couleur d'une promotion */
+.swatches {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.swatch {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 16px 6px 6px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  background: var(--color-surface);
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.swatchColor {
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-full);
+}
+
+.swatchOn {
+  border-color: var(--color-primary);
+  color: var(--color-text-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-dim);
+}
