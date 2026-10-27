@@ -13,6 +13,7 @@ import ConfirmDialog from '@/components/ConfirmDialog'
 import { getStaffMembership } from '@/lib/staff'
 import { productPhotoPath } from '@/lib/product-photos'
 import { isNewProduct, newUntilFor, NEW_FOR_DAYS } from '@/lib/product-badges'
+import OptionGroupsEditor, { cleanOptionGroups } from '@/components/OptionGroupsEditor'
 
 registerLocale('fr', fr)
 
@@ -48,7 +49,7 @@ export default function AdminClient({ section, initialStaff = [] }) {
   const [menuLoading, setMenuLoading] = useState(true)
   const [menuModalOpen, setMenuModalOpen] = useState(false)
   const [editingProduct, setEditingProduct] = useState(null)
-  const [productForm, setProductForm] = useState({ title: '', category: 'Pizzas', price: '', description: '', image: '', is_spicy: false, is_new: false })
+  const [productForm, setProductForm] = useState({ title: '', category: 'Pizzas', price: '', description: '', image: '', is_spicy: false, is_new: false, option_groups: [] })
   const [imageFile, setImageFile] = useState(null)
   const [formLoading, setFormLoading] = useState(false)
   const [openDropdownId, setOpenDropdownId] = useState(null)
@@ -158,10 +159,11 @@ export default function AdminClient({ section, initialStaff = [] }) {
         prep_time: product.prep_time || '25-35 min',
         is_spicy: Boolean(product.is_spicy),
         is_new: isNewProduct(product),
+        option_groups: Array.isArray(product.option_groups) ? product.option_groups : [],
       })
     } else {
       setEditingProduct(null)
-      setProductForm({ title: '', category: 'Pizzas', price: '', description: '', image: '', prep_time: '25-35 min', is_spicy: false, is_new: true })
+      setProductForm({ title: '', category: 'Pizzas', price: '', description: '', image: '', prep_time: '25-35 min', is_spicy: false, is_new: true, option_groups: [] })
     }
     setImageFile(null)
     setMenuModalOpen(true)
@@ -169,6 +171,11 @@ export default function AdminClient({ section, initialStaff = [] }) {
 
   const handleSaveProduct = async (e) => {
     e.preventDefault()
+    const options = cleanOptionGroups(productForm.option_groups)
+    if (options.error) {
+      toast.error(options.error)
+      return
+    }
     setFormLoading(true)
 
     let finalImageUrl = productForm.image;
@@ -198,6 +205,7 @@ export default function AdminClient({ section, initialStaff = [] }) {
       prep_time: productForm.prep_time || '25-35 min',
       is_spicy: productForm.is_spicy,
       new_until: newUntilFor(productForm.is_new, editingProduct?.new_until),
+      option_groups: options.groups,
     }
 
     let error;
@@ -540,7 +548,7 @@ export default function AdminClient({ section, initialStaff = [] }) {
       {/* MENU MODAL */}
       {menuModalOpen && (
         <div className={styles.modalOverlay}>
-          <div className={styles.modal} style={{ maxWidth: '500px' }}>
+          <div className={styles.modal} style={{ maxWidth: '580px' }}>
             <h3>{editingProduct ? 'Modifier un produit' : 'Nouveau produit'}</h3>
             <p>Entrez les détails du plat pour le menu.</p>
             <form onSubmit={handleSaveProduct}>
@@ -603,6 +611,15 @@ export default function AdminClient({ section, initialStaff = [] }) {
                     </div>
                   )}
                 </div>
+              </div>
+
+              <div className={styles.inputGroup}>
+                <label>Choix proposés au client</label>
+                <p className={styles.fieldHelp}>Taille, formule, suppléments… avec ce que chaque possibilité ajoute au prix.</p>
+                <OptionGroupsEditor
+                  value={productForm.option_groups}
+                  onChange={(groups) => setProductForm({ ...productForm, option_groups: groups })}
+                />
               </div>
 
               <div className={styles.badgeChoices}>

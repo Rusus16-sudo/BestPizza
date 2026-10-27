@@ -104,6 +104,8 @@ export default function CategoriesPage() {
                   image={item.image}
                   isSpicy={item.isSpicy ?? item.is_spicy}
                   newUntil={item.new_until}
+
+                  optionGroups={item.option_groups}
                   rating={item.rating}
                 />
               ))}

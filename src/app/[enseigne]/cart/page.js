@@ -6,9 +6,12 @@ import { useCart, formatPrice } from '@/context/CartContext'
 import { createClient } from '@/utils/supabase/client'
 import PageHeader from '@/components/PageHeader'
 import { useStorefront } from '@/context/StorefrontContext'
+import { singleLabels, extraLabels } from '@/lib/options'
 import styles from './Cart.module.css'
 
+// « Grande · Bacon fumé, Fromage » (et les paniers d'avant les choix par plat)
 function describeOptions(item) {
+  if (Array.isArray(item.lines)) return [singleLabels(item.lines), extraLabels(item.lines).join(', ')].filter(Boolean).join(' · ')
   const parts = []
   if (item.size && item.size !== 'Standard') parts.push(item.size)
   const extras = Object.entries(item.customizations || {}).filter(([, on]) => on).length

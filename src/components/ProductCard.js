@@ -9,15 +9,15 @@ import toast from 'react-hot-toast'
 import { useCart, formatPrice } from '@/context/CartContext'
 import { getStaffMembership, screenRole } from '@/lib/staff'
 import { productPhotoPath } from '@/lib/product-photos'
+import { defaultSelection, selectionLines, unitPriceFor } from '@/lib/options'
 import { isNewProduct, newUntilFor, NEW_FOR_DAYS } from '@/lib/product-badges'
 import { useStorefrontHref } from '@/context/StorefrontContext'
 
-export default function ProductCard({ id, title, price, image, category = 'Pizza', isSpicy = false, newUntil = null, rating = null, prepTime = "25-35 min", variant = 'grid' }) {
+export default function ProductCard({ id, title, price, image, category = 'Pizza', optionGroups = [], isSpicy = false, newUntil = null, rating = null, prepTime = "25-35 min", variant = 'grid' }) {
   const isNew = isNewProduct({ new_until: newUntil })
   const { addToCart } = useCart()
   const shop = useStorefrontHref()
   const [justAdded, setJustAdded] = useState(false)
-  const isPizza = ['pizza', 'pizzas'].includes(String(category).toLowerCase())
   const [showDropdown, setShowDropdown] = useState(false)
   const [isGerant, setIsGerant] = useState(false)
   const [editModalOpen, setEditModalOpen] = useState(false)
@@ -126,8 +126,10 @@ export default function ProductCard({ id, title, price, image, category = 'Pizza
   const handleQuickAdd = (e) => {
     e.preventDefault()
     e.stopPropagation()
-    const size = isPizza ? 'Moyenne' : 'Standard'
-    addToCart({ id, title, image, category }, 1, size, {}, Number(price))
+    // Ajout rapide : le plat avec ses choix par défaut (première taille, première formule)
+    const product = { id, title, image, category, price, option_groups: optionGroups }
+    const selection = defaultSelection(product)
+    addToCart(product, 1, selection, selectionLines(product, selection), unitPriceFor(product, selection))
     setJustAdded(true)
     toast.success(`${title} ajouté au panier`, { id: 'cart-add' })
     setTimeout(() => setJustAdded(false), 1400)

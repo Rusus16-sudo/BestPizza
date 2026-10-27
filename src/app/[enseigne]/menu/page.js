@@ -87,6 +87,8 @@ export default function MenuPage() {
                   category={item.category}
                   isSpicy={item.isSpicy ?? item.is_spicy}
                   newUntil={item.new_until}
+
+                  optionGroups={item.option_groups}
                   rating={item.rating}
                   prepTime={item.prep_time || '25-35 min'}
                 />

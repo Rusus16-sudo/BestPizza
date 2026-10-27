@@ -5,17 +5,13 @@ import { usePathname } from 'next/navigation'
 import { storefrontSlugFromPath, lastStorefrontSlug, DEFAULT_STOREFRONT } from '@/lib/storefront-paths'
 import { promoApplies } from '@/lib/pricing'
 import { formatPrice } from '@/lib/format'
+import { sameSelection, singleLabels } from '@/lib/options'
 
 const CartContext = createContext()
 
 // Les écrans l'importent d'ici ; le serveur, de lib/format
 export { formatPrice }
 
-function sameCustomizations(a = {}, b = {}) {
-  const keys = new Set([...Object.keys(a), ...Object.keys(b)])
-  for (const k of keys) if (!!a[k] !== !!b[k]) return false
-  return true
-}
 
 // Un panier par restaurant, gardé sur l'appareil : passer d'une vitrine à l'autre
 // ne mélange pas les plats.
@@ -78,32 +74,34 @@ export function CartProvider({ children }) {
     } catch {}
   }, [cartItems, appliedPromo, isMounted, loadedSlug, slug])
 
-  const addToCart = (product, quantity, size, customizations, totalPrice) => {
-    const unitPrice = totalPrice / quantity
+  // Un article du panier : le plat, ses choix (taille, formule, suppléments) et leur détail
+  const cartLine = (product, quantity, choices, lines, totalPrice, id) => ({
+    id,
+    productId: product.id,
+    title: product.title,
+    category: product.category,
+    price: totalPrice, // Prix pour toute la quantité
+    unitPrice: totalPrice / quantity,
+    image: product.image,
+    quantity,
+    choices,
+    lines,
+    size: singleLabels(lines),
+  })
+
+  const addToCart = (product, quantity, choices, lines, totalPrice) => {
     setCartItems(prev => {
-      // Même produit, même taille, mêmes options : on additionne les quantités
+      // Même plat, mêmes choix : on additionne les quantités
       const existing = prev.find(item =>
         item.productId === product.id &&
-        item.size === size &&
-        sameCustomizations(item.customizations, customizations)
+        sameSelection(item.choices, choices)
       )
       if (existing) {
         return prev.map(item => item.id === existing.id
           ? { ...item, quantity: item.quantity + quantity, price: item.unitPrice * (item.quantity + quantity) }
           : item)
       }
-      return [...prev, {
-        id: Date.now().toString(),
-        productId: product.id,
-        title: product.title,
-        category: product.category,
-        price: totalPrice, // Prix pour toute la quantité
-        unitPrice,
-        image: product.image,
-        quantity,
-        size,
-        customizations
-      }]
+      return [...prev, cartLine(product, quantity, choices, lines, totalPrice, Date.now().toString())]
     })
   }
 
@@ -111,22 +109,11 @@ export function CartProvider({ children }) {
   // (« Recommander » depuis mes commandes, qui regroupent tous les restaurants)
   const addToStorefrontCart = (targetSlug, entries) => {
     if (targetSlug === slug) {
-      entries.forEach(e => addToCart(e.product, e.quantity, e.size, e.customizations, e.totalPrice))
+      entries.forEach(e => addToCart(e.product, e.quantity, e.choices, e.lines, e.totalPrice))
       return
     }
     const items = readJSON(cartKey(targetSlug)) || []
-    entries.forEach((e, i) => items.push({
-      id: `${Date.now()}-${i}`,
-      productId: e.product.id,
-      title: e.product.title,
-      category: e.product.category,
-      price: e.totalPrice,
-      unitPrice: e.totalPrice / e.quantity,
-      image: e.product.image,
-      quantity: e.quantity,
-      size: e.size,
-      customizations: e.customizations,
-    }))
+    entries.forEach((e, i) => items.push(cartLine(e.product, e.quantity, e.choices, e.lines, e.totalPrice, `${Date.now()}-${i}`)))
     try {
       localStorage.setItem(cartKey(targetSlug), JSON.stringify(items))
     } catch {}

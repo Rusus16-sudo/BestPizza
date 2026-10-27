@@ -84,6 +84,8 @@ export default function CheckoutPage() {
           items: cartItems.map(item => ({
             productId: item.productId,
             quantity: item.quantity,
+            // Les choix du plat ; un panier d'avant les choix envoie encore taille et suppléments
+            choices: item.choices,
             size: item.size,
             customizations: item.customizations || {},
           })),

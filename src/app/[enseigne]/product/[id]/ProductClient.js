@@ -7,7 +7,7 @@ import { useCart, formatPrice } from '@/context/CartContext'
 import { getBrowserClient } from '@/utils/supabase/client'
 import toast from 'react-hot-toast'
 import styles from './Product.module.css'
-import { SIZES, isPizzaCategory, computeUnitPrice } from '@/lib/pricing'
+import { defaultSelection, normalizeSelection, selectionLines, unitPriceFor } from '@/lib/options'
 import { isNewProduct } from '@/lib/product-badges'
 import { useStorefront } from '@/context/StorefrontContext'
 
@@ -17,13 +17,14 @@ export default function ProductClient({ product }) {
   const { addToCart, totalItems } = useCart()
   const { href } = useStorefront()
   const [quantity, setQuantity] = useState(1)
-  const [size, setSize] = useState('Moyenne')
+  // Les choix du plat (taille, formule, suppléments), définis par le gérant
+  const groups = (product.option_groups || []).filter(g => g?.choices?.length)
+  const [choices, setChoices] = useState(() => defaultSelection(product))
   const [isFavorite, setIsFavorite] = useState(false)
   const [user, setUser] = useState(null)
   const [justAdded, setJustAdded] = useState(false)
   const [supabase] = useState(() => getBrowserClient())
 
-  const isPizza = isPizzaCategory(product.category)
   const reviews = Array.isArray(product.reviews) ? product.reviews : []
   const reviewCount = Array.isArray(product.reviews) ? product.reviews.length : Number(product.reviews) || 0
   const isMock = String(product.id).length <= 10
@@ -46,11 +47,13 @@ export default function ProductClient({ product }) {
     initFav()
   }, [product.id])
 
-  const [customizations, setCustomizations] = useState(() =>
-    (product.customizations || []).reduce((acc, c) => ({ ...acc, [c.id]: false }), {})
-  )
+  const toggleOption = (groupId, choiceId) => setChoices(prev => {
+    const current = prev[groupId] || []
+    return { ...prev, [groupId]: current.includes(choiceId) ? current.filter(id => id !== choiceId) : [...current, choiceId] }
+  })
 
-  const unitPrice = computeUnitPrice(product, size, customizations)
+  const selection = normalizeSelection(product, choices)
+  const unitPrice = unitPriceFor(product, selection)
   const totalPrice = unitPrice * quantity
 
   const toggleFavorite = async () => {
@@ -78,7 +81,7 @@ export default function ProductClient({ product }) {
   }
 
   const handleAdd = () => {
-    addToCart(product, quantity, isPizza ? size : 'Standard', customizations, totalPrice)
+    addToCart(product, quantity, selection, selectionLines(product, selection), totalPrice)
     setJustAdded(true)
     setTimeout(() => setJustAdded(false), 1600)
     toast.success(`${quantity > 1 ? `${quantity} × ` : ''}${product.title} ajouté au panier`, { id: 'cart-add' })
@@ -124,47 +127,43 @@ export default function ProductClient({ product }) {
           {product.description && <p className={styles.description}>{product.description}</p>}
         </header>
 
-        {isPizza && (
-          <section className={styles.block} aria-labelledby="size-title">
-            <h2 id="size-title">Taille</h2>
-            <div className={styles.sizes} role="radiogroup" aria-labelledby="size-title">
-              {SIZES.map(s => (
-                <button
-                  key={s.id}
-                  role="radio"
-                  aria-checked={size === s.id}
-                  className={`${styles.size} ${size === s.id ? styles.sizeActive : ''}`}
-                  onClick={() => setSize(s.id)}
-                >
-                  <span className={styles.sizeName}>{s.id}</span>
-                  <span className={styles.sizeExtra}>{s.extra ? `+${s.extra.toLocaleString('fr-FR')}` : 'Inclus'}</span>
-                </button>
-              ))}
-            </div>
+        {groups.map(group => (
+          <section key={group.id} className={styles.block} aria-labelledby={`group-${group.id}`}>
+            <h2 id={`group-${group.id}`}>{group.name}</h2>
+            {group.type === 'multiple' ? (
+              <div className={styles.addons}>
+                {group.choices.map(choice => {
+                  const on = (choices[group.id] || []).includes(String(choice.id))
+                  return (
+                    <label key={choice.id} className={`${styles.addon} ${on ? styles.addonOn : ''}`}>
+                      <input type="checkbox" checked={on} onChange={() => toggleOption(group.id, String(choice.id))} />
+                      <span className={styles.check} aria-hidden="true">
+                        <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" strokeWidth="3.2" fill="none" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                      </span>
+                      <span className={styles.addonLabel}>{choice.label}</span>
+                      <span className={styles.addonPrice}>{Number(choice.price) ? `+${Number(choice.price).toLocaleString('fr-FR')}` : 'Offert'}</span>
+                    </label>
+                  )
+                })}
+              </div>
+            ) : (
+              <div className={styles.sizes} role="radiogroup" aria-labelledby={`group-${group.id}`}>
+                {group.choices.map(choice => (
+                  <button
+                    key={choice.id}
+                    role="radio"
+                    aria-checked={choices[group.id] === String(choice.id)}
+                    className={`${styles.size} ${choices[group.id] === String(choice.id) ? styles.sizeActive : ''}`}
+                    onClick={() => setChoices(prev => ({ ...prev, [group.id]: String(choice.id) }))}
+                  >
+                    <span className={styles.sizeName}>{choice.label}</span>
+                    <span className={styles.sizeExtra}>{Number(choice.price) ? `+${Number(choice.price).toLocaleString('fr-FR')}` : 'Inclus'}</span>
+                  </button>
+                ))}
+              </div>
+            )}
           </section>
-        )}
-
-        {product.customizations?.length > 0 && (
-          <section className={styles.block} aria-labelledby="addons-title">
-            <h2 id="addons-title">Suppléments</h2>
-            <div className={styles.addons}>
-              {product.customizations.map(addon => (
-                <label key={addon.id} className={`${styles.addon} ${customizations[addon.id] ? styles.addonOn : ''}`}>
-                  <input
-                    type="checkbox"
-                    checked={!!customizations[addon.id]}
-                    onChange={() => setCustomizations(prev => ({ ...prev, [addon.id]: !prev[addon.id] }))}
-                  />
-                  <span className={styles.check} aria-hidden="true">
-                    <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" strokeWidth="3.2" fill="none" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
-                  </span>
-                  <span className={styles.addonLabel}>{addon.label}</span>
-                  <span className={styles.addonPrice}>+{Number(addon.price).toLocaleString('fr-FR')}</span>
-                </label>
-              ))}
-            </div>
-          </section>
-        )}
+        ))}
 
         <section className={styles.block} aria-labelledby="reviews-title">
           <h2 id="reviews-title">Avis clients</h2>

@@ -290,3 +290,10 @@
   font-size: 0.95rem;
   color: var(--color-text-secondary);
 }
+
+.extras {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.82rem;
+  color: var(--color-text-tertiary);
+}

@@ -11,6 +11,7 @@ import PushOptIn from '@/components/PushOptIn'
 import { useCart } from '@/context/CartContext'
 import Link from 'next/link'
 import { rememberedOrders } from '@/lib/guest-orders'
+import { normalizeSelection, legacySelection, selectionFromLines, selectionLines, unitPriceFor } from '@/lib/options'
 
 export default function OrdersPage() {
   const router = useRouter()
@@ -100,7 +101,8 @@ export default function OrdersPage() {
             quantity,
             price,
             size,
-            customizations
+            customizations,
+            options
           )
         `)
         .eq('user_id', currentUser.id)
@@ -131,7 +133,8 @@ export default function OrdersPage() {
             quantity: item.quantity,
             price: item.price,
             size: item.size,
-            customizations: item.customizations || {}
+            customizations: item.customizations || {},
+            options: item.options || []
           }))
         }))
         setOrders(formattedOrders)
@@ -158,19 +161,26 @@ export default function OrdersPage() {
     }
     const ids = order.items.map(item => item.productId).filter(Boolean)
     const { data: products } = ids.length
-      ? await createClient().from('products').select('id, title, image, category, is_available').in('id', ids)
+      ? await createClient().from('products').select('id, title, image, category, is_available, price, option_groups').in('id', ids)
       : { data: [] }
     const byId = new Map((products || []).filter(p => p.is_available !== false).map(p => [p.id, p]))
 
     const entries = order.items
       .filter(item => byId.has(item.productId))
-      .map(item => ({
-        product: byId.get(item.productId),
-        quantity: item.quantity,
-        size: item.size || 'Standard',
-        customizations: item.customizations,
-        totalPrice: item.price,
-      }))
+      .map(item => {
+        // Les mêmes choix qu'à la commande, au prix d'aujourd'hui
+        const product = byId.get(item.productId)
+        const selection = item.options?.length
+          ? normalizeSelection(product, selectionFromLines(item.options))
+          : legacySelection(product, item.size, item.customizations)
+        return {
+          product,
+          quantity: item.quantity,
+          choices: selection,
+          lines: selectionLines(product, selection),
+          totalPrice: unitPriceFor(product, selection) * item.quantity,
+        }
+      })
 
     if (entries.length === 0) {
       toast.error("Ces plats ne sont plus à la carte.")

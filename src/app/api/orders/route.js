@@ -2,7 +2,8 @@ import { NextResponse } from 'next/server'
 import { createAdminClient, requireUser } from '@/utils/supabase/admin'
 import { resolveStorefront } from '@/lib/storefront'
 import { deliveryQuote } from '@/lib/delivery'
-import { computeUnitPrice, isPizzaCategory, SIZES, promoApplies, isOfferValid } from '@/lib/pricing'
+import { promoApplies, isOfferValid } from '@/lib/pricing'
+import { normalizeSelection, legacySelection, selectionLines, unitPriceFor, singleLabels } from '@/lib/options'
 import { initializePayment, isNotchPayConfigured } from '@/lib/notchpay'
 import { headers } from 'next/headers'
 
@@ -76,7 +77,7 @@ export async function POST(request) {
   const validIds = ids.filter(id => UUID.test(id))
   const [{ data: products, error: productsError }, { data: localRules }] = validIds.length
     ? await Promise.all([
-      db.from('products').select('id, title, price, category, customizations, is_available')
+      db.from('products').select('id, title, price, category, option_groups, is_available')
         .eq('organization_id', organization.id).in('id', validIds),
       db.from('product_locations').select('product_id, is_available, price_override')
         .eq('location_id', location.id).in('product_id', validIds),
@@ -118,13 +119,14 @@ export async function POST(request) {
   const lines = items.map(item => {
     const product = byId.get(String(item.productId))
     const quantity = Math.min(Math.max(parseInt(item.quantity, 10) || 1, 1), 50)
-    const size = isPizzaCategory(product.category) && SIZES.some(s => s.id === item.size) ? item.size : (isPizzaCategory(product.category) ? 'Moyenne' : 'Standard')
-    const allowed = new Set((product.customizations || []).map(c => c.id))
-    const customizations = Object.fromEntries(
-      Object.entries(item.customizations || {}).filter(([k, v]) => allowed.has(k) && v === true)
-    )
-    const unitPrice = computeUnitPrice(product, size, customizations)
-    return { product, quantity, size, customizations, unitPrice, price: unitPrice * quantity }
+    // Les choix du plat (taille, formule, suppléments) ; un panier d'avant les choix
+    // par plat envoie encore une taille et des suppléments, traduits ici
+    const selection = item.choices && typeof item.choices === 'object'
+      ? normalizeSelection(product, item.choices)
+      : legacySelection(product, item.size, item.customizations)
+    const options = selectionLines(product, selection)
+    const unitPrice = unitPriceFor(product, selection)
+    return { product, quantity, options, unitPrice, price: unitPrice * quantity }
   })
 
   const subtotal = lines.reduce((s, l) => s + l.price, 0)
@@ -178,10 +180,11 @@ export async function POST(request) {
     product_id: l.product.id,
     product_name: l.product.title,
     quantity: l.quantity,
-    size: l.size,
+    size: singleLabels(l.options) || 'Standard',
     unit_price: l.unitPrice,
     price: l.price,
-    customizations: l.customizations,
+    customizations: {},
+    options: l.options,
   })))
 
   if (itemsError) {

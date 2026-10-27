@@ -1426,3 +1426,9 @@
   background: var(--color-surface-muted);
   color: var(--color-text-primary);
 }
+
+.fieldHelp {
+  margin: -2px 0 8px;
+  font-size: 0.82rem;
+  color: var(--color-text-tertiary);
+}

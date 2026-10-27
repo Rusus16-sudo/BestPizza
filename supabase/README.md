@@ -24,6 +24,7 @@ relancé sans risque : il ne recrée pas ce qui existe déjà.
 | 10 | `migrations/20261027_tchopi_4_vitrines.sql` | Tchopi : partie publique des restaurants pour les vitrines (nom, logo, couleur), adresses réservées |
 | 11 | `migrations/20261027_tchopi_5_commande_sans_compte.sql` | Tchopi : commande sans compte (lien de suivi secret, notifications par commande) |
 | 12 | `migrations/20261027_tchopi_6_horaires_livraison.sql` | Tchopi : horaires, frais de livraison et quartiers de chaque point de vente, réglés par le gérant |
+| 13 | `migrations/20261027_tchopi_7_formats_des_plats.sql` | Tchopi : les choix de chaque plat (taille, formule, suppléments), définis par le gérant |
 
 Après l'étape 7, `node scripts/test-isolation.js` vérifie qu'aucun établissement ne voit
 les données d'un autre (il crée deux faux restaurants, sans envoyer d'email, puis les efface).

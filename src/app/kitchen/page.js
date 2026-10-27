@@ -9,6 +9,7 @@ import ConfirmDialog from '@/components/ConfirmDialog'
 import PushOptIn from '@/components/PushOptIn'
 import styles from './Kitchen.module.css'
 import { formatDuration } from '@/lib/format'
+import { extraLabels } from '@/lib/options'
 import { signOut } from '@/lib/sign-out'
 
 const COLUMNS = [
@@ -30,7 +31,10 @@ function minutesSince(date, now) {
   return Math.max(0, Math.floor((now - new Date(date).getTime()) / 60000))
 }
 
+// Les options cochées d'un article. Les commandes d'avant les choix par plat les
+// rangeaient dans « customizations », avec le catalogue du produit.
 function customizationLabels(item) {
+  if (Array.isArray(item.options) && item.options.length) return extraLabels(item.options)
   const chosen = Object.entries(item.customizations || {}).filter(([, on]) => on).map(([id]) => id)
   if (chosen.length === 0) return []
   const catalog = item.products?.customizations || []
@@ -127,7 +131,7 @@ export default function KitchenPage() {
       .from('orders')
       .select(`
         id, short_id, status, special_instructions, created_at, updated_at,
-        order_items ( product_name, quantity, size, customizations, products ( customizations ) )
+        order_items ( product_name, quantity, size, customizations, options, products ( customizations ) )
       `)
       .in('status', COLUMNS.map(c => c.status))
       .order('created_at', { ascending: true })
@@ -304,7 +308,7 @@ export default function KitchenPage() {
                                 <span className={styles.qty}>{item.quantity}×</span>
                                 <span className={styles.itemName}>
                                   {item.product_name}
-                                  {item.size && !['Moyenne', 'Standard'].includes(item.size) && <em className={styles.size}>{item.size}</em>}
+                                  {item.size && item.size !== 'Standard' && <em className={styles.size}>{item.size}</em>}
                                   {extras.length > 0 && <span className={styles.extras}>+ {extras.join(', ')}</span>}
                                 </span>
                               </li>

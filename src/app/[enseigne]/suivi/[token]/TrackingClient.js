@@ -152,7 +152,10 @@ export default function TrackingClient({ initialOrder, token, isLoggedIn }) {
         <ul className={styles.items}>
           {order.items.map((item, i) => (
             <li key={i}>
-              <span>{item.quantity}× {item.name}{item.size && item.size !== 'Standard' ? ` · ${item.size}` : ''}</span>
+              <span>
+                {item.quantity}× {item.name}{item.size && item.size !== 'Standard' ? ` · ${item.size}` : ''}
+                {item.extras?.length > 0 && <small className={styles.extras}>+ {item.extras.join(', ')}</small>}
+              </span>
               <span>{formatPrice(item.price)}</span>
             </li>
           ))}

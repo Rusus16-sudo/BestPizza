@@ -17,7 +17,7 @@ export async function getTrackedOrder(token) {
     .select(`
       id, short_id, order_number, status, payment_status, payment_method, total_amount, delivery_fee, delivery_zone,
       created_at, customer_name, user_id, organization_id,
-      order_items ( product_name, quantity, price, size )
+      order_items ( product_name, quantity, price, size, options )
     `)
     .eq('tracking_token', token)
     .maybeSingle()
@@ -48,6 +48,7 @@ export async function getTrackedOrder(token) {
       quantity: i.quantity,
       price: i.price,
       size: i.size,
+      extras: (i.options || []).filter((o) => !o.single).map((o) => o.label),
     })),
   }
 }
