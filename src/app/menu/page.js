@@ -89,6 +89,7 @@ export default function MenuPage() {
                   image={item.image}
                   category={item.category}
                   isSpicy={item.isSpicy ?? item.is_spicy}
+                  newUntil={item.new_until}
                   rating={item.rating}
                   prepTime={item.prep_time || '25-35 min'}
                 />

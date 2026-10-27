@@ -8,6 +8,7 @@ import { getBrowserClient } from '@/utils/supabase/client'
 import toast from 'react-hot-toast'
 import styles from './Product.module.css'
 import { SIZES, isPizzaCategory, computeUnitPrice } from '@/lib/pricing'
+import { isNewProduct } from '@/lib/product-badges'
 
 
 export default function ProductClient({ product }) {
@@ -106,14 +107,13 @@ export default function ProductClient({ product }) {
         <header className={styles.intro}>
           <h1>{product.title}</h1>
           <div className={styles.meta}>
-            {product.rating ? (
+            {isNewProduct(product) && <span className={styles.newTag}>Nouveau</span>}
+            {product.rating && (
               <span className={styles.metaItem}>
                 <svg className={styles.star} viewBox="0 0 24 24" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>
                 <strong>{product.rating}</strong>
                 {reviewCount > 0 && <span>({reviewCount} avis)</span>}
               </span>
-            ) : (
-              <span className={styles.newTag}>Nouveau</span>
             )}
             <span className={styles.metaItem}>{product.prep_time || '25-35 min'}</span>
             {(product.isSpicy ?? product.is_spicy) && <span className={`${styles.metaItem} ${styles.spicy}`}>Épicé</span>}

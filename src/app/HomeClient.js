@@ -58,6 +58,7 @@ export default function HomeClient({ user, products, latestOffer }) {
       image={item.image}
       category={item.category}
       isSpicy={item.isSpicy ?? item.is_spicy}
+      newUntil={item.new_until}
       rating={item.rating}
       prepTime={item.prep_time || '25-35 min'}
       variant={variant}

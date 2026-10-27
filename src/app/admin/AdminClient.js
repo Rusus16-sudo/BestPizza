@@ -12,6 +12,7 @@ import styles from './Admin.module.css'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import { getStaffMembership } from '@/lib/staff'
 import { productPhotoPath } from '@/lib/product-photos'
+import { isNewProduct, newUntilFor, NEW_FOR_DAYS } from '@/lib/product-badges'
 
 registerLocale('fr', fr)
 
@@ -47,7 +48,7 @@ export default function AdminClient({ section, initialStaff = [] }) {
   const [menuLoading, setMenuLoading] = useState(true)
   const [menuModalOpen, setMenuModalOpen] = useState(false)
   const [editingProduct, setEditingProduct] = useState(null)
-  const [productForm, setProductForm] = useState({ title: '', category: 'Pizzas', price: '', description: '', image: '' })
+  const [productForm, setProductForm] = useState({ title: '', category: 'Pizzas', price: '', description: '', image: '', is_spicy: false, is_new: false })
   const [imageFile, setImageFile] = useState(null)
   const [formLoading, setFormLoading] = useState(false)
   const [openDropdownId, setOpenDropdownId] = useState(null)
@@ -154,11 +155,13 @@ export default function AdminClient({ section, initialStaff = [] }) {
         price: product.price.toString(),
         description: product.description || '',
         image: product.image,
-        prep_time: product.prep_time || '25-35 min'
+        prep_time: product.prep_time || '25-35 min',
+        is_spicy: Boolean(product.is_spicy),
+        is_new: isNewProduct(product),
       })
     } else {
       setEditingProduct(null)
-      setProductForm({ title: '', category: 'Pizzas', price: '', description: '', image: '', prep_time: '25-35 min' })
+      setProductForm({ title: '', category: 'Pizzas', price: '', description: '', image: '', prep_time: '25-35 min', is_spicy: false, is_new: true })
     }
     setImageFile(null)
     setMenuModalOpen(true)
@@ -192,7 +195,9 @@ export default function AdminClient({ section, initialStaff = [] }) {
       price: Number(productForm.price),
       description: productForm.description,
       image: finalImageUrl,
-      prep_time: productForm.prep_time || '25-35 min'
+      prep_time: productForm.prep_time || '25-35 min',
+      is_spicy: productForm.is_spicy,
+      new_until: newUntilFor(productForm.is_new, editingProduct?.new_until),
     }
 
     let error;
@@ -517,7 +522,11 @@ export default function AdminClient({ section, initialStaff = [] }) {
                     )}
                   </div>
                   <div className={styles.menuItemContent}>
-                    <span className={styles.menuItemCategory}>{product.category}</span>
+                    <span className={styles.menuItemCategory}>
+                      {product.category}
+                      {isNewProduct(product) && <span className={styles.menuItemBadge}>Nouveau</span>}
+                      {product.is_spicy && <span className={styles.menuItemBadge}>Épicé</span>}
+                    </span>
                     <h3 className={styles.menuItemTitle}>{product.title}</h3>
                     <div className={styles.menuItemPrice}>{product.price} FCFA</div>
                   </div>
@@ -594,6 +603,23 @@ export default function AdminClient({ section, initialStaff = [] }) {
                     </div>
                   )}
                 </div>
+              </div>
+
+              <div className={styles.badgeChoices}>
+                <label className={styles.badgeChoice}>
+                  <input type="checkbox" checked={productForm.is_new} onChange={(e) => setProductForm({...productForm, is_new: e.target.checked})} />
+                  <span>
+                    <strong>Nouveau</strong>
+                    Badge affiché {NEW_FOR_DAYS} jours, puis retiré tout seul
+                  </span>
+                </label>
+                <label className={styles.badgeChoice}>
+                  <input type="checkbox" checked={productForm.is_spicy} onChange={(e) => setProductForm({...productForm, is_spicy: e.target.checked})} />
+                  <span>
+                    <strong>Épicé</strong>
+                    Prévient les clients qui n’aiment pas le piment
+                  </span>
+                </label>
               </div>
 
               <div className={styles.modalActions}>

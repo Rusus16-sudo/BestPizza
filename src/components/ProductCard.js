@@ -9,8 +9,10 @@ import toast from 'react-hot-toast'
 import { useCart, formatPrice } from '@/context/CartContext'
 import { getStaffMembership, screenRole } from '@/lib/staff'
 import { productPhotoPath } from '@/lib/product-photos'
+import { isNewProduct, newUntilFor, NEW_FOR_DAYS } from '@/lib/product-badges'
 
-export default function ProductCard({ id, title, price, image, category = 'Pizza', isSpicy = false, rating = null, prepTime = "25-35 min", variant = 'grid' }) {
+export default function ProductCard({ id, title, price, image, category = 'Pizza', isSpicy = false, newUntil = null, rating = null, prepTime = "25-35 min", variant = 'grid' }) {
+  const isNew = isNewProduct({ new_until: newUntil })
   const { addToCart } = useCart()
   const [justAdded, setJustAdded] = useState(false)
   const isPizza = ['pizza', 'pizzas'].includes(String(category).toLowerCase())
@@ -28,6 +30,7 @@ export default function ProductCard({ id, title, price, image, category = 'Pizza
     category,
     image,
     isSpicy,
+    isNew,
     prep_time: prepTime
   })
   
@@ -99,7 +102,9 @@ export default function ProductCard({ id, title, price, image, category = 'Pizza
       price: editForm.price,
       category: editForm.category,
       image: finalImageUrl,
-      prep_time: editForm.prep_time || '25-35 min'
+      prep_time: editForm.prep_time || '25-35 min',
+      is_spicy: Boolean(editForm.isSpicy),
+      new_until: newUntilFor(editForm.isNew, newUntil),
     }
 
     const { error: dbError } = await supabase.from('products').update(payload).eq('id', id)
@@ -142,13 +147,12 @@ export default function ProductCard({ id, title, price, image, category = 'Pizza
         <div className={styles.content}>
           <h3 className={styles.title}>{title}</h3>
           <div className={styles.meta}>
-            {rating ? (
+            {isNew && <span className={styles.newTag}>Nouveau</span>}
+            {rating && (
               <span className={styles.metaItem}>
                 <svg className={styles.star} viewBox="0 0 24 24" width="13" height="13" fill="currentColor" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
                 <span className="visually-hidden">Note </span>{rating}
               </span>
-            ) : (
-              <span className={styles.newTag}>Nouveau</span>
             )}
             {prepTime && <span className={styles.metaItem}>{prepTime}</span>}
           </div>
@@ -191,7 +195,7 @@ export default function ProductCard({ id, title, price, image, category = 'Pizza
                     onClick={(e) => { 
                       e.preventDefault()
                       e.stopPropagation()
-                      setEditForm({ title, price, category, image, isSpicy, prep_time: prepTime })
+                      setEditForm({ title, price, category, image, isSpicy, isNew, prep_time: prepTime })
                       setEditModalOpen(true)
                       setShowDropdown(false)
                     }}
@@ -308,6 +312,11 @@ export default function ProductCard({ id, title, price, image, category = 'Pizza
             <div className={styles.checkboxGroup} onClick={() => setEditForm({...editForm, isSpicy: !editForm.isSpicy})}>
               <input type="checkbox" checked={editForm.isSpicy} readOnly />
               <label>Ce plat est épicé</label>
+            </div>
+
+            <div className={styles.checkboxGroup} onClick={() => setEditForm({...editForm, isNew: !editForm.isNew})}>
+              <input type="checkbox" checked={editForm.isNew} readOnly />
+              <label>Afficher « Nouveau » ({NEW_FOR_DAYS} jours)</label>
             </div>
 
             <div className={styles.modalActions}>

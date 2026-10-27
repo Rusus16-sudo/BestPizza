@@ -92,6 +92,7 @@ export default function FavoritesPage() {
               price={item.price}
               image={item.image}
               isSpicy={item.isSpicy ?? item.is_spicy}
+              newUntil={item.new_until}
               rating={item.rating}
               category={item.category}
               prepTime={item.prep_time || "25-35 min"}
