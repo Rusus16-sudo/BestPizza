@@ -70,7 +70,7 @@ export default function CartPage() {
             <img src="/margherita.png" alt="" />
           </div>
           <h2>Votre panier est vide</h2>
-          <p>Ajoutez une pizza depuis la carte, elle apparaîtra ici.</p>
+          <p>Ajoutez un plat depuis la carte, il apparaîtra ici.</p>
           <Link href={href('/menu')} className="btn btn-primary">Voir la carte</Link>
         </div>
       </div>

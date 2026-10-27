@@ -86,7 +86,7 @@ export default function HomeClient({ user, products, latestOffer }) {
             <input
               id="search"
               type="search"
-              placeholder="Une envie ? Margherita, burger…"
+              placeholder="Une envie ? Cherchez un plat…"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className={styles.searchInput}
