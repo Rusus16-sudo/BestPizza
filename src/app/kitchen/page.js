@@ -16,6 +16,11 @@ const COLUMNS = [
   { status: 'prete', title: 'Prêtes, en attente du livreur', action: null, next: null },
 ]
 
+// Choix du son, retenu sur l'appareil
+const SOUND_KEY = 'tchopi_cuisine_son'
+// Rappel sonore tant qu'une commande attend d'être lancée
+const REMIND_EVERY_MS = 30000
+
 // Seuils d'alerte (minutes depuis la commande)
 const WARN_AFTER = 15
 const LATE_AFTER = 25
@@ -57,12 +62,64 @@ export default function KitchenPage() {
   const [loadError, setLoadError] = useState(false)
   const [now, setNow] = useState(() => Date.now())
   const [soundOn, setSoundOn] = useState(false)
+  // Le navigateur ne laisse sonner qu'après un geste : tant que personne n'a touché
+  // l'écran depuis l'ouverture, le son choisi ne peut pas encore jouer
+  const [audioReady, setAudioReady] = useState(false)
   const [freshIds, setFreshIds] = useState(() => new Set())
   const [busyId, setBusyId] = useState(null)
   const [confirmLogout, setConfirmLogout] = useState(false)
   const knownIds = useRef(null)
   const audioCtx = useRef(null)
   const soundRef = useRef(false)
+  const lastChimeAt = useRef(0)
+  const waitingRef = useRef(0)
+
+  const chime = useCallback(() => {
+    if (!soundRef.current || !audioCtx.current) return
+    lastChimeAt.current = Date.now()
+    playChime(audioCtx.current)
+  }, [])
+
+  // Prépare le son, à appeler pendant un geste (toucher, clic, touche du clavier)
+  const unlockAudio = useCallback(() => {
+    if (!audioCtx.current) {
+      const Ctx = window.AudioContext || window.webkitAudioContext
+      if (Ctx) audioCtx.current = new Ctx()
+    }
+    audioCtx.current?.resume()
+    setAudioReady(Boolean(audioCtx.current))
+  }, [])
+
+  // Le choix du son est retenu sur la tablette, même après une déconnexion
+  useEffect(() => {
+    let saved = false
+    try {
+      saved = localStorage.getItem(SOUND_KEY) === '1'
+    } catch {}
+    if (!saved) return
+    setSoundOn(true)
+    soundRef.current = true
+
+    // Le premier geste sur l'écran réveille le son (et le réveille à nouveau si la
+    // tablette l'a mis en pause)
+    const wake = () => {
+      if (soundRef.current) unlockAudio()
+    }
+    window.addEventListener('pointerdown', wake)
+    window.addEventListener('keydown', wake)
+    return () => {
+      window.removeEventListener('pointerdown', wake)
+      window.removeEventListener('keydown', wake)
+    }
+  }, [unlockAudio])
+
+  // Rappel : tant qu'une commande attend dans « À préparer », on resonne toutes les 30 s
+  useEffect(() => {
+    const reminder = setInterval(() => {
+      if (waitingRef.current > 0 && Date.now() - lastChimeAt.current >= REMIND_EVERY_MS - 1000) chime()
+    }, REMIND_EVERY_MS)
+    return () => clearInterval(reminder)
+  }, [chime])
 
   const fetchOrders = useCallback(async () => {
     const { data, error } = await supabase
@@ -86,7 +143,7 @@ export default function KitchenPage() {
     if (knownIds.current) {
       const fresh = incoming.filter(id => !knownIds.current.has(id))
       if (fresh.length > 0) {
-        if (soundRef.current) playChime(audioCtx.current)
+        chime()
         setFreshIds(prev => new Set([...prev, ...fresh]))
         setTimeout(() => setFreshIds(prev => {
           const next = new Set(prev)
@@ -99,7 +156,7 @@ export default function KitchenPage() {
     knownIds.current = new Set(data.map(o => o.id))
     setOrders(data)
     setLoading(false)
-  }, [supabase])
+  }, [supabase, chime])
 
   useEffect(() => {
     fetchOrders()
@@ -116,21 +173,21 @@ export default function KitchenPage() {
 
   // Nombre de commandes à préparer dans l'onglet du navigateur
   const waiting = orders.filter(o => o.status === 'en_attente').length
+  waitingRef.current = waiting
   useEffect(() => {
     document.title = waiting > 0 ? `(${waiting}) Cuisine · Tchopi` : 'Cuisine · Tchopi'
   }, [waiting])
 
   const toggleSound = () => {
-    // Les navigateurs n'autorisent le son qu'après un geste de l'utilisateur
-    if (!audioCtx.current) {
-      const Ctx = window.AudioContext || window.webkitAudioContext
-      if (Ctx) audioCtx.current = new Ctx()
-    }
-    audioCtx.current?.resume()
+    // Ce clic est le geste qui autorise le son
+    unlockAudio()
     const next = !soundOn
     setSoundOn(next)
     soundRef.current = next
-    if (next) playChime(audioCtx.current)
+    try {
+      localStorage.setItem(SOUND_KEY, next ? '1' : '0')
+    } catch {}
+    if (next) chime()
   }
 
   const advance = async (order, nextStatus) => {
@@ -183,6 +240,14 @@ export default function KitchenPage() {
 
       {!soundOn && (
         <p className={styles.soundHint}>Activez le son pour être prévenu à chaque nouvelle commande.</p>
+      )}
+
+      {soundOn && !audioReady && (
+        // Toucher n'importe où suffit ; ce bouton rend le geste évident
+        <button className={styles.soundTap} onClick={unlockAudio}>
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4V5z" /><path d="M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14" /></svg>
+          Touchez l’écran pour réveiller le son
+        </button>
       )}
 
       <PushOptIn
