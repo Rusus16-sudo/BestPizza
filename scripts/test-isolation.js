@@ -248,6 +248,22 @@ async function run() {
     check('Le propriétaire A peut mettre son plat en rupture dans son point de vente', !error, error?.message)
   }
 
+  console.log('\n— Horaires et livraison')
+  {
+    const own = must(await as.ownerA.from('locations').update({ delivery_fee: 1200 }).eq('id', A.location.id).select('id'), 'A → horaires A')
+    check('Le propriétaire A règle les horaires et la livraison de son point de vente', own.length === 1)
+    const other = must(await as.ownerA.from('locations').update({ is_open: false }).eq('id', B.location.id).select('id'), 'A → point de vente B')
+    check('Le propriétaire A ne peut pas fermer le point de vente de B', other.length === 0)
+    const cook = must(await as.cookA.from('locations').update({ delivery_fee: 0 }).eq('id', A.location.id).select('id'), 'cuisine A → point de vente A')
+    check('La cuisine ne peut pas changer les frais de livraison', cook.length === 0)
+    const { error: zoneOwn } = await as.ownerA.from('delivery_zones').insert({ location_id: A.location.id, name: 'Quartier test', fee: 1000 })
+    check('Le propriétaire A ajoute un quartier à son point de vente', !zoneOwn, zoneOwn?.message)
+    const { error: zoneOther } = await as.ownerA.from('delivery_zones').insert({ location_id: B.location.id, name: 'Intrus', fee: 0 })
+    check('Le propriétaire A ne peut pas ajouter un quartier chez B', Boolean(zoneOther))
+    const seen = must(await anonymous.from('delivery_zones').select('id').eq('location_id', A.location.id), 'quartiers visiteur')
+    check('Un visiteur voit les quartiers desservis', seen.length === 1)
+  }
+
   console.log('\n— Photos des plats (un dossier par enseigne)')
   {
     // Une image PNG d'un pixel

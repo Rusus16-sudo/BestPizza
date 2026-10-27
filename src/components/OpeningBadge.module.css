@@ -1,0 +1,39 @@
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: var(--radius-full);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  background: currentColor;
+}
+
+.open {
+  background: var(--color-basil-dim);
+  color: var(--color-basil);
+}
+
+.closed {
+  background: var(--color-primary-dim);
+  color: var(--color-primary-hover);
+}
+
+/* Sur un fond sombre (accueil de la vitrine) */
+.dark {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.dark.open {
+  color: #8fd8a8;
+}
+
+.dark.closed {
+  color: #ffb4a6;
+}

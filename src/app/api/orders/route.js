@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient, requireUser } from '@/utils/supabase/admin'
 import { resolveStorefront } from '@/lib/storefront'
+import { deliveryQuote } from '@/lib/delivery'
 import { computeUnitPrice, isPizzaCategory, SIZES, promoApplies, isOfferValid } from '@/lib/pricing'
 import { initializePayment, isNotchPayConfigured } from '@/lib/notchpay'
 import { headers } from 'next/headers'
@@ -35,7 +36,7 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Requête invalide' }, { status: 400 })
   }
 
-  const { items, phone, address, paymentMethod, instructions, promoCode, name } = body || {}
+  const { items, phone, address, paymentMethod, instructions, promoCode, name, zoneId } = body || {}
   const customerName = String(name || '').replace(/\|/g, ' ').trim().slice(0, 60)
 
   if (!Array.isArray(items) || items.length === 0 || items.length > 50) {
@@ -68,7 +69,7 @@ export async function POST(request) {
   if (storefront.error) {
     return NextResponse.json({ error: storefront.error }, { status: storefront.status })
   }
-  const { organization, location } = storefront
+  const { organization, location, zones } = storefront
 
   // 1. Plats demandés, tels qu'ils sont en base : uniquement ceux de CE restaurant
   const ids = [...new Set(items.map(i => String(i.productId)))]
@@ -130,9 +131,16 @@ export async function POST(request) {
   const discount = offer
     ? Math.round(lines.reduce((s, l) => s + (promoApplies(offer, l.product) ? l.price * offer.discount_percentage / 100 : 0), 0))
     : 0
-  const total = Math.max(0, subtotal - discount)
+  const itemsTotal = Math.max(0, subtotal - discount)
 
-  // 4. Enregistrement
+  // 4. Livraison : forfait, ou tarif du quartier choisi ; commande minimum et livraison gratuite
+  const delivery = deliveryQuote({ location, zones, plan: organization.plan, zoneId, subtotal: itemsTotal })
+  if (delivery.error) {
+    return NextResponse.json({ error: delivery.error }, { status: 400 })
+  }
+  const total = itemsTotal + delivery.fee
+
+  // 5. Enregistrement
   const shortId = `CMD-${Math.floor(10000 + Math.random() * 90000)}`
   const cleanAddress = String(address).replace(/\|/g, ' ').trim().slice(0, 200)
   const cleanPhone = String(phone).replace(/\|/g, ' ').trim().slice(0, 30)
@@ -149,9 +157,12 @@ export async function POST(request) {
       payment_status: payOnline ? 'en_attente' : 'a_la_livraison',
       total_price: total,
       total_amount: total,
+      delivery_fee: delivery.fee,
+      delivery_zone: delivery.zone?.name || null,
       promo_code: offer?.code || null,
       special_instructions: String(instructions || '').slice(0, 500) || null,
-      delivery_address: `Quartier: ${cleanAddress} | Tél: ${cleanPhone} | Paiement: ${paymentMethod}`,
+      // Le quartier choisi d'abord : c'est lui que voit le livreur
+      delivery_address: `Quartier: ${delivery.zone ? `${delivery.zone.name} – ` : ''}${cleanAddress} | Tél: ${cleanPhone} | Paiement: ${paymentMethod}`,
       customer_name: customerName || profile?.email?.split('@')[0] || 'Client',
     })
     .select('id, short_id, tracking_token')
@@ -180,7 +191,7 @@ export async function POST(request) {
   }
 
   if (!payOnline) {
-    return NextResponse.json({ shortId: order.short_id, total, discount, trackingToken: order.tracking_token })
+    return NextResponse.json({ shortId: order.short_id, total, discount, deliveryFee: delivery.fee, trackingToken: order.tracking_token })
   }
 
   // Paiement en ligne : on ouvre le paiement chez Notch Pay et on renvoie

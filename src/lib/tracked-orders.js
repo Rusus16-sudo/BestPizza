@@ -15,7 +15,7 @@ export async function getTrackedOrder(token) {
   const { data: order } = await db
     .from('orders')
     .select(`
-      id, short_id, order_number, status, payment_status, payment_method, total_amount,
+      id, short_id, order_number, status, payment_status, payment_method, total_amount, delivery_fee, delivery_zone,
       created_at, customer_name, user_id, organization_id,
       order_items ( product_name, quantity, price, size )
     `)
@@ -37,6 +37,8 @@ export async function getTrackedOrder(token) {
     paymentStatus: order.payment_status,
     paymentMethod: order.payment_method,
     total: order.total_amount,
+    deliveryFee: Number(order.delivery_fee) || 0,
+    deliveryZone: order.delivery_zone,
     createdAt: order.created_at,
     customerName: order.customer_name,
     hasAccount: Boolean(order.user_id),

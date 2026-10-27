@@ -9,6 +9,9 @@ import toast from 'react-hot-toast'
 import PageHeader from '@/components/PageHeader'
 import { useStorefront } from '@/context/StorefrontContext'
 import { rememberOrder } from '@/lib/guest-orders'
+import { deliveryQuote } from '@/lib/delivery'
+import { describeOpening } from '@/lib/opening-hours'
+import { useOpening } from '@/components/OpeningBadge'
 import styles from './Checkout.module.css'
 
 const PAYMENT_METHODS = [
@@ -19,7 +22,15 @@ const PAYMENT_METHODS = [
 export default function CheckoutPage() {
   const router = useRouter()
   const { cartItems, cartTotal, discountAmount, finalTotal, appliedPromo, clearCart, removeFromCart, isMounted } = useCart()
-  const { slug, location, href } = useStorefront()
+  const { slug, name: restaurantName, plan, location, href } = useStorefront()
+  const [zoneId, setZoneId] = useState('')
+  // Frais de livraison recalculés à chaque changement (le serveur refait le calcul et fait foi)
+  const quote = deliveryQuote({ location, zones: location?.zones || [], plan, zoneId, subtotal: finalTotal })
+  const deliveryFee = quote.usesZones && !quote.zone ? 0 : quote.fee
+  const grandTotal = finalTotal + deliveryFee
+  // En dehors des horaires, on ne peut pas commander
+  const opening = useOpening()
+  const closed = Boolean(opening && !opening.open)
   const [instructions, setInstructions] = useState('')
   const [deliveryAddress, setDeliveryAddress] = useState('')
   const [phone, setPhone] = useState('')
@@ -49,7 +60,8 @@ export default function CheckoutPage() {
     const next = {}
     if (isGuest && name.trim().length < 2) next.name = 'Indiquez votre nom, pour que le livreur vous trouve.'
     if (phone.replace(/\D/g, '').length < 8) next.phone = 'Entrez un numéro joignable par le livreur.'
-    if (deliveryAddress.trim().length < 3) next.address = 'Indiquez votre quartier et un repère.'
+    if (quote.usesZones && !quote.zone) next.zone = 'Choisissez votre quartier.'
+    if (deliveryAddress.trim().length < 3) next.address = quote.usesZones ? 'Indiquez un repère (ex : face pharmacie).' : 'Indiquez votre quartier et un repère.'
     setErrors(next)
     return Object.keys(next).length === 0
   }
@@ -78,6 +90,7 @@ export default function CheckoutPage() {
           name: name.trim(),
           phone: phone.trim(),
           address: deliveryAddress.trim(),
+          zoneId: quote.zone?.id || null,
           paymentMethod,
           instructions,
           promoCode: appliedPromo?.code || null,
@@ -176,14 +189,33 @@ export default function CheckoutPage() {
                 ? <p id="phone-error" className={styles.error}>{errors.phone}</p>
                 : <p id="phone-hint" className={styles.hint}>Le livreur vous appelle à son arrivée.</p>}
             </div>
+            {quote.usesZones && (
+              <div className={styles.field}>
+                <label htmlFor="zone">Quartier</label>
+                <select
+                  id="zone"
+                  className={styles.input}
+                  value={zoneId}
+                  onChange={(e) => { setZoneId(e.target.value); setErrors(er => ({ ...er, zone: undefined })) }}
+                  aria-invalid={!!errors.zone}
+                  aria-describedby={errors.zone ? 'zone-error' : undefined}
+                >
+                  <option value="">Choisissez votre quartier</option>
+                  {location.zones.map(z => (
+                    <option key={z.id} value={z.id}>{z.name} · {Number(z.fee) > 0 ? formatPrice(z.fee) : 'livraison offerte'}</option>
+                  ))}
+                </select>
+                {errors.zone && <p id="zone-error" className={styles.error}>{errors.zone}</p>}
+              </div>
+            )}
             <div className={styles.field}>
-              <label htmlFor="address">Adresse</label>
+              <label htmlFor="address">{quote.usesZones ? 'Adresse précise' : 'Adresse'}</label>
               <input
                 id="address"
                 type="text"
                 autoComplete="street-address"
                 className={styles.input}
-                placeholder="Quartier, repère (ex : Bonamoussadi, face pharmacie)"
+                placeholder={quote.usesZones ? 'Rue, repère (ex : face pharmacie)' : 'Quartier, repère (ex : Bonamoussadi, face pharmacie)'}
                 value={deliveryAddress}
                 onChange={(e) => { setDeliveryAddress(e.target.value); setErrors(er => ({ ...er, address: undefined })) }}
                 aria-invalid={!!errors.address}
@@ -252,17 +284,33 @@ export default function CheckoutPage() {
                 <dt>Code {appliedPromo.code}</dt><dd>-{formatPrice(discountAmount)}</dd>
               </div>
             )}
-            <div className={`${styles.row} ${styles.total}`}><dt>Total</dt><dd>{formatPrice(finalTotal)}</dd></div>
+            <div className={styles.row}>
+              <dt>Livraison{quote.zone ? ` · ${quote.zone.name}` : ''}</dt>
+              <dd>{quote.usesZones && !quote.zone ? 'selon le quartier' : quote.free ? 'Offerte' : formatPrice(deliveryFee)}</dd>
+            </div>
+            <div className={`${styles.row} ${styles.total}`}><dt>Total</dt><dd>{formatPrice(grandTotal)}</dd></div>
           </dl>
+          {quote.freeFrom !== null && !quote.free && finalTotal < quote.freeFrom && (
+            <p className={styles.hint}>Plus que {formatPrice(quote.freeFrom - finalTotal)} pour la livraison offerte.</p>
+          )}
+          {quote.minimum > 0 && finalTotal < quote.minimum && (
+            <p className={styles.error}>Commande minimum : {formatPrice(quote.minimum)}. Ajoutez encore {formatPrice(quote.minimum - finalTotal)}.</p>
+          )}
+          {closed && (
+            <p className={styles.error}>
+              {restaurantName} est fermé{opening.manual || !opening.opensAt ? ' pour le moment' : ` et ${describeOpening(opening).replace(/^Fermé · /, '')}`}.
+              {' '}Vous pourrez commander à l’ouverture.
+            </p>
+          )}
 
           <div className={styles.submitBar}>
-            <button type="submit" className={styles.submitBtn} disabled={isSubmitting}>
+            <button type="submit" className={styles.submitBtn} disabled={isSubmitting || closed || (quote.minimum > 0 && finalTotal < quote.minimum)}>
               {isSubmitting ? (
                 <span>{payOnline ? 'Ouverture du paiement…' : 'Envoi en cours…'}</span>
               ) : (
                 <>
                   <span>{payOnline ? 'Payer maintenant' : 'Confirmer la commande'}</span>
-                  <span className="price">{formatPrice(finalTotal)}</span>
+                  <span className="price">{formatPrice(grandTotal)}</span>
                 </>
               )}
             </button>

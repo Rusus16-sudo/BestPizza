@@ -7,6 +7,7 @@ import styles from './page.module.css'
 import ProductCard from '@/components/ProductCard'
 import BrandMark from '@/components/BrandMark'
 import { useStorefront } from '@/context/StorefrontContext'
+import OpeningBadge from '@/components/OpeningBadge'
 
 const CATEGORIES = [
   { id: 'all', label: 'Tout', aliases: [] },
@@ -139,6 +140,7 @@ export default function HomeClient({ user, products, latestOffer }) {
         <>
           <section className={styles.hero}>
             <div className={styles.heroText}>
+              <OpeningBadge dark className={styles.heroBadge} />
               <h1>{name},<br />livré chez vous.</h1>
               <p>Choisissez vos plats, on s’occupe du reste.</p>
               <div className={styles.heroActions}>

@@ -131,6 +131,7 @@ export default function Sidebar() {
             {navLink({ href: '/admin', icon: 'chart', label: 'Tableau de bord' })}
             {navLink({ href: '/admin/commandes', icon: 'orders', label: 'Commandes', badge: activeOrders })}
             {navLink({ href: '/admin/carte', icon: 'menu', label: 'La carte' })}
+            {navLink({ href: '/admin/livraison', icon: 'truck', label: 'Horaires et livraison' })}
             {navLink({ href: '/admin/promotions', icon: 'tag', label: 'Promotions' })}
             {navLink({ href: '/admin/equipe', icon: 'users', label: 'Équipe' })}
             {navLink({ href: '/admin/avis', icon: 'star', label: 'Avis clients' })}

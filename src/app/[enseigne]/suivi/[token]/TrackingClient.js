@@ -157,6 +157,12 @@ export default function TrackingClient({ initialOrder, token, isLoggedIn }) {
             </li>
           ))}
         </ul>
+        {order.deliveryZone || order.deliveryFee > 0 ? (
+          <div className={styles.deliveryRow}>
+            <span>Livraison{order.deliveryZone ? ` · ${order.deliveryZone}` : ''}</span>
+            <span>{order.deliveryFee > 0 ? formatPrice(order.deliveryFee) : 'Offerte'}</span>
+          </div>
+        ) : null}
         <div className={styles.total}>
           <span>Total</span>
           <strong>{formatPrice(order.total)}</strong>

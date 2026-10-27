@@ -282,3 +282,11 @@
     align-self: stretch;
   }
 }
+
+.deliveryRow {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 12px;
+  font-size: 0.95rem;
+  color: var(--color-text-secondary);
+}
