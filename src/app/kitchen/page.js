@@ -9,6 +9,7 @@ import ConfirmDialog from '@/components/ConfirmDialog'
 import PushOptIn from '@/components/PushOptIn'
 import styles from './Kitchen.module.css'
 import { formatDuration } from '@/lib/format'
+import { signOut } from '@/lib/sign-out'
 
 const COLUMNS = [
   { status: 'en_attente', title: 'À préparer', action: 'Lancer la préparation', next: 'en_preparation' },
@@ -208,7 +209,7 @@ export default function KitchenPage() {
   }
 
   const handleLogout = async () => {
-    await supabase.auth.signOut()
+    await signOut(supabase)
     router.push('/login')
   }
 

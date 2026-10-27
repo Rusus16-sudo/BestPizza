@@ -155,8 +155,32 @@ export async function forgetDevice() {
   fetch('/api/push/subscribe', {
     method: 'DELETE',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ endpoint: subscription.endpoint }),
+    body: JSON.stringify({ endpoint: subscription.endpoint, scope: 'all' }),
     keepalive: true,
   }).catch(() => {})
   await subscription.unsubscribe()
+}
+
+/**
+ * Plus personne n'est connecté sur cet appareil : il ne reçoit plus les notifications
+ * d'aucun compte (personnel ou client). Il garde seulement celles des commandes passées
+ * sans compte depuis cet appareil. On attend la réponse, au plus quelques secondes.
+ */
+export async function detachDevice() {
+  if (typeof window === 'undefined' || !('serviceWorker' in navigator)) return
+  try {
+    const registration = await navigator.serviceWorker.getRegistration('/')
+    const subscription = await registration?.pushManager.getSubscription()
+    if (!subscription) return
+
+    await Promise.race([
+      fetch('/api/push/subscribe', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ endpoint: subscription.endpoint, scope: 'account' }),
+        keepalive: true,
+      }),
+      new Promise((resolve) => setTimeout(resolve, 4000)),
+    ])
+  } catch {}
 }

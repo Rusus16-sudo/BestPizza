@@ -9,6 +9,7 @@ import { useCart } from '@/context/CartContext'
 import ConfirmDialog from './ConfirmDialog'
 import { getStaffMembership, screenRole } from '@/lib/staff'
 import { useStorefrontHref } from '@/context/StorefrontContext'
+import { signOut } from '@/lib/sign-out'
 
 const svg = (children, filled) => (
   <svg viewBox="0 0 24 24" width="24" height="24" fill={filled ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={filled ? 0 : 2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -66,7 +67,7 @@ export default function BottomNav() {
 
   const handleLogout = async () => {
     const supabase = createClient()
-    await supabase.auth.signOut()
+    await signOut(supabase)
     setConfirmLogout(false)
     setShowMenu(false)
     router.push('/login')

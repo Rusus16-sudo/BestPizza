@@ -6,6 +6,7 @@ import { getBrowserClient } from '@/utils/supabase/client'
 import Link from 'next/link'
 import { getStaffMembership, screenRole } from '@/lib/staff'
 import styles from './Profile.module.css'
+import { signOut } from '@/lib/sign-out'
 
 const STAFF_SETTINGS = {
   cuisinier: '/kitchen/settings',
@@ -63,7 +64,7 @@ export default function ProfilePage() {
   }, [router, supabase])
 
   const handleLogout = async () => {
-    await supabase.auth.signOut()
+    await signOut(supabase)
     router.push('/login')
   }
 

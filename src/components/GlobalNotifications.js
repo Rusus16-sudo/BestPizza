@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/utils/supabase/client'
 import toast from 'react-hot-toast'
 import { ORDER_STATUS_MESSAGES } from '@/lib/order-status-messages'
-import { registerServiceWorker, syncPush, forgetDevice } from '@/lib/push-client'
+import { registerServiceWorker, syncPush, detachDevice } from '@/lib/push-client'
 import { claimRememberedOrders } from '@/lib/guest-orders'
 
 export default function GlobalNotifications() {
@@ -32,6 +32,11 @@ export default function GlobalNotifications() {
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
         setUserId(user.id)
+      } else {
+        // Filet de sécurité : personne n'est connecté, mais l'appareil a pu rester lié à un
+        // compte (session terminée sans passer par « Se déconnecter »). Il ne doit plus
+        // recevoir les notifications de ce compte, surtout celles du personnel.
+        detachDevice()
       }
     }
     
@@ -45,7 +50,8 @@ export default function GlobalNotifications() {
         setUserId(null)
       }
       // Après déconnexion, cet appareil ne reçoit plus les notifications du compte
-      if (event === 'SIGNED_OUT') forgetDevice().catch(() => {})
+      // (les boutons « Se déconnecter » l'ont déjà fait : ceci couvre les autres cas)
+      if (event === 'SIGNED_OUT') detachDevice()
     })
 
     return () => {

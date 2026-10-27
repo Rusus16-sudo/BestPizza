@@ -9,6 +9,7 @@ import ConfirmDialog from '@/components/ConfirmDialog'
 import { getPushState, enablePush, sendTestPush } from '@/lib/push-client'
 import { getStaffMembership, MANAGER_ROLES } from '@/lib/staff'
 import styles from './StaffSettings.module.css'
+import { signOut } from '@/lib/sign-out'
 
 const ROLE_LABELS = { proprietaire: 'Propriétaire', gerant: 'Gérant', cuisinier: 'Cuisinier', livreur: 'Livreur' }
 
@@ -77,7 +78,7 @@ export default function StaffSettings({ home }) {
   }
 
   const handleLogout = async () => {
-    await supabase.auth.signOut()
+    await signOut(supabase)
     router.push('/login')
   }
 

@@ -10,6 +10,7 @@ import BrandMark from './BrandMark'
 import ConfirmDialog from './ConfirmDialog'
 import { getStaffMembership, screenRole } from '@/lib/staff'
 import { useStorefrontHref, useStorefrontInfo } from '@/context/StorefrontContext'
+import { signOut } from '@/lib/sign-out'
 
 const Icon = ({ children }) => (
   <svg className={styles.icon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -91,7 +92,7 @@ export default function Sidebar() {
 
   const handleLogout = async () => {
     const supabase = createClient()
-    await supabase.auth.signOut()
+    await signOut(supabase)
     setShowLogoutConfirm(false)
     router.push('/login')
   }

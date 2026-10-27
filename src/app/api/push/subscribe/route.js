@@ -57,9 +57,12 @@ export async function POST(request) {
   return NextResponse.json({ ok: true })
 }
 
-// Oublie un appareil (notifications désactivées ou déconnexion).
-// L'adresse d'abonnement est secrète : la connaître suffit pour la retirer,
-// ce qui permet de le faire même juste après la déconnexion.
+// Détache un appareil. L'adresse d'abonnement est secrète : la connaître suffit,
+// ce qui permet de le faire sans être connecté.
+// - scope « account » (déconnexion, ou appareil ouvert sans personne de connecté) :
+//   il ne reçoit plus rien pour un compte, ni personnel ni client. Il garde seulement
+//   les commandes passées sans compte depuis cet appareil, que le client suit lui-même.
+// - scope « all » (notifications désactivées) : il ne reçoit plus rien du tout.
 export async function DELETE(request) {
   let body
   try {
@@ -73,6 +76,11 @@ export async function DELETE(request) {
   }
 
   const db = createAdminClient()
-  await db.from('push_subscriptions').delete().eq('endpoint', body.endpoint)
+  if (body.scope === 'all') {
+    await db.from('push_subscriptions').delete().eq('endpoint', body.endpoint)
+  } else {
+    await db.from('push_subscriptions').delete().eq('endpoint', body.endpoint).is('order_id', null)
+    await db.from('push_subscriptions').update({ user_id: null }).eq('endpoint', body.endpoint)
+  }
   return NextResponse.json({ ok: true })
 }

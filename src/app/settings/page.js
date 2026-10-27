@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/utils/supabase/client'
 import { useStorefrontHref } from '@/context/StorefrontContext'
 import styles from './Settings.module.css'
+import { signOut } from '@/lib/sign-out'
 
 export default function SettingsPage() {
   const router = useRouter()
@@ -99,7 +100,7 @@ export default function SettingsPage() {
             className={styles.logoutBtn}
             onClick={async () => {
               const supabase = createClient()
-              await supabase.auth.signOut()
+              await signOut(supabase)
               router.push('/login')
             }}
           >
