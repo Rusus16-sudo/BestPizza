@@ -11,8 +11,9 @@ const QR_INK = '#1f1d1b'
 /**
  * Le kit de partage d'une vitrine : son lien, un QR code à imprimer ou télécharger,
  * « Copier le lien » et « Partager sur WhatsApp ».
+ * `stacked` : QR code au-dessus, pour une colonne étroite.
  */
-export default function ShareKit({ url, name }) {
+export default function ShareKit({ url, name, stacked = false }) {
   const [qr, setQr] = useState(null)
 
   useEffect(() => {
@@ -34,7 +35,7 @@ export default function ShareKit({ url, name }) {
   const display = url.replace(/^https?:\/\//, '')
 
   return (
-    <div className={styles.kit}>
+    <div className={`${styles.kit} ${stacked ? styles.stacked : ''}`}>
       <div className={styles.qrCard}>
         {qr ? <img src={qr} alt={`QR code de la vitrine ${name}`} className={styles.qr} /> : <div className={styles.qrPlaceholder} />}
         <p className={styles.qrCaption}>Scannez pour commander</p>

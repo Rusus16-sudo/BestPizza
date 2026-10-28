@@ -24,3 +24,15 @@ export function brandColorVars(hex) {
     '--shadow-glow': `0 8px 24px rgba(${rgb.join(', ')}, 0.28)`,
   }
 }
+
+// Couleurs proposées aux restaurants (inscription, « Mon restaurant »)
+export const BRAND_COLORS = [
+  { value: '#d93a1f', name: 'Tomate' },
+  { value: '#e8590c', name: 'Orange' },
+  { value: '#d6336c', name: 'Framboise' },
+  { value: '#7048e8', name: 'Violet' },
+  { value: '#1c7ed6', name: 'Bleu' },
+  { value: '#0ca678', name: 'Menthe' },
+  { value: '#2b8a3e', name: 'Basilic' },
+  { value: '#1f1d1b', name: 'Ardoise' },
+]

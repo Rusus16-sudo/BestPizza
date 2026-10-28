@@ -130,6 +130,7 @@ export default function Sidebar() {
             <span className={styles.groupLabel}>Gestion</span>
             {navLink({ href: '/admin', icon: 'chart', label: 'Tableau de bord' })}
             {navLink({ href: '/admin/commandes', icon: 'orders', label: 'Commandes', badge: activeOrders })}
+            {navLink({ href: '/admin/restaurant', icon: 'store', label: 'Mon restaurant' })}
             {navLink({ href: '/admin/carte', icon: 'menu', label: 'La carte' })}
             {navLink({ href: '/admin/livraison', icon: 'truck', label: 'Horaires et livraison' })}
             {navLink({ href: '/admin/promotions', icon: 'tag', label: 'Promotions' })}

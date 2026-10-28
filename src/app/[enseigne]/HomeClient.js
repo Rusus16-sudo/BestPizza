@@ -29,7 +29,7 @@ function describeOffer(offer) {
 
 export default function HomeClient({ user, products, latestOffer }) {
   const { totalItems } = useCart()
-  const { name, logo_url: logoUrl, href } = useStorefront()
+  const { name, logo_url: logoUrl, cover_url: coverUrl, tagline_title: taglineTitle, tagline_text: taglineText, href } = useStorefront()
   const [activeCategory, setActiveCategory] = useState('all')
   const [searchQuery, setSearchQuery] = useState('')
   const menuRef = useRef(null)
@@ -45,8 +45,10 @@ export default function HomeClient({ user, products, latestOffer }) {
   const rated = products.filter(p => p.rating).sort((a, b) => Number(b.rating) - Number(a.rating))
   const featured = (rated.length >= 3 ? rated : products).slice(0, 8)
   const featuredTitle = rated.length >= 3 ? 'Les plus appréciés' : 'À la carte'
-  // L'illustration d'accueil : la photo d'un plat du restaurant
-  const heroImage = products.find(p => p.image)?.image || '/margherita.png'
+  // L'image d'accueil : la photo de couverture du restaurant, sinon celle d'un de ses plats,
+  // sinon son logo (ou ses initiales) sur sa couleur. Jamais une image qui n'est pas à lui.
+  const dishPhoto = products.find(p => p.image)?.image
+  const initials = name.split(/s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase()
 
   const visibleProducts = isSearching
     ? products.filter(p => p.title.toLowerCase().includes(query) || String(p.category).toLowerCase().includes(query))
@@ -140,11 +142,12 @@ export default function HomeClient({ user, products, latestOffer }) {
         </section>
       ) : (
         <>
-          <section className={styles.hero}>
+          <section className={`${styles.hero} ${coverUrl ? styles.heroWithCover : ''}`}>
+            {coverUrl && <img src={coverUrl} alt="" className={styles.heroCover} />}
             <div className={styles.heroText}>
               <OpeningBadge dark className={styles.heroBadge} />
-              <h1>{name},<br />livré chez vous.</h1>
-              <p>Choisissez vos plats, on s’occupe du reste.</p>
+              <h1>{taglineTitle || <>{name},<br />livré chez vous.</>}</h1>
+              <p>{taglineText || 'Choisissez vos plats, on s’occupe du reste.'}</p>
               <div className={styles.heroActions}>
                 <button className="btn btn-primary" onClick={scrollToMenu}>Voir la carte</button>
                 {latestOffer && (
@@ -154,9 +157,15 @@ export default function HomeClient({ user, products, latestOffer }) {
                 )}
               </div>
             </div>
-            <div className={styles.heroPizza} aria-hidden="true">
-              <img src={heroImage} alt="" />
-            </div>
+            {!coverUrl && (dishPhoto ? (
+              <div className={styles.heroPizza} aria-hidden="true">
+                <img src={dishPhoto} alt="" />
+              </div>
+            ) : (
+              <div className={styles.heroBrand} aria-hidden="true">
+                {logoUrl ? <img src={logoUrl} alt="" /> : <span>{initials}</span>}
+              </div>
+            ))}
           </section>
 
           {products.length === 0 && (

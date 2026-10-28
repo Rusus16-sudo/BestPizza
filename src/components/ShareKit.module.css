@@ -107,3 +107,12 @@
     margin: 0 auto;
   }
 }
+
+.stacked {
+  grid-template-columns: 1fr;
+}
+
+.stacked .qrCard {
+  max-width: 200px;
+  margin: 0 auto;
+}

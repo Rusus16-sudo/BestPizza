@@ -4,22 +4,13 @@ import { useEffect, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import { getBrowserClient } from '@/utils/supabase/client'
 import { slugify, slugProblem } from '@/lib/slug'
-import { brandColorVars } from '@/lib/brand'
+import { brandColorVars, BRAND_COLORS } from '@/lib/brand'
 import BrandMark from '@/components/BrandMark'
 import TimePicker from '@/components/TimePicker'
 import ShareKit from '@/components/ShareKit'
 import styles from './Creer.module.css'
 
-const COLORS = [
-  { value: '#d93a1f', name: 'Tomate' },
-  { value: '#e8590c', name: 'Orange' },
-  { value: '#d6336c', name: 'Framboise' },
-  { value: '#7048e8', name: 'Violet' },
-  { value: '#1c7ed6', name: 'Bleu' },
-  { value: '#0ca678', name: 'Menthe' },
-  { value: '#2b8a3e', name: 'Basilic' },
-  { value: '#1f1d1b', name: 'Ardoise' },
-]
+const COLORS = BRAND_COLORS
 
 const STEPS = ['Le restaurant', 'L’apparence', 'Le point de vente']
 

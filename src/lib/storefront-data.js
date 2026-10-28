@@ -15,7 +15,7 @@ export const loadStorefront = cache(async (slug) => {
   const supabase = await createClient()
   const { data: storefront } = await supabase
     .from('storefronts')
-    .select('id, slug, name, logo_url, primary_color, country, currency, timezone, locale, plan')
+    .select('id, slug, name, logo_url, primary_color, country, currency, timezone, locale, plan, cover_url, tagline_title, tagline_text')
     .eq('slug', slug)
     .maybeSingle()
   if (!storefront) return null

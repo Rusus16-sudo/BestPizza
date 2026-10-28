@@ -20,13 +20,14 @@ relancé sans risque : il ne recrée pas ce qui existe déjà.
 | 6b | `migrations/20261026_tchopi_1b_correctif.sql` | Corrige l'étape 6 : l'ajout d'un plat, d'une offre ou d'un avis échouait |
 | 7 | `migrations/20261026_tchopi_2_securite.sql` | Tchopi : chacun ne voit que son établissement (retour arrière : `20261026_tchopi_2_retour_arriere.sql`) |
 | 8 | `migrations/20261026_tchopi_3_fin_transition.sql` | Tchopi : fin de la transition (établissement obligatoire, codes promo par enseigne, photos par dossier). **Après** le déploiement du code des équipes |
-| 9 | `migrations/20261027_plats_nouveaux.sql` | Le gérant marque un plat « Nouveau » (30 jours) |
+| 9 | `migrations/20261027_plats_nouveaux.sql` | Le gérant marque un plat « Nouveau » (30 jours) |
 | 10 | `migrations/20261027_tchopi_4_vitrines.sql` | Tchopi : partie publique des restaurants pour les vitrines (nom, logo, couleur), adresses réservées |
 | 11 | `migrations/20261027_tchopi_5_commande_sans_compte.sql` | Tchopi : commande sans compte (lien de suivi secret, notifications par commande) |
 | 12 | `migrations/20261027_tchopi_6_horaires_livraison.sql` | Tchopi : horaires, frais de livraison et quartiers de chaque point de vente, réglés par le gérant |
 | 13 | `migrations/20261027_tchopi_7_formats_des_plats.sql` | Tchopi : les choix de chaque plat (taille, formule, suppléments), définis par le gérant |
 | 14 | `migrations/20261027_tchopi_8_finitions.sql` | Tchopi : numéros de commande #1, #2… par restaurant ; prénom de l’auteur sur chaque avis |
 | 15 | `migrations/20261028_tchopi_9_inscription.sql` | Tchopi : réserve les adresses des pages de Tchopi (/creer, /tarifs…) |
+| 16 | `migrations/20261028_tchopi_10_mon_restaurant.sql` | Tchopi : photo de couverture et accroche de la vitrine (page « Mon restaurant ») |
 
 Après l'étape 7, `node scripts/test-isolation.js` vérifie qu'aucun établissement ne voit
 les données d'un autre (il crée deux faux restaurants, sans envoyer d'email, puis les efface).
