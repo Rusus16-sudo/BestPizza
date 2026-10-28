@@ -26,6 +26,7 @@ relancé sans risque : il ne recrée pas ce qui existe déjà.
 | 12 | `migrations/20261027_tchopi_6_horaires_livraison.sql` | Tchopi : horaires, frais de livraison et quartiers de chaque point de vente, réglés par le gérant |
 | 13 | `migrations/20261027_tchopi_7_formats_des_plats.sql` | Tchopi : les choix de chaque plat (taille, formule, suppléments), définis par le gérant |
 | 14 | `migrations/20261027_tchopi_8_finitions.sql` | Tchopi : numéros de commande #1, #2… par restaurant ; prénom de l’auteur sur chaque avis |
+| 15 | `migrations/20261028_tchopi_9_inscription.sql` | Tchopi : réserve les adresses des pages de Tchopi (/creer, /tarifs…) |
 
 Après l'étape 7, `node scripts/test-isolation.js` vérifie qu'aucun établissement ne voit
 les données d'un autre (il crée deux faux restaurants, sans envoyer d'email, puis les efface).

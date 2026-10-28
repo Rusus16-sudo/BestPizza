@@ -7,6 +7,7 @@ export const APP_SEGMENTS = new Set([
   'admin', 'api', 'auth', 'kitchen', 'delivery', 'login', 'signup', 'reset-password', 'orders',
   'profile', 'settings', 'notifications', 'paiement', 'menu', 'categories', 'product', 'cart',
   'checkout', 'favorites', 'offers', 'help', 'tchopi', 'www', 'app', 'static', 'public',
+  'creer', 'inscription', 'tarifs', 'aide', 'contact', 'cgu', 'confidentialite', 'blog', 'suivi',
   '_next', 'favicon.ico', 'sw.js', 'manifest.json',
 ])
 

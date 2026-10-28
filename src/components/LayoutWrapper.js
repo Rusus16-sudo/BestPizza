@@ -14,7 +14,8 @@ export default function LayoutWrapper({ children }) {
   const pathname = usePathname() || ''
 
   // Pages sans la mise en page globale (barre latérale / barre du bas)
-  const isAuthPage = pathname === '/login' || pathname === '/signup' || pathname === '/reset-password'
+  // … et la création d'un restaurant, une page à part, hors de toute vitrine
+  const isAuthPage = pathname === '/login' || pathname === '/signup' || pathname === '/reset-password' || pathname === '/creer'
 
   if (isAuthPage) {
     return (
