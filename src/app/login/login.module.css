@@ -53,6 +53,64 @@
   letter-spacing: -0.03em;
 }
 
+/* Version restaurant : pas de plat, la promesse faite au restaurateur */
+.visualPro {
+  background:
+    radial-gradient(120% 90% at 100% 0%, rgba(217, 58, 31, 0.55) 0%, transparent 55%),
+    radial-gradient(90% 70% at 0% 100%, rgba(232, 89, 12, 0.35) 0%, transparent 60%),
+    var(--color-ink);
+}
+
+.visualPro::after {
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px) 0 0 / 32px 32px,
+    linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px) 0 0 / 32px 32px;
+  mask-image: linear-gradient(180deg, #000 0%, transparent 85%);
+}
+
+.perks {
+  display: none;
+  list-style: none;
+  margin: 28px 0 0;
+  padding: 0;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.perks li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 1.02rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.perks li > span {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  border-radius: var(--radius-full);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.eyebrow {
+  margin-bottom: 10px;
+  display: inline-block;
+  padding: 5px 12px;
+  border-radius: var(--radius-full);
+  background: var(--color-primary-dim);
+  color: var(--color-primary-hover);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
 /* ---------- Côté formulaire ---------- */
 .panel {
   display: flex;
@@ -310,6 +368,10 @@
   .tagline {
     font-size: clamp(2rem, 3.4vw, 2.8rem);
     margin-top: 16px;
+  }
+
+  .perks {
+    display: flex;
   }
 
   .panel {
