@@ -168,6 +168,20 @@ export default function LoginPage() {
           </p>
 
           <Link href="/" className={styles.guest}>Continuer sans compte</Link>
+
+          {/* Pour les restaurants : sauf s'ils sont déjà en train de créer le leur */}
+          {next !== '/creer' && (
+            <Link href="/creer" className={styles.restaurantCta}>
+              <span className={styles.restaurantIcon} aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l1.5-5h15L21 9" /><path d="M4 9v11h16V9" /><path d="M3 9h18" /><path d="M9 20v-6h6v6" /></svg>
+              </span>
+              <span className={styles.restaurantText}>
+                <strong>Vous avez un restaurant ?</strong>
+                <span>Créez votre vitrine Tchopi en quelques minutes</span>
+              </span>
+              <span aria-hidden="true">›</span>
+            </Link>
+          )}
         </div>
       </main>
     </div>
