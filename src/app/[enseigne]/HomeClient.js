@@ -48,7 +48,7 @@ export default function HomeClient({ user, products, latestOffer }) {
   // L'image d'accueil : la photo de couverture du restaurant, sinon celle d'un de ses plats,
   // sinon son logo (ou ses initiales) sur sa couleur. Jamais une image qui n'est pas à lui.
   const dishPhoto = products.find(p => p.image)?.image
-  const initials = name.split(/s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase()
+  const initials = name.split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase()
 
   const visibleProducts = isSearching
     ? products.filter(p => p.title.toLowerCase().includes(query) || String(p.category).toLowerCase().includes(query))
