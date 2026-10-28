@@ -8,9 +8,9 @@ import { brandColorVars, BRAND_COLORS } from '@/lib/brand'
 import AdminPageHeader from '../AdminPageHeader'
 import BrandMark from '@/components/BrandMark'
 import ShareKit from '@/components/ShareKit'
+import { PLAN_NAMES } from '@/lib/plans'
 import styles from './RestaurantSettings.module.css'
 
-const PLANS = { starter: 'Starter', pro: 'Pro', business: 'Business' }
 const MAX_LOGO = 3 * 1024 * 1024
 const MAX_COVER = 6 * 1024 * 1024
 
@@ -120,7 +120,7 @@ export default function RestaurantSettings() {
       subtitle="Ce que vos clients voient en ouvrant votre lien."
     >
       <p className={styles.plan}>
-        Offre <strong>{PLANS[org.plan] || org.plan}</strong>
+        Offre <strong>{PLAN_NAMES[org.plan] || org.plan}</strong>
         {trialEnd && <> · essai gratuit jusqu’au {trialEnd}</>}
       </p>
 

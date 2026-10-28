@@ -36,6 +36,7 @@ const icons = {
   users: <Icon><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" /></Icon>,
   star: <Icon><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></Icon>,
   flame: <Icon><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.07-2.14-.22-4.05 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.15.43-2.29 1-3a2.5 2.5 0 0 0 2.5 2.5z" /></Icon>,
+  pin: <Icon><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z" /><circle cx="12" cy="9.5" r="2.5" /></Icon>,
   store: <Icon><path d="M3 9l1.5-5h15L21 9" /><path d="M4 9v11h16V9" /><path d="M3 9h18" /><path d="M9 20v-6h6v6" /></Icon>,
 }
 
@@ -131,6 +132,7 @@ export default function Sidebar() {
             {navLink({ href: '/admin', icon: 'chart', label: 'Tableau de bord' })}
             {navLink({ href: '/admin/commandes', icon: 'orders', label: 'Commandes', badge: activeOrders })}
             {navLink({ href: '/admin/restaurant', icon: 'store', label: 'Mon restaurant' })}
+            {navLink({ href: '/admin/points-de-vente', icon: 'pin', label: 'Points de vente' })}
             {navLink({ href: '/admin/carte', icon: 'menu', label: 'La carte' })}
             {navLink({ href: '/admin/livraison', icon: 'truck', label: 'Horaires et livraison' })}
             {navLink({ href: '/admin/promotions', icon: 'tag', label: 'Promotions' })}

@@ -154,6 +154,7 @@ export default function BottomNav() {
               {isGerant ? (
                 <>
                   <Link href="/admin/restaurant" className={styles.menuItem} onClick={close}>Mon restaurant</Link>
+                  <Link href="/admin/points-de-vente" className={styles.menuItem} onClick={close}>Points de vente</Link>
                   <Link href="/admin/livraison" className={styles.menuItem} onClick={close}>Horaires et livraison</Link>
                   <Link href="/admin/promotions" className={styles.menuItem} onClick={close}>Promotions</Link>
                   <Link href="/admin/equipe" className={styles.menuItem} onClick={close}>Équipe</Link>

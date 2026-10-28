@@ -30,6 +30,7 @@ relancé sans risque : il ne recrée pas ce qui existe déjà.
 | 16 | `migrations/20261028_tchopi_10_mon_restaurant.sql` | Tchopi : photo de couverture et accroche de la vitrine (page « Mon restaurant ») |
 | 17 | `migrations/20261028_tchopi_11_offre_protegee.sql` | Tchopi : seul Tchopi change l’offre, l’essai et l’adresse d’un restaurant |
 | 18 | `migrations/20261028_tchopi_12_suppression_compte.sql` | Tchopi : un compte peut être supprimé (son profil part avec lui, ses commandes restent au restaurant) |
+| 19 | `migrations/20261028_tchopi_13_points_de_vente.sql` | Tchopi : le nombre de points de vente suit l’offre (1 en Starter et Pro, sans limite en Business) |
 
 Après l'étape 7, `node scripts/test-isolation.js` vérifie qu'aucun établissement ne voit
 les données d'un autre (il crée deux faux restaurants, sans envoyer d'email, puis les efface).

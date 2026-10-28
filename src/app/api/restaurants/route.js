@@ -1,12 +1,10 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient, requireUser } from '@/utils/supabase/admin'
-import { slugProblem, slugify } from '@/lib/slug'
+import { slugProblem, slugify, STOREFRONT_PAGES } from '@/lib/slug'
 
 const TIME = /^([01]\d|2[0-3]):[0-5]\d$/
 const COLOR = /^#[0-9a-f]{6}$/i
 const TRIAL_DAYS = 14
-// Pages de la vitrine : un point de vente ne peut pas porter leur nom (contrainte de la base)
-const STOREFRONT_PAGES = new Set(['menu', 'categories', 'product', 'cart', 'checkout', 'favorites', 'offers', 'help', 'manifest', 'suivi'])
 
 /**
  * Un restaurant s'inscrit : son enseigne, son premier point de vente, et le compte

@@ -16,7 +16,7 @@ export default function OtherAccount() {
   }
 
   return (
-    <button type="button" className={styles.secondaryBtn} onClick={switchAccount} disabled={busy}>
+    <button type="button" className={styles.linkBtn} onClick={switchAccount} disabled={busy}>
       {busy ? 'Un instant…' : 'Utiliser un autre compte'}
     </button>
   )

@@ -4,6 +4,9 @@ import { APP_SEGMENTS } from '@/lib/storefront-paths'
 
 export const SLUG_PATTERN = /^[a-z0-9]+(-[a-z0-9]+)*$/
 
+// Pages de la vitrine : un point de vente ne peut pas porter leur nom (contrainte de la base)
+export const STOREFRONT_PAGES = new Set(['menu', 'categories', 'product', 'cart', 'checkout', 'favorites', 'offers', 'help', 'manifest', 'suivi'])
+
 /** « Chez Mama Africa ! » → « chez-mama-africa » */
 export function slugify(name) {
   return String(name || '')
