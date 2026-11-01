@@ -8,6 +8,7 @@ import ProductCard from '@/components/ProductCard'
 import BrandMark from '@/components/BrandMark'
 import { useStorefront } from '@/context/StorefrontContext'
 import OpeningBadge from '@/components/OpeningBadge'
+import LocationChip from '@/components/LocationChip'
 
 const CATEGORIES = [
   { id: 'all', label: 'Tout', aliases: [] },
@@ -145,7 +146,10 @@ export default function HomeClient({ user, products, latestOffer }) {
           <section className={`${styles.hero} ${coverUrl ? styles.heroWithCover : ''}`}>
             {coverUrl && <img src={coverUrl} alt="" className={styles.heroCover} />}
             <div className={styles.heroText}>
-              <OpeningBadge dark className={styles.heroBadge} />
+              <div className={styles.heroBadges}>
+                <OpeningBadge dark />
+                <LocationChip dark />
+              </div>
               <h1>{taglineTitle || <>{name},<br />livré chez vous.</>}</h1>
               <p>{taglineText || 'Choisissez vos plats, on s’occupe du reste.'}</p>
               <div className={styles.heroActions}>

@@ -28,7 +28,7 @@ export default function HelpPage() {
   const router = useRouter()
   const { name, location, href } = useStorefront()
   // Numéro du point de vente au format international (+237 au Cameroun)
-  const digits = String(location?.phone || '').replace(/D/g, '')
+  const digits = String(location?.phone || '').replace(/\D/g, '')
   const phoneDigits = digits.length === 9 ? `237${digits}` : digits
   const [openIndex, setOpenIndex] = useState(0)
 

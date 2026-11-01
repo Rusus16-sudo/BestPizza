@@ -389,3 +389,8 @@
   font-size: 0.9rem;
   line-height: 1.5;
 }
+
+/* Le point de vente qui prépare et livre, s'il y en a plusieurs */
+.locationChip {
+  margin: -6px 0 16px;
+}

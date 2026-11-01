@@ -14,6 +14,7 @@ import { loadDeliveryDetails, saveDeliveryDetails, joinAddress, splitAddress } f
 import { describeOpening } from '@/lib/opening-hours'
 import { useOpening } from '@/components/OpeningBadge'
 import Select from '@/components/Select'
+import LocationChip from '@/components/LocationChip'
 import styles from './Checkout.module.css'
 
 const PAYMENT_METHODS = [
@@ -181,6 +182,7 @@ export default function CheckoutPage() {
         <div className={styles.main}>
           <section className={styles.section} aria-labelledby="delivery-title">
             <h2 id="delivery-title">Livraison</h2>
+            <LocationChip label="Préparée et livrée par" className={styles.locationChip} />
             <div className={styles.field}>
               <label htmlFor="name">Nom</label>
               <input

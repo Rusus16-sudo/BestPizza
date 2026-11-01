@@ -181,7 +181,11 @@
   max-width: 74%;
 }
 
-.heroBadge {
+.heroBadges {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
   margin-bottom: 14px;
 }
 

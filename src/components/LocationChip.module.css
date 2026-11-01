@@ -1,0 +1,57 @@
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+  padding: 7px 8px 7px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  font-size: 0.88rem;
+  cursor: pointer;
+  transition: border-color var(--transition-fast);
+}
+
+.chip:hover {
+  border-color: var(--color-primary);
+}
+
+.chip svg {
+  flex-shrink: 0;
+  color: var(--color-primary);
+}
+
+.chip span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chip em {
+  flex-shrink: 0;
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  background: var(--color-primary-dim);
+  color: var(--color-primary-hover);
+  font-style: normal;
+  font-weight: 800;
+  font-size: 0.78rem;
+}
+
+.dark {
+  border-color: rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  backdrop-filter: blur(6px);
+}
+
+.dark svg {
+  color: white;
+}
+
+.dark em {
+  background: white;
+  color: var(--color-ink);
+}

@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useState, useCallback } from 'rea
 import { usePathname } from 'next/navigation'
 import { createClient } from '@/utils/supabase/client'
 import { brandColorVars } from '@/lib/brand'
+import LocationPicker from '@/components/LocationPicker'
 import {
   DEFAULT_STOREFRONT, LAST_STOREFRONT_COOKIE, lastStorefrontSlug, storefrontHref, storefrontSlugFromPath,
 } from '@/lib/storefront-paths'
@@ -17,6 +18,9 @@ const locationKey = (slug) => `tchopi_pdv:${slug}`
 export function StorefrontProvider({ storefront, children }) {
   const { slug, locations } = storefront
   const [locationSlug, setLocationSlug] = useState(null)
+  // Le choix retenu sur cet appareil a été lu (sinon on ne sait pas encore s'il faut le demander)
+  const [ready, setReady] = useState(false)
+  const [pickerOpen, setPickerOpen] = useState(false)
 
   useEffect(() => {
     // Retenu pour les pages communes (mes commandes, profil…) et pour revenir ici depuis tchopi.cm
@@ -24,6 +28,7 @@ export function StorefrontProvider({ storefront, children }) {
     try {
       setLocationSlug(localStorage.getItem(locationKey(slug)))
     } catch {}
+    setReady(true)
   }, [slug])
 
   // La couleur de l'enseigne s'applique aussi aux barres de navigation, hors de la vitrine
@@ -36,17 +41,23 @@ export function StorefrontProvider({ storefront, children }) {
 
   const chooseLocation = useCallback((next) => {
     setLocationSlug(next)
+    setPickerOpen(false)
     try {
       localStorage.setItem(locationKey(slug), next)
     } catch {}
   }, [slug])
 
-  const location = locations.find((l) => l.slug === locationSlug) || locations[0] || null
+  const chosen = locations.find((l) => l.slug === locationSlug)
+  const location = chosen || locations[0] || null
   const href = useCallback((path) => storefrontHref(slug, path), [slug])
+  const openLocationPicker = useCallback(() => setPickerOpen(true), [])
+  // Plusieurs adresses et rien de choisi : le client choisit d'abord celle qui le livre
+  const mustChoose = ready && locations.length > 1 && !chosen
 
   return (
-    <StorefrontContext.Provider value={{ ...storefront, location, chooseLocation, href }}>
+    <StorefrontContext.Provider value={{ ...storefront, location, chooseLocation, openLocationPicker, href }}>
       {children}
+      {(pickerOpen || mustChoose) && <LocationPicker required={mustChoose} onClose={() => setPickerOpen(false)} />}
     </StorefrontContext.Provider>
   )
 }
