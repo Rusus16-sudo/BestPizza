@@ -5,19 +5,12 @@ import { createClient } from '@/utils/supabase/client'
 import { useStorefront, useLocalMenu } from '@/context/StorefrontContext'
 import ProductCard from '@/components/ProductCard'
 import PageHeader from '@/components/PageHeader'
+import { groupByCategory } from '@/lib/categories'
+import { slugify } from '@/lib/slug'
 import styles from './Menu.module.css'
 
-const CATEGORY_LABELS = {
-  pizza: 'Pizzas', pizzas: 'Pizzas',
-  burger: 'Burgers', burgers: 'Burgers',
-  dessert: 'Desserts', desserts: 'Desserts',
-  drink: 'Boissons', drinks: 'Boissons', boisson: 'Boissons', boissons: 'Boissons',
-  side: 'Accompagnements', sides: 'Accompagnements',
-}
-const ORDER = ['Pizzas', 'Burgers', 'Accompagnements', 'Desserts', 'Boissons']
-
-const labelFor = (category) => CATEGORY_LABELS[String(category).toLowerCase()] || category || 'Autres'
-const slug = (label) => label.toLowerCase().normalize('NFD').replace(/[^a-z]/g, '')
+// L'ancre d'une catégorie : #poulet-dg
+const anchor = (group, i) => slugify(group.label) || `categorie-${i + 1}`
 
 export default function MenuPage() {
   const { id: organizationId } = useStorefront()
@@ -39,16 +32,8 @@ export default function MenuPage() {
     fetchProducts()
   }, [organizationId])
 
-  // Regroupe par catégorie, dans un ordre fixe
-  const grouped = productsList.reduce((acc, product) => {
-    const label = labelFor(product.category)
-    ;(acc[label] ||= []).push(product)
-    return acc
-  }, {})
-  const sections = Object.entries(grouped).sort(([a], [b]) => {
-    const ia = ORDER.indexOf(a), ib = ORDER.indexOf(b)
-    return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib)
-  })
+  // Les catégories du restaurant, chacune avec ses plats
+  const sections = groupByCategory(productsList).map((g, i) => ({ ...g, id: anchor(g, i) }))
 
   return (
     <div className={styles.container}>
@@ -56,8 +41,8 @@ export default function MenuPage() {
 
       {!loading && sections.length > 1 && (
         <nav className={`${styles.jump} no-scrollbar`} aria-label="Aller à une catégorie">
-          {sections.map(([label]) => (
-            <a key={label} href={`#${slug(label)}`} className={styles.jumpLink}>{label}</a>
+          {sections.map(s => (
+            <a key={s.key} href={`#${s.id}`} className={styles.jumpLink}>{s.label}</a>
           ))}
         </nav>
       )}
@@ -73,9 +58,9 @@ export default function MenuPage() {
           ))}
         </div>
       ) : (
-        sections.map(([label, items]) => (
-          <section key={label} id={slug(label)} className={styles.section} aria-labelledby={`title-${slug(label)}`}>
-            <h2 id={`title-${slug(label)}`} className={styles.sectionTitle}>
+        sections.map(({ key, id, label, products: items }) => (
+          <section key={key} id={id} className={styles.section} aria-labelledby={`title-${id}`}>
+            <h2 id={`title-${id}`} className={styles.sectionTitle}>
               {label} <span className={styles.count}>{items.length}</span>
             </h2>
             <div className={styles.grid}>

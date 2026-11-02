@@ -88,7 +88,9 @@ export default function CartPage() {
         <ul className={styles.list}>
           {cartItems.map(item => (
             <li key={item.id} className={styles.item}>
-              <img src={item.image} alt="" className={styles.itemImage} />
+              {item.image
+                ? <img src={item.image} alt="" className={styles.itemImage} />
+                : <span className={`${styles.itemImage} ${styles.noPhoto}`} aria-hidden="true">{String(item.title || '?').trim().charAt(0).toUpperCase()}</span>}
               <div className={styles.itemBody}>
                 <div className={styles.itemTop}>
                   <h3 className={styles.itemTitle}>{item.title}</h3>

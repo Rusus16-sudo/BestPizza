@@ -1,12 +1,17 @@
+import { initialsOf } from '@/lib/brand'
 import styles from './BrandMark.module.css'
 
-// Logo : le logo du restaurant s'il en a un, sinon une part de pizza, et son nom.
-// Hors d'une vitrine, c'est celui de la plateforme.
-export default function BrandMark({ size = 'md', name = 'Tchopi', logoUrl = null }) {
+const PLATFORM = 'Tchopi'
+
+// Logo et nom : le logo du restaurant, sinon ses initiales sur sa couleur.
+// La part de pizza est celle de Tchopi, hors d'une vitrine : jamais celle d'un restaurant.
+export default function BrandMark({ size = 'md', name = PLATFORM, logoUrl = null }) {
   return (
     <span className={`${styles.brand} ${styles[size]}`}>
       {logoUrl ? (
         <img className={styles.mark} src={logoUrl} alt="" />
+      ) : name !== PLATFORM ? (
+        <span className={`${styles.mark} ${styles.initials}`} aria-hidden="true">{initialsOf(name)}</span>
       ) : (
         <svg className={styles.mark} viewBox="0 0 32 32" aria-hidden="true">
           <path d="M16 3C9.4 3 3.9 6.9 2 12.6L16 29l14-16.4C28.1 6.9 22.6 3 16 3Z" fill="var(--color-crust)" />

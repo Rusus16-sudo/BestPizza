@@ -92,7 +92,9 @@ export default function ProductClient({ product: baseProduct }) {
   return (
     <div className={styles.page}>
       <div className={styles.media}>
-        <img src={product.image} alt={product.title} className={styles.photo} />
+        {product.image
+          ? <img src={product.image} alt={product.title} className={styles.photo} />
+          : <span className={`${styles.photo} ${styles.noPhoto}`} aria-hidden="true">{String(product.title || '?').trim().charAt(0).toUpperCase()}</span>}
         <div className={styles.topActions}>
           <button className={styles.roundBtn} onClick={() => router.back()} aria-label="Retour">
             <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" strokeWidth="2.2" fill="none" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6" /></svg>

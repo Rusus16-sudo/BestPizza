@@ -28,6 +28,23 @@
   background: var(--color-surface-muted);
 }
 
+.noPhoto {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    radial-gradient(circle at 30% 25%, rgba(255, 255, 255, 0.6), transparent 55%),
+    var(--color-primary-dim);
+  color: var(--color-primary);
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: clamp(2.5rem, 9vw, 4rem);
+  letter-spacing: -0.04em;
+  opacity: 0.85;
+}
+
 .productImage {
   object-fit: cover;
   transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);

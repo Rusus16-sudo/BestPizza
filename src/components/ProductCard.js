@@ -147,7 +147,12 @@ export default function ProductCard({ id, title, price, image, category = 'Pizza
     <div className={`${styles.card} ${variant === 'rail' ? styles.rail : ''}`}>
       <Link href={shop(`/product/${id}`)} className={styles.link}>
         <div className={styles.imageContainer}>
-          <Image src={image} alt="" fill className={styles.productImage} sizes={variant === 'rail' ? '208px' : '(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw'} />
+          {image ? (
+            <Image src={image} alt="" fill className={styles.productImage} sizes={variant === 'rail' ? '208px' : '(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw'} />
+          ) : (
+            // Pas encore de photo : l'initiale du plat, aux couleurs du restaurant
+            <span className={styles.noPhoto} aria-hidden="true">{String(title || '?').trim().charAt(0).toUpperCase()}</span>
+          )}
           {isSpicy && (
             <span className={styles.spicyTag}>
               <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" aria-hidden="true"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>

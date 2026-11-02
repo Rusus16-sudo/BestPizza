@@ -404,3 +404,18 @@
   cursor: default;
   justify-content: center;
 }
+
+/* Plat sans photo : son initiale, aux couleurs du restaurant */
+.noPhoto {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    radial-gradient(circle at 30% 25%, rgba(255, 255, 255, 0.6), transparent 55%),
+    var(--color-primary-dim);
+  color: var(--color-primary);
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 6rem;
+  letter-spacing: -0.04em;
+}

@@ -9,6 +9,23 @@
   flex-shrink: 0;
 }
 
+.initials {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9px;
+  background: var(--color-primary);
+  color: white;
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 0.8rem;
+  letter-spacing: -0.02em;
+}
+
+.lg .initials {
+  font-size: 0.95rem;
+}
+
 .name {
   font-family: var(--font-heading);
   font-weight: 800;

@@ -10,18 +10,10 @@ import { useStorefront, useLocalMenu } from '@/context/StorefrontContext'
 import OpeningBadge from '@/components/OpeningBadge'
 import LocationChip from '@/components/LocationChip'
 import { initialsOf } from '@/lib/brand'
+import { categoryKey, categoryLabel, groupByCategory } from '@/lib/categories'
 
-const CATEGORIES = [
-  { id: 'all', label: 'Tout', aliases: [] },
-  { id: 'Pizza', label: 'Pizzas', aliases: ['pizza', 'pizzas'] },
-  { id: 'Burgers', label: 'Burgers', aliases: ['burger', 'burgers'] },
-  { id: 'Sides', label: 'Accompagnements', aliases: ['side', 'sides', 'accompagnement', 'accompagnements'] },
-  { id: 'Desserts', label: 'Desserts', aliases: ['dessert', 'desserts'] },
-  { id: 'Drinks', label: 'Boissons', aliases: ['drink', 'drinks', 'boisson', 'boissons'] },
-]
-
-const inCategory = (item, cat) =>
-  cat.id === 'all' || cat.aliases.includes(String(item.category).toLowerCase())
+// L'onglet « Tout », puis les catégories du restaurant (voir lib/categories)
+const inCategory = (item, cat) => cat.id === 'all' || categoryKey(item.category) === cat.id
 
 function describeOffer(offer) {
   if (offer.target_type === 'all') return 'sur toute la carte'
@@ -43,7 +35,7 @@ export default function HomeClient({ user, products: allProducts, latestOffer })
   const initial = user?.email ? user.email[0].toUpperCase() : null
 
   // Seules les catégories qui ont des plats sont proposées
-  const categories = CATEGORIES.filter(cat => cat.id === 'all' || products.some(p => inCategory(p, cat)))
+  const categories = [{ id: 'all', label: 'Tout' }, ...groupByCategory(products).map(g => ({ id: g.key, label: g.label }))]
   const currentCat = categories.find(c => c.id === activeCategory) || categories[0]
 
   const rated = products.filter(p => p.rating).sort((a, b) => Number(b.rating) - Number(a.rating))
@@ -55,7 +47,7 @@ export default function HomeClient({ user, products: allProducts, latestOffer })
   const initials = initialsOf(name)
 
   const visibleProducts = isSearching
-    ? products.filter(p => p.title.toLowerCase().includes(query) || String(p.category).toLowerCase().includes(query))
+    ? products.filter(p => p.title.toLowerCase().includes(query) || categoryLabel(p.category).toLowerCase().includes(query))
     : products.filter(p => inCategory(p, currentCat))
 
   const scrollToMenu = () => menuRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/utils/supabase/client'
 import { useStorefront, useLocalMenu } from '@/context/StorefrontContext'
+import { groupByCategory } from '@/lib/categories'
 import styles from './Categories.module.css'
 import ProductCard from '@/components/ProductCard'
 import SkeletonCard from '@/components/SkeletonCard'
@@ -26,8 +27,8 @@ export default function CategoriesPage() {
     fetchProducts()
   }, [organizationId])
   
-  // Extract unique categories from products
-  const uniqueCategories = [...new Set(productsList.map(p => p.category))]
+  // Les catégories du restaurant, chacune avec ses plats
+  const groups = groupByCategory(productsList)
   const [activeTab, setActiveTab] = useState('All')
 
   const handleTabClick = (category) => {
@@ -44,10 +45,7 @@ export default function CategoriesPage() {
     }
   }
 
-  // Filter categories to render based on activeTab
-  const categoriesToRender = activeTab === 'All' 
-    ? uniqueCategories 
-    : [activeTab]
+  const groupsToRender = activeTab === 'All' ? groups : groups.filter(g => g.key === activeTab)
 
   return (
     <div className={styles.container}>
@@ -68,13 +66,13 @@ export default function CategoriesPage() {
         >
           Tout voir
         </button>
-        {uniqueCategories.map(cat => (
-          <button 
-            key={cat}
-            className={`${styles.navChip} ${activeTab === cat ? styles.active : ''}`}
-            onClick={() => handleTabClick(cat)}
+        {groups.map(g => (
+          <button
+            key={g.key}
+            className={`${styles.navChip} ${activeTab === g.key ? styles.active : ''}`}
+            onClick={() => handleTabClick(g.key)}
           >
-            {cat}
+            {g.label}
           </button>
         ))}
       </nav>
@@ -87,13 +85,12 @@ export default function CategoriesPage() {
           <SkeletonCard />
         </div>
       ) : (
-        categoriesToRender.map(category => {
-          const categoryProducts = productsList.filter(p => p.category === category)
+        groupsToRender.map(({ key, label, products: categoryProducts }) => {
           return (
-          <section key={category} id={`category-${category}`} className={styles.categorySection}>
+          <section key={key} id={`category-${key}`} className={styles.categorySection}>
             <div className={styles.categoryHeader}>
-              <h2>{category}</h2>
-              <span className={styles.itemCount}>{categoryProducts.length} articles</span>
+              <h2>{label}</h2>
+              <span className={styles.itemCount}>{categoryProducts.length} plat{categoryProducts.length > 1 ? 's' : ''}</span>
             </div>
             
             <div className={styles.productsGrid}>
