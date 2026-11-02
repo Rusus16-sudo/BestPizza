@@ -14,8 +14,9 @@ export default function LayoutWrapper({ children }) {
   const pathname = usePathname() || ''
 
   // Pages sans la mise en page globale (barre latérale / barre du bas)
-  // … la création d'un restaurant, une page à part, hors de toute vitrine, et l'espace Tchopi
-  const isAuthPage = pathname === '/login' || pathname === '/signup' || pathname === '/reset-password' || pathname === '/creer' || pathname === '/tchopi' || pathname.startsWith('/tchopi/')
+  // … la création d'un restaurant, une page à part, hors de toute vitrine, l'espace Tchopi,
+  // et les pages de Tchopi pour les restaurants (accueil, tarifs)
+  const isAuthPage = pathname === '/login' || pathname === '/signup' || pathname === '/reset-password' || pathname === '/creer' || pathname === '/tchopi' || pathname.startsWith('/tchopi/') || pathname === '/' || pathname === '/tarifs'
 
   if (isAuthPage) {
     return (
