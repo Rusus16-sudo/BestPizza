@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
-import { createAdminClient, requireStaff, MANAGER_ROLES, STAFF_ROLES } from '@/utils/supabase/admin'
+import { createAdminClient, requireStaff, MANAGER_ROLES } from '@/utils/supabase/admin'
+import { findManagedMember } from '@/lib/team'
 
 // Suspendre ou réactiver un membre de l'équipe. Seul son accès à CET établissement
 // change : son compte reste utilisable ailleurs (client, autre restaurant).
@@ -17,13 +18,15 @@ export async function POST(request) {
 
     const supabaseAdmin = createAdminClient()
 
-    // Seul le personnel de son équipe : jamais un gérant, ni le membre d'un autre établissement
+    // Seule son équipe : ni le gérant du restaurant, ni un autre point de vente, ni un autre établissement
+    const member = await findManagedMember(supabaseAdmin, membership, userId)
+    if (!member) {
+      return NextResponse.json({ error: 'Ce compte ne fait pas partie de votre personnel' }, { status: 403 })
+    }
     const { data: updated, error } = await supabaseAdmin
       .from('memberships')
       .update({ is_active: isActive })
-      .eq('user_id', userId)
-      .eq('organization_id', membership.organization_id)
-      .in('role', STAFF_ROLES)
+      .eq('id', member.id)
       .select('user_id')
 
     if (error) {

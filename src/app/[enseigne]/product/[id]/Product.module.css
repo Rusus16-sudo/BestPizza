@@ -395,3 +395,12 @@
     background: rgba(246, 246, 244, 0.94);
   }
 }
+
+/* En rupture au point de vente choisi */
+.addBtn:disabled {
+  background: var(--color-surface-muted);
+  color: var(--color-text-tertiary);
+  box-shadow: none;
+  cursor: default;
+  justify-content: center;
+}

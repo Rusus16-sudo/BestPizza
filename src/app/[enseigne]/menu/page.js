@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { createClient } from '@/utils/supabase/client'
-import { useStorefront } from '@/context/StorefrontContext'
+import { useStorefront, useLocalMenu } from '@/context/StorefrontContext'
 import ProductCard from '@/components/ProductCard'
 import PageHeader from '@/components/PageHeader'
 import styles from './Menu.module.css'
@@ -21,7 +21,9 @@ const slug = (label) => label.toLowerCase().normalize('NFD').replace(/[^a-z]/g, 
 
 export default function MenuPage() {
   const { id: organizationId } = useStorefront()
-  const [productsList, setProductsList] = useState([])
+  const [allProducts, setProductsList] = useState([])
+  // La carte du point de vente choisi
+  const productsList = useLocalMenu(allProducts)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {

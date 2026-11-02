@@ -9,13 +9,15 @@ import toast from 'react-hot-toast'
 import styles from './Product.module.css'
 import { defaultSelection, normalizeSelection, selectionLines, unitPriceFor } from '@/lib/options'
 import { isNewProduct } from '@/lib/product-badges'
-import { useStorefront } from '@/context/StorefrontContext'
+import { useStorefront, useLocalProduct } from '@/context/StorefrontContext'
 
 
-export default function ProductClient({ product }) {
+export default function ProductClient({ product: baseProduct }) {
   const router = useRouter()
   const { addToCart, totalItems } = useCart()
-  const { href } = useStorefront()
+  const { href, location, locations } = useStorefront()
+  // Le plat au point de vente choisi : son prix, ou en rupture à cette adresse
+  const product = useLocalProduct(baseProduct)
   const [quantity, setQuantity] = useState(1)
   // Les choix du plat (taille, formule, suppléments), définis par le gérant
   const groups = (product.option_groups || []).filter(g => g?.choices?.length)
@@ -203,9 +205,15 @@ export default function ProductClient({ product }) {
               <span className={styles.addPrice}>{totalItems} article{totalItems > 1 ? 's' : ''}</span>
             </Link>
           ) : (
-            <button className={styles.addBtn} onClick={handleAdd}>
-              <span>Ajouter</span>
-              <span className={styles.addPrice}>{formatPrice(totalPrice)}</span>
+            <button className={styles.addBtn} onClick={handleAdd} disabled={!product.is_available}>
+              {product.is_available ? (
+                <>
+                  <span>Ajouter</span>
+                  <span className={styles.addPrice}>{formatPrice(totalPrice)}</span>
+                </>
+              ) : (
+                <span>{locations?.length > 1 ? `Indisponible à ${location?.name}` : 'Indisponible pour le moment'}</span>
+              )}
             </button>
           )}
         </div>

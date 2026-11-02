@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import { getBrowserClient } from '@/utils/supabase/client'
 import { getStaffMembership } from '@/lib/staff'
-import { brandColorVars, BRAND_COLORS } from '@/lib/brand'
+import { brandColorVars, BRAND_COLORS, initialsOf } from '@/lib/brand'
 import AdminPageHeader from '../AdminPageHeader'
 import BrandMark from '@/components/BrandMark'
 import ShareKit from '@/components/ShareKit'
@@ -109,7 +109,7 @@ export default function RestaurantSettings() {
 
   const logoShown = logo.preview || logo.url
   const coverShown = cover.preview || cover.url
-  const initials = (name || org.name).split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase()
+  const initials = initialsOf(name || org.name)
   const trialEnd = org.plan_status === 'trial' && org.trial_ends_at
     ? new Date(org.trial_ends_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })
     : null

@@ -28,12 +28,20 @@ export const loadStorefront = cache(async (slug) => {
 
   // Les quartiers desservis par chaque point de vente, avec leur tarif
   const ids = (locations || []).map((l) => l.id)
-  const { data: zones } = ids.length
-    ? await supabase.from('delivery_zones').select('id, location_id, name, fee').in('location_id', ids).order('position')
-    : { data: [] }
+  const [{ data: zones }, { data: rules }] = ids.length
+    ? await Promise.all([
+      supabase.from('delivery_zones').select('id, location_id, name, fee').in('location_id', ids).order('position'),
+      // Les plats en rupture ou à un autre prix à une adresse
+      supabase.from('product_locations').select('product_id, location_id, is_available, price_override').in('location_id', ids),
+    ])
+    : [{ data: [] }, { data: [] }]
 
   return {
     ...storefront,
-    locations: (locations || []).map((l) => ({ ...l, zones: (zones || []).filter((z) => z.location_id === l.id) })),
+    locations: (locations || []).map((l) => ({
+      ...l,
+      zones: (zones || []).filter((z) => z.location_id === l.id),
+      rules: (rules || []).filter((r) => r.location_id === l.id),
+    })),
   }
 })

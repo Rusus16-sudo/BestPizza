@@ -1,10 +1,11 @@
 'use client'
 
-import { createContext, useContext, useEffect, useState, useCallback } from 'react'
+import { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react'
 import { usePathname } from 'next/navigation'
 import { createClient } from '@/utils/supabase/client'
 import { brandColorVars } from '@/lib/brand'
 import LocationPicker from '@/components/LocationPicker'
+import { localMenu, localProduct } from '@/lib/location-menu'
 import {
   DEFAULT_STOREFRONT, LAST_STOREFRONT_COOKIE, lastStorefrontSlug, storefrontHref, storefrontSlugFromPath,
 } from '@/lib/storefront-paths'
@@ -60,6 +61,18 @@ export function StorefrontProvider({ storefront, children }) {
       {(pickerOpen || mustChoose) && <LocationPicker required={mustChoose} onClose={() => setPickerOpen(false)} />}
     </StorefrontContext.Provider>
   )
+}
+
+/** Les plats proposés au point de vente choisi, à son prix (voir lib/location-menu). */
+export function useLocalMenu(products) {
+  const location = useContext(StorefrontContext)?.location
+  return useMemo(() => localMenu(products, location), [products, location])
+}
+
+/** Ce plat au point de vente choisi : son prix, et `is_available` faux s'il y est en rupture. */
+export function useLocalProduct(product) {
+  const location = useContext(StorefrontContext)?.location
+  return useMemo(() => localProduct(product, location), [product, location])
 }
 
 /** Le restaurant de la vitrine en cours, ou null hors d'une vitrine. */

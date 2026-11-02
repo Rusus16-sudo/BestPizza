@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/utils/supabase/client'
-import { useStorefront } from '@/context/StorefrontContext'
+import { useStorefront, useLocalMenu } from '@/context/StorefrontContext'
 import styles from './Favorites.module.css'
 import ProductCard from '@/components/ProductCard'
 import SkeletonCard from '@/components/SkeletonCard'
@@ -11,7 +11,9 @@ import SkeletonCard from '@/components/SkeletonCard'
 export default function FavoritesPage() {
   const router = useRouter()
   const { id: organizationId, href } = useStorefront()
-  const [favoriteProducts, setFavoriteProducts] = useState([])
+  const [allFavorites, setFavoriteProducts] = useState([])
+  // Ceux proposés au point de vente choisi, à son prix
+  const favoriteProducts = useLocalMenu(allFavorites)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {

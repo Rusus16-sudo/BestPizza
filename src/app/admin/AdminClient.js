@@ -11,6 +11,7 @@ import AdminPageHeader from './AdminPageHeader'
 import styles from './Admin.module.css'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import { getStaffMembership } from '@/lib/staff'
+import LocationRules from './carte/LocationRules'
 import { productPhotoPath } from '@/lib/product-photos'
 import { isNewProduct, newUntilFor, NEW_FOR_DAYS } from '@/lib/product-badges'
 import OptionGroupsEditor, { cleanOptionGroups } from '@/components/OptionGroupsEditor'
@@ -34,7 +35,11 @@ const SECTIONS = {
   reviews: { title: 'Avis clients', subtitle: 'Ce que vos clients pensent de vos plats.' },
 }
 
-export default function AdminClient({ section, initialStaff = [] }) {
+const ROLE_LABELS = { cuisinier: 'Cuisinier', livreur: 'Livreur', gerant: 'Responsable' }
+const ALL_LOCATIONS = 'tous'
+
+// `team` (page Équipe) : les points de vente, et ce que ce gérant peut choisir en ajoutant quelqu'un
+export default function AdminClient({ section, initialStaff = [], team = { locations: [], canChooseLocation: false, canAddManager: false } }) {
   const router = useRouter()
   const [supabase] = useState(() => getBrowserClient())
   
@@ -44,6 +49,7 @@ export default function AdminClient({ section, initialStaff = [] }) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [role, setRole] = useState('cuisinier')
+  const [staffLocation, setStaffLocation] = useState(ALL_LOCATIONS)
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState({ type: '', text: '' })
   const [staff, setStaff] = useState(initialStaff)
@@ -89,12 +95,18 @@ export default function AdminClient({ section, initialStaff = [] }) {
 
   // L'enseigne que gère ce compte : la carte, les promotions et les avis sont les siens
   const [organizationId, setOrganizationId] = useState(null)
+  // Ses points de vente : un plat peut y être en rupture ou à un autre prix
+  const [menuLocations, setMenuLocations] = useState([])
 
   useEffect(() => {
     const loadOrganization = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       const membership = await getStaffMembership(supabase, user?.id)
       setOrganizationId(membership?.organization_id || null)
+      if (!membership) return
+      const { data } = await supabase.from('locations').select('id, name')
+        .eq('organization_id', membership.organization_id).order('created_at')
+      setMenuLocations(data || [])
     }
     loadOrganization()
   }, [supabase])
@@ -338,7 +350,7 @@ export default function AdminClient({ section, initialStaff = [] }) {
       const res = await fetch('/api/admin/create-user', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, role })
+        body: JSON.stringify({ email, password, role, locationId: staffLocation === ALL_LOCATIONS ? null : staffLocation })
       })
 
       const data = await res.json()
@@ -347,8 +359,8 @@ export default function AdminClient({ section, initialStaff = [] }) {
         throw new Error(data.error || 'Erreur lors de la création')
       }
 
-      setMessage({ type: 'success', text: `Compte ${role} créé avec succès.` })
-      setStaff([{ id: data.user.id, email: email, role: role, is_active: true, created_at: new Date().toISOString() }, ...staff])
+      setMessage({ type: 'success', text: `Compte ${ROLE_LABELS[role].toLowerCase()} créé.` })
+      setStaff([{ id: data.user.id, email: email, role: role, location_id: data.user.location_id, is_active: true, created_at: new Date().toISOString() }, ...staff])
       setEmail('')
       setPassword('')
     } catch (err) {
@@ -424,13 +436,32 @@ export default function AdminClient({ section, initialStaff = [] }) {
                 <Select
                   label="Rôle"
                   value={role}
-                  onChange={setRole}
+                  onChange={(next) => {
+                    setRole(next)
+                    // Un responsable gère une adresse précise
+                    if (next === 'gerant' && staffLocation === ALL_LOCATIONS) setStaffLocation(team.locations[0]?.id)
+                  }}
                   options={[
                     { value: 'cuisinier', label: 'Cuisinier', hint: 'Écran cuisine' },
                     { value: 'livreur', label: 'Livreur', hint: 'Livraisons' },
+                    ...(team.canAddManager ? [{ value: 'gerant', label: 'Responsable', hint: 'Gère un point de vente' }] : []),
                   ]}
                 />
               </div>
+              {team.canChooseLocation && (
+                <div className={styles.inputGroup}>
+                  <label>Point de vente</label>
+                  <Select
+                    label="Point de vente"
+                    value={staffLocation}
+                    onChange={setStaffLocation}
+                    options={[
+                      ...(role === 'gerant' ? [] : [{ value: ALL_LOCATIONS, label: 'Tous les points de vente', hint: 'Voit les commandes de chaque adresse' }]),
+                      ...team.locations.map((l) => ({ value: l.id, label: l.name })),
+                    ]}
+                  />
+                </div>
+              )}
               <div className={styles.inputGroup}>
                 <label>Adresse Email</label>
                 <input type="email" className={styles.formInput} value={email} onChange={(e) => setEmail(e.target.value)} placeholder="employe@bestpizza.com" required />
@@ -478,7 +509,12 @@ export default function AdminClient({ section, initialStaff = [] }) {
                       <div className={styles.memberDetails}>
                         <span className={styles.memberEmail}>{member.email || 'Email non renseigné'}</span>
                         <span className={styles.memberRole}>
-                          <span className={`${styles.roleBadge} ${member.is_active ? styles[member.role] : styles.inactive}`}>{member.role}</span>
+                          <span className={`${styles.roleBadge} ${member.is_active ? styles[member.role] : styles.inactive}`}>{ROLE_LABELS[member.role] || member.role}</span>
+                          {team.locations.length > 1 && (
+                            <span className={styles.memberLocation}>
+                              {team.locations.find((l) => l.id === member.location_id)?.name || 'Tous les points de vente'}
+                            </span>
+                          )}
                         </span>
                       </div>
                     </div>
@@ -652,6 +688,10 @@ export default function AdminClient({ section, initialStaff = [] }) {
                   </span>
                 </label>
               </div>
+
+              {editingProduct && menuLocations.length > 1 && (
+                <LocationRules productId={editingProduct.id} basePrice={editingProduct.price} locations={menuLocations} />
+              )}
 
               <div className={styles.modalActions}>
                 <button type="button" onClick={() => setMenuModalOpen(false)} className={styles.btnCancel}>Annuler</button>

@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
 import { loadStorefront } from '@/lib/storefront-data'
-import { brandColorVars } from '@/lib/brand'
+import { brandColorVars, appIconUrl } from '@/lib/brand'
 import { StorefrontProvider } from '@/context/StorefrontContext'
 import styles from './Storefront.module.css'
 
@@ -16,6 +16,8 @@ export async function generateMetadata({ params }) {
     title: { default: `${storefront.name} · Commandez en ligne`, template: `%s · ${storefront.name}` },
     description: `Commandez chez ${storefront.name} et suivez votre livraison en direct.`,
     manifest: `/${storefront.slug}/manifest.webmanifest`,
+    applicationName: storefront.name,
+    icons: { apple: appIconUrl(storefront, 180) },
     appleWebApp: { capable: true, statusBarStyle: 'default', title: storefront.name },
   }
 }

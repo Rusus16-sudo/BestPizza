@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/utils/supabase/client'
-import { useStorefront } from '@/context/StorefrontContext'
+import { useStorefront, useLocalMenu } from '@/context/StorefrontContext'
 import styles from './Categories.module.css'
 import ProductCard from '@/components/ProductCard'
 import SkeletonCard from '@/components/SkeletonCard'
@@ -11,7 +11,9 @@ import SkeletonCard from '@/components/SkeletonCard'
 export default function CategoriesPage() {
   const router = useRouter()
   const { id: organizationId, href } = useStorefront()
-  const [productsList, setProductsList] = useState([])
+  const [allProducts, setProductsList] = useState([])
+  // La carte du point de vente choisi
+  const productsList = useLocalMenu(allProducts)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {

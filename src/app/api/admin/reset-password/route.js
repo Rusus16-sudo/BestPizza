@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
-import { createAdminClient, requireStaff, MANAGER_ROLES, STAFF_ROLES } from '@/utils/supabase/admin'
+import { createAdminClient, requireStaff, MANAGER_ROLES } from '@/utils/supabase/admin'
+import { findManagedMember } from '@/lib/team'
 
 export async function POST(request) {
   const auth = await requireStaff(MANAGER_ROLES)
@@ -25,7 +26,7 @@ export async function POST(request) {
       .from('memberships')
       .select('organization_id, role')
       .eq('user_id', userId)
-    const inMyTeam = memberships?.some((m) => m.organization_id === membership.organization_id && STAFF_ROLES.includes(m.role))
+    const inMyTeam = Boolean(await findManagedMember(supabaseAdmin, membership, userId))
     const elsewhere = memberships?.some((m) => m.organization_id !== membership.organization_id)
     if (!inMyTeam) {
       return NextResponse.json({ error: 'Ce compte ne fait pas partie de votre personnel' }, { status: 403 })

@@ -36,3 +36,13 @@ export const BRAND_COLORS = [
   { value: '#2b8a3e', name: 'Basilic' },
   { value: '#1f1d1b', name: 'Ardoise' },
 ]
+
+/** « Chez Mama Africa » → « CM » : quand le restaurant n'a pas de logo. */
+export function initialsOf(name) {
+  return String(name || '').split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase() || 'T'
+}
+
+/** L'icône du restaurant (app installée, écran d'accueil) : son logo, sinon ses initiales sur sa couleur. */
+export function appIconUrl(storefront, size = 192) {
+  return storefront?.logo_url || `/api/icon/${storefront?.slug}?size=${size}`
+}

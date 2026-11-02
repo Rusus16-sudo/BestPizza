@@ -6,6 +6,8 @@ export const metadata = {
   title: "Tchopi · Commandez chez vos restaurants",
   description: "Commandez en ligne chez vos restaurants et suivez votre livraison en temps réel.",
   manifest: "/manifest.json",
+  applicationName: "Tchopi",
+  icons: { apple: "/icon-192x192.png" },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
@@ -26,13 +28,9 @@ export default function RootLayout({ children }) {
   return (
     <html lang="fr">
       <head>
-        <meta name="application-name" content="Tchopi" />
-        <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        <meta name="apple-mobile-web-app-title" content="Tchopi" />
+        {/* Nom et icône de l'app : dans `metadata`, pour que chaque vitrine mette les siens */}
         <meta name="format-detection" content="telephone=no" />
         <meta name="mobile-web-app-capable" content="yes" />
-        <link rel="apple-touch-icon" href="/icon-192x192.png" />
       </head>
       <body>
         <CartProvider>

@@ -6,9 +6,10 @@ import { useCart } from '@/context/CartContext'
 import styles from './page.module.css'
 import ProductCard from '@/components/ProductCard'
 import BrandMark from '@/components/BrandMark'
-import { useStorefront } from '@/context/StorefrontContext'
+import { useStorefront, useLocalMenu } from '@/context/StorefrontContext'
 import OpeningBadge from '@/components/OpeningBadge'
 import LocationChip from '@/components/LocationChip'
+import { initialsOf } from '@/lib/brand'
 
 const CATEGORIES = [
   { id: 'all', label: 'Tout', aliases: [] },
@@ -28,7 +29,9 @@ function describeOffer(offer) {
   return 'sur une sélection'
 }
 
-export default function HomeClient({ user, products, latestOffer }) {
+export default function HomeClient({ user, products: allProducts, latestOffer }) {
+  // La carte du point de vente choisi
+  const products = useLocalMenu(allProducts)
   const { totalItems } = useCart()
   const { name, logo_url: logoUrl, cover_url: coverUrl, tagline_title: taglineTitle, tagline_text: taglineText, href } = useStorefront()
   const [activeCategory, setActiveCategory] = useState('all')
@@ -49,7 +52,7 @@ export default function HomeClient({ user, products, latestOffer }) {
   // L'image d'accueil : la photo de couverture du restaurant, sinon celle d'un de ses plats,
   // sinon son logo (ou ses initiales) sur sa couleur. Jamais une image qui n'est pas à lui.
   const dishPhoto = products.find(p => p.image)?.image
-  const initials = name.split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase()
+  const initials = initialsOf(name)
 
   const visibleProducts = isSearching
     ? products.filter(p => p.title.toLowerCase().includes(query) || String(p.category).toLowerCase().includes(query))

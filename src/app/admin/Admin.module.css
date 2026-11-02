@@ -356,6 +356,19 @@
   border: 1px solid #dcfce7;
 }
 
+.roleBadge.gerant {
+  background: #fff4e6;
+  color: #c2410c;
+  border: 1px solid #ffe8cc;
+}
+
+/* Son point de vente, quand le restaurant en a plusieurs */
+.memberLocation {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--color-text-tertiary);
+}
+
 .roleBadge.inactive {
   background: #f8fafc;
   color: #64748b;

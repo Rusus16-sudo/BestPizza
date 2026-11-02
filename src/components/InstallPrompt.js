@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useStorefrontInfo } from '@/context/StorefrontContext'
+import { appIconUrl } from '@/lib/brand'
 import styles from './InstallPrompt.module.css'
 
 export default function InstallPrompt({ hidden = false }) {
@@ -76,10 +77,10 @@ export default function InstallPrompt({ hidden = false }) {
       <div className={styles.promptContent}>
         <div className={styles.leftSection}>
           <div className={styles.iconWrapper}>
-            <img src={store?.logo_url || '/icon-192x192.png'} alt="" className={styles.appIcon} />
+            <img src={store?.slug ? appIconUrl(store, 96) : '/icon-192x192.png'} alt="" className={styles.appIcon} />
           </div>
           <div className={styles.promptText}>
-            <div className={styles.promptTitle}>L'app {store?.name || 'Tchopi'}</div>
+            <div className={styles.promptTitle}>L’app {store?.name || 'Tchopi'}</div>
             <div className={styles.promptDesc}>Commandez depuis votre écran d’accueil</div>
           </div>
         </div>
