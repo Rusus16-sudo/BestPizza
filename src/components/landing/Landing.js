@@ -156,36 +156,43 @@ export default function Landing({ account = null }) {
 
         {/* Le reste, en simple liste */}
         <section className={styles.moreSection}>
+          <Reveal>
           <h2 className={styles.title}>Et aussi</h2>
           <dl className={styles.more}>
-            {MORE.map(([term, text]) => (
-              <div key={term}>
+            {MORE.map(([term, text], i) => (
+              <div key={term} style={{ '--i': i }}>
                 <dt>{term}</dt>
                 <dd>{text}</dd>
               </div>
             ))}
           </dl>
-          <div className={styles.demo}>
+          </Reveal>
+          <Reveal className={styles.demo} threshold={0.6}>
             <p>Best Pizza commande et livre déjà avec Tchopi. Ouvrez sa vitrine comme un client.</p>
             <Link href="/best-pizza" className={styles.secondaryCta}>Ouvrir la vitrine de Best Pizza</Link>
-          </div>
+          </Reveal>
         </section>
 
-        <section id="tarifs" className={styles.pricingSection}>
+        <Reveal as="section" id="tarifs" className={styles.pricingSection} threshold={0.2}>
           <h2 className={styles.title}>Un abonnement fixe, en FCFA, sans commission sur vos ventes</h2>
           <PricingPlans />
-        </section>
+        </Reveal>
 
-        <section className={styles.faqSection}>
+        <Reveal as="section" className={styles.faqSection} threshold={0.2}>
           <h2 className={styles.title}>Vos questions</h2>
           <Faq />
-        </section>
+        </Reveal>
 
-        <section className={styles.final}>
+        {/* La fin : le livreur traverse, comme au début de la page */}
+        <Reveal as="section" className={styles.final} threshold={0.4}>
+          <div className={styles.road} aria-hidden="true">
+            <span className={styles.roadTrail} />
+            <span className={styles.roadRider}>🛵</span>
+          </div>
           <h2>Votre restaurant peut prendre ses commandes en ligne dès ce soir.</h2>
           <Link href="/creer" className={styles.primaryCta}>Créer mon restaurant</Link>
           <p>14 jours gratuits pour essayer avec vos vrais clients.</p>
-        </section>
+        </Reveal>
       </main>
 
       <LandingFooter />

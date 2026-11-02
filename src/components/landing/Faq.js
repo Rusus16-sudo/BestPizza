@@ -31,8 +31,8 @@ const QUESTIONS = [
 export default function Faq() {
   return (
     <div className={styles.faq}>
-      {QUESTIONS.map(({ q, a }) => (
-        <details key={q} className={styles.faqItem}>
+      {QUESTIONS.map(({ q, a }, i) => (
+        <details key={q} className={styles.faqItem} style={{ '--i': i }}>
           <summary>{q}</summary>
           <p>{a}</p>
         </details>

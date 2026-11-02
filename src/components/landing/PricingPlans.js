@@ -37,14 +37,14 @@ export default function PricingPlans() {
       </div>
 
       <div className={styles.plans}>
-        {PLAN_ORDER.map((plan) => {
+        {PLAN_ORDER.map((plan, i) => {
           const monthly = PLAN_PRICES[plan]
           return (
-            <article key={plan} className={`${styles.plan} ${plan === 'pro' ? styles.planPro : ''}`}>
+            <article key={plan} className={`${styles.plan} ${plan === 'pro' ? styles.planPro : ''}`} style={{ '--i': i }}>
               {plan === 'pro' && <span className={styles.planBadge}>Recommandé</span>}
               <h3>{PLAN_NAMES[plan]}</h3>
               <p className={styles.planPitch}>{PLANS[plan].pitch}</p>
-              <p className={styles.planPrice}>
+              <p key={yearly ? 'an' : 'mois'} className={`${styles.planPrice} ${styles.priceSwap}`}>
                 <strong>{formatPrice(yearly ? monthly * 10 : monthly)}</strong>
                 <span>{yearly ? '/ an' : '/ mois'}</span>
               </p>
