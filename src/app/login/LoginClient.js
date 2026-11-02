@@ -200,7 +200,7 @@ export default function LoginClient({ initialMode = 'login', next = '' }) {
           </p>
 
           {/* Pour les clients ; les restaurants, eux, ne commandent pas : ils créent le leur */}
-          {!forRestaurant && <Link href="/" className={styles.guest}>Continuer sans compte</Link>}
+          {!forRestaurant && <Link href="/?boutique" className={styles.guest}>Continuer sans compte</Link>}
 
           {!forRestaurant && (
             <Link href="/creer" className={styles.restaurantCta}>

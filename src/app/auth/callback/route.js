@@ -5,8 +5,8 @@ export async function GET(request) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')
   // Seulement une page du site : jamais une adresse extérieure
-  const asked = searchParams.get('next') || '/'
-  const next = asked.startsWith('/') && !asked.startsWith('//') ? asked : '/'
+  const asked = searchParams.get('next') || '/?boutique'
+  const next = asked.startsWith('/') && !asked.startsWith('//') ? asked : '/?boutique'
 
   if (code) {
     const supabase = await createClient()

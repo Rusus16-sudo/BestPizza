@@ -17,7 +17,7 @@ export default async function AdminLayout({ children }) {
       <div style={{ padding: '48px 20px', textAlign: 'center', maxWidth: '420px', margin: '0 auto' }}>
         <h2>Accès réservé au gérant</h2>
         <p style={{ color: 'var(--color-text-secondary)' }}>Cet espace sert à gérer le restaurant.</p>
-        <Link href="/" className="btn btn-primary" style={{ marginTop: '16px' }}>Retour à la boutique</Link>
+        <Link href="/?boutique" className="btn btn-primary" style={{ marginTop: '16px' }}>Retour à la boutique</Link>
       </div>
     )
   }

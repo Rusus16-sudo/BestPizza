@@ -31,10 +31,10 @@ const SHOPS = [
 ]
 
 /** La page d'accueil de Tchopi, pour les restaurants. */
-export default function Landing() {
+export default function Landing({ account = null }) {
   return (
     <div className={styles.page}>
-      <LandingHeader />
+      <LandingHeader account={account} />
 
       <main>
         <section className={styles.hero}>

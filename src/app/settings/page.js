@@ -64,7 +64,7 @@ export default function SettingsPage() {
   return (
     <div className={styles.container}>
       <header className={styles.header}>
-        <button className={styles.backBtn} onClick={() => router.push('/')}>
+        <button className={styles.backBtn} onClick={() => router.push('/?boutique')}>
           <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" strokeWidth="2" fill="none">
             <polyline points="15 18 9 12 15 6"></polyline>
           </svg>

@@ -59,11 +59,11 @@ export async function login(formData) {
 
     revalidatePath('/', 'layout')
     // Le personnel va à son écran de travail ; un client revient où il était (ex. son suivi)
-    return { redirectTo: (active && HOME_BY_ROLE[screenRole(active)]) || safeNext(formData) || '/' }
+    return { redirectTo: (active && HOME_BY_ROLE[screenRole(active)]) || safeNext(formData) || '/?boutique' }
   }
 
   revalidatePath('/', 'layout')
-  return { redirectTo: safeNext(formData) || '/' }
+  return { redirectTo: safeNext(formData) || '/?boutique' }
 }
 
 export async function signup(formData) {
@@ -95,7 +95,7 @@ export async function signup(formData) {
   }
 
   revalidatePath('/', 'layout')
-  return { redirectTo: safeNext(formData) || '/' }
+  return { redirectTo: safeNext(formData) || '/?boutique' }
 }
 
 export async function requestPasswordReset(formData) {

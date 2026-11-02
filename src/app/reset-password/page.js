@@ -50,7 +50,7 @@ export default function ResetPasswordPage() {
     }
 
     setMessage({ type: 'info', text: 'Mot de passe changé. Vous allez être redirigé…' })
-    setTimeout(() => window.location.assign('/'), 1600)
+    setTimeout(() => window.location.assign('/?boutique'), 1600)
   }
 
   return (
