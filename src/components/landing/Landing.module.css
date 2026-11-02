@@ -1433,3 +1433,11 @@
   from { transform: translateX(-60px); }
   to { transform: translateX(calc(100vw + 20px)); }
 }
+
+/* Pro : la seule offre qui s'essaie gratuitement */
+.planTrial {
+  margin-top: 6px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--taxi);
+}

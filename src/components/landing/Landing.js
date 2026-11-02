@@ -52,7 +52,7 @@ export default function Landing({ account = null }) {
               <Link href="/creer" className={styles.primaryCta}>Créer mon restaurant</Link>
               <Link href="/best-pizza" className={styles.secondaryCta}>Voir une vitrine en vrai</Link>
             </div>
-            <p className={styles.reassure}>14 jours gratuits, sans carte bancaire. En ligne en 5 minutes.</p>
+            <p className={styles.reassure}>Offre Pro gratuite pendant 14 jours, sans carte bancaire. En ligne en 5 minutes.</p>
           </div>
           <HeroDelivery />
         </section>
@@ -191,7 +191,7 @@ export default function Landing({ account = null }) {
           </div>
           <h2>Votre restaurant peut prendre ses commandes en ligne dès ce soir.</h2>
           <Link href="/creer" className={styles.primaryCta}>Créer mon restaurant</Link>
-          <p>14 jours gratuits pour essayer avec vos vrais clients.</p>
+          <p>L’offre Pro est gratuite pendant 14 jours : essayez-la avec vos vrais clients.</p>
         </Reveal>
       </main>
 

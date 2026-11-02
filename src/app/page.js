@@ -7,7 +7,7 @@ import Landing from '@/components/landing/Landing'
 
 export const metadata = {
   title: 'Tchopi · L’app de commande et de livraison de votre restaurant',
-  description: 'Votre restaurant en ligne en 5 minutes : un lien à partager, la cuisine et les livreurs connectés, et le suivi de livraison en direct pour vos clients. 14 jours gratuits.',
+  description: 'Votre restaurant en ligne en 5 minutes : un lien à partager, la cuisine et les livreurs connectés, et le suivi de livraison en direct pour vos clients. Offre Pro gratuite pendant 14 jours.',
 }
 
 // tchopi.cm : la page d'accueil de Tchopi, pour tout le monde. Seuls la cuisine et les

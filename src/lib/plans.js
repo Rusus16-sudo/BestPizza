@@ -3,7 +3,8 @@
 export const PLAN_NAMES = { starter: 'Starter', pro: 'Pro', business: 'Business' }
 
 // Prix mensuels, en FCFA. À l'année : 10 mois payés pour 12 (2 mois offerts).
-export const PLAN_PRICES = { starter: 10000, pro: 25000, business: 50000 }
+// Seul Pro s'essaie gratuitement (14 jours) ; Starter et Business se paient dès le départ.
+export const PLAN_PRICES = { starter: 15000, pro: 25000, business: 50000 }
 export const PLAN_ORDER = ['starter', 'pro', 'business']
 
 // Starter : une petite carte, un livreur ; au-delà de 300 commandes par mois, on lui

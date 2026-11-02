@@ -15,7 +15,7 @@ const QUESTIONS = [
   },
   {
     q: 'Que se passe-t-il à la fin de l’essai gratuit ?',
-    a: 'Vous choisissez votre offre et vous payez depuis votre espace. Rien n’est prélevé automatiquement. Sans paiement, votre vitrine est mise en pause après 3 jours de grâce, sans rien perdre : elle revient dès le paiement.',
+    a: 'L’essai gratuit de 14 jours concerne l’offre Pro. À la fin, vous choisissez votre offre (Starter, Pro ou Business) et vous payez depuis votre espace. Rien n’est prélevé automatiquement. Sans paiement, votre vitrine est mise en pause après 3 jours de grâce, sans rien perdre : elle revient dès le paiement.',
   },
   {
     q: 'Mes livreurs ont-ils besoin d’un téléphone particulier ?',

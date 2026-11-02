@@ -49,6 +49,7 @@ export default function PricingPlans() {
                 <span>{yearly ? '/ an' : '/ mois'}</span>
               </p>
               {yearly && <p className={styles.planSaving}>Soit {formatPrice(Math.round((monthly * 10) / 12))} par mois</p>}
+              {plan === 'pro' && <p className={styles.planTrial}>14 jours gratuits pour commencer</p>}
               <ul>
                 {PLANS[plan].features.map((f) => <li key={f}>{f}</li>)}
                 {PLANS[plan].soon && (
@@ -57,12 +58,12 @@ export default function PricingPlans() {
                   </li>
                 )}
               </ul>
-              <Link href="/creer" className={styles.planCta}>Essayer 14 jours gratuits</Link>
+              <Link href="/creer" className={styles.planCta}>{plan === 'pro' ? 'Essayer Pro gratuitement' : `Choisir ${PLAN_NAMES[plan]}`}</Link>
             </article>
           )
         })}
       </div>
-      <p className={styles.planNote}>14 jours d’essai gratuit de l’offre Pro, sans engagement et sans carte bancaire. Vous choisissez votre offre à la fin de l’essai.</p>
+      <p className={styles.planNote}>Seule l’offre Pro s’essaie gratuitement, pendant 14 jours, sans engagement et sans carte bancaire. Starter et Business se paient dès le premier mois.</p>
     </div>
   )
 }

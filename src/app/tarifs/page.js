@@ -6,7 +6,7 @@ import styles from '@/components/landing/Landing.module.css'
 
 export const metadata = {
   title: 'Tarifs · Tchopi',
-  description: 'Starter 10 000 FCFA, Pro 25 000 FCFA, Business 50 000 FCFA par mois. 2 mois offerts à l’année. 14 jours gratuits, sans engagement.',
+  description: 'Starter 15 000 FCFA, Pro 25 000 FCFA, Business 50 000 FCFA par mois. 2 mois offerts à l’année. Offre Pro gratuite pendant 14 jours, sans engagement.',
 }
 
 // tchopi.cm/tarifs : les trois offres, pour les restaurants
@@ -17,7 +17,7 @@ export default function PricingPage() {
       <main>
         <section className={styles.pricingHero}>
           <h1>Un prix simple, en FCFA</h1>
-          <p>Pas de commission sur vos ventes : un abonnement fixe, c’est tout. 14 jours gratuits pour essayer.</p>
+          <p>Pas de commission sur vos ventes : un abonnement fixe, c’est tout. L’offre Pro s’essaie gratuitement pendant 14 jours.</p>
         </section>
         <section className={styles.section}>
           <PricingPlans />
