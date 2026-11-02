@@ -400,6 +400,7 @@ export default function OrdersPage() {
                   ))}
                 </div>
 
+                {/* La carte ne s'affiche que si l'offre du restaurant inclut le suivi en direct */}
                 {order.status === 'en_route' && (
                   <LiveDeliveryMap trackingToken={order.trackingToken} />
                 )}

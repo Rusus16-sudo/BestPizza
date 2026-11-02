@@ -507,3 +507,9 @@
 }
 
 .s_paiement { background: rgba(233, 162, 59, 0.18); color: #8a5a10; }
+
+/* Période non incluse dans l'offre (Starter : le jour seulement) */
+.periodLocked {
+  opacity: 0.55;
+  cursor: not-allowed;
+}

@@ -6,6 +6,7 @@ import { useCart, formatPrice } from '@/context/CartContext'
 import { createClient } from '@/utils/supabase/client'
 import PageHeader from '@/components/PageHeader'
 import { useStorefront } from '@/context/StorefrontContext'
+import { hasFeature } from '@/lib/plans'
 import { singleLabels, extraLabels } from '@/lib/options'
 import styles from './Cart.module.css'
 
@@ -24,7 +25,9 @@ export default function CartPage() {
     cartItems, updateQuantity, removeFromCart, totalItems, cartTotal,
     appliedPromo, setAppliedPromo, discountAmount, finalTotal, isMounted
   } = useCart()
-  const { id: organizationId, href } = useStorefront()
+  const { id: organizationId, href, plan } = useStorefront()
+  // Les codes promo sont inclus à partir de Pro
+  const withPromos = hasFeature(plan, 'promos')
 
   const [promoCode, setPromoCode] = useState('')
   const [promoError, setPromoError] = useState('')
@@ -121,7 +124,7 @@ export default function CartPage() {
         </ul>
 
         <aside className={styles.summary}>
-          {appliedPromo ? (
+          {!withPromos ? null : appliedPromo ? (
             <div className={styles.promoApplied}>
               <span>
                 Code <strong>{appliedPromo.code}</strong> appliqué

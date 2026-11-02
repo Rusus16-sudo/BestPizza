@@ -1,5 +1,6 @@
 import { createAdminClient } from '@/utils/supabase/admin'
 import { DELIVERY_ISSUES } from '@/lib/delivery-issues'
+import { hasFeature } from '@/lib/plans'
 
 // Le jeton du lien de suivi : 32 caractères hexadécimaux (voir la migration 2.2)
 export const TRACKING_TOKEN = /^[0-9a-f]{32}$/
@@ -25,14 +26,16 @@ export async function getTrackedOrder(token) {
     .maybeSingle()
   if (!order) return null
 
-  const [{ data: restaurant }, { data: location }, { data: driver }, { data: position }] = await Promise.all([
-    db.from('organizations').select('slug, name').eq('id', order.organization_id).maybeSingle(),
+  // L'offre du restaurant décide de ce que montre le suivi
+  const { data: restaurant } = await db.from('organizations').select('slug, name, plan').eq('id', order.organization_id).maybeSingle()
+  const restaurantPlan = restaurant?.plan
+  const [{ data: location }, { data: driver }, { data: position }] = await Promise.all([
     // Le numéro à appeler : celui du point de vente qui prépare et livre
     order.location_id ? db.from('locations').select('name, phone').eq('id', order.location_id).maybeSingle() : { data: null },
     // Le livreur, par son prénom seulement
     order.driver_id ? db.from('profiles').select('first_name').eq('id', order.driver_id).maybeSingle() : { data: null },
-    // Sa dernière position, pendant qu'il livre
-    order.status === 'en_route' ? db.from('driver_positions').select('lat, lng, updated_at').eq('order_id', order.id).maybeSingle() : { data: null },
+    // Sa dernière position, pendant qu'il livre (le suivi sur la carte est inclus à partir de Pro)
+    order.status === 'en_route' && hasFeature(restaurantPlan, 'liveMap') ? db.from('driver_positions').select('lat, lng, updated_at').eq('order_id', order.id).maybeSingle() : { data: null },
   ])
 
   return {
@@ -60,7 +63,9 @@ export async function getTrackedOrder(token) {
     destination: order.delivery_lat != null && order.delivery_lng != null ? { lat: order.delivery_lat, lng: order.delivery_lng } : null,
     customerName: order.customer_name,
     hasAccount: Boolean(order.user_id),
-    restaurant: restaurant || null,
+    restaurant: restaurant ? { slug: restaurant.slug, name: restaurant.name } : null,
+    // Ce que l'offre du restaurant inclut sur la page de suivi
+    features: { liveMap: hasFeature(restaurantPlan, 'liveMap'), reviews: hasFeature(restaurantPlan, 'reviews') },
     items: (order.order_items || []).map((i) => ({
       name: i.product_name,
       quantity: i.quantity,

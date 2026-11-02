@@ -42,3 +42,17 @@ export function subscriptionPrice(plan, months, locationCount = 1) {
   const monthly = (PLAN_PRICES[plan] || 0) + extra
   return months === 12 ? monthly * 10 : monthly
 }
+
+// Ce que chaque offre ouvre, au-delà du Starter (les limites chiffrées sont plus haut)
+const PRO_AND_UP = ['pro', 'business']
+export const PLAN_FEATURES = {
+  liveMap: PRO_AND_UP,    // le livreur suivi en direct sur la carte du client
+  promos: PRO_AND_UP,     // codes promo et offres sur la vitrine
+  reviews: PRO_AND_UP,    // avis clients
+  fullStats: PRO_AND_UP,  // statistiques sur 7 et 30 jours (Starter : du jour)
+}
+
+/** Cette offre ouvre-t-elle cette fonctionnalité ? */
+export function hasFeature(plan, feature) {
+  return (PLAN_FEATURES[feature] || []).includes(plan)
+}

@@ -12,6 +12,8 @@ import styles from './Admin.module.css'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import { getStaffMembership } from '@/lib/staff'
 import LocationRules from './carte/LocationRules'
+import PlanLock from './PlanLock'
+import { hasFeature } from '@/lib/plans'
 import { productPhotoPath } from '@/lib/product-photos'
 import { isNewProduct, newUntilFor, NEW_FOR_DAYS } from '@/lib/product-badges'
 import OptionGroupsEditor, { cleanOptionGroups } from '@/components/OptionGroupsEditor'
@@ -97,6 +99,8 @@ export default function AdminClient({ section, initialStaff = [], team = { locat
   const [organizationId, setOrganizationId] = useState(null)
   // Ses points de vente : un plat peut y être en rupture ou à un autre prix
   const [menuLocations, setMenuLocations] = useState([])
+  // L'offre du restaurant : les promotions et les avis sont inclus à partir de Pro
+  const [plan, setPlan] = useState(null)
 
   useEffect(() => {
     const loadOrganization = async () => {
@@ -104,9 +108,12 @@ export default function AdminClient({ section, initialStaff = [], team = { locat
       const membership = await getStaffMembership(supabase, user?.id)
       setOrganizationId(membership?.organization_id || null)
       if (!membership) return
-      const { data } = await supabase.from('locations').select('id, name')
-        .eq('organization_id', membership.organization_id).order('created_at')
+      const [{ data }, { data: org }] = await Promise.all([
+        supabase.from('locations').select('id, name').eq('organization_id', membership.organization_id).order('created_at'),
+        supabase.from('organizations').select('plan').eq('id', membership.organization_id).maybeSingle(),
+      ])
       setMenuLocations(data || [])
+      setPlan(org?.plan || null)
     }
     loadOrganization()
   }, [supabase])
@@ -704,7 +711,11 @@ export default function AdminClient({ section, initialStaff = [], team = { locat
       )}
 
       {/* TAB CONTENT: OFFERS */}
-      {activeTab === 'offers' && (
+      {activeTab === 'offers' && plan && !hasFeature(plan, 'promos') && (
+        <PlanLock title="Les codes promo sont inclus dans l’offre Pro" text="Créez des réductions sur toute la carte, une catégorie ou quelques plats, avec un code à partager et une date de fin. Elles s’affichent sur votre vitrine et s’appliquent toutes seules au panier." />
+      )}
+
+      {activeTab === 'offers' && (!plan || hasFeature(plan, 'promos')) && (
         <div className={styles.menuContainer}>
           <div className={styles.menuHeader}>
             <p style={{ margin: 0, color: 'var(--color-text-secondary)' }}>{offers.length} offre{offers.length > 1 ? 's' : ''}</p>
@@ -848,7 +859,11 @@ export default function AdminClient({ section, initialStaff = [], team = { locat
       )}
 
       {/* TAB CONTENT: AVIS CLIENTS */}
-      {activeTab === 'reviews' && (
+      {activeTab === 'reviews' && plan && !hasFeature(plan, 'reviews') && (
+        <PlanLock title="Les avis clients sont inclus dans l’offre Pro" text="Après chaque livraison, vos clients notent leurs plats. Les notes s’affichent sur votre vitrine et vous voyez ici ce qu’ils en pensent." />
+      )}
+
+      {activeTab === 'reviews' && (!plan || hasFeature(plan, 'reviews')) && (
         <div>
 
           {reviewsLoading ? (

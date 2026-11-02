@@ -29,6 +29,9 @@ export default function LiveDeliveryMap({ trackingToken }) {
     }
   }, [trackingToken])
 
+  // Suivi sur la carte non inclus dans l'offre du restaurant (Starter)
+  if (order && !order.features?.liveMap) return null
+
   return (
     <div style={{ marginTop: '16px' }}>
       <TrackingMap position={order?.driver} destination={order?.destination} />

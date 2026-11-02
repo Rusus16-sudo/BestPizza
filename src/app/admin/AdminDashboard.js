@@ -8,6 +8,8 @@ import BarChart from './BarChart'
 import PushOptIn from '@/components/PushOptIn'
 import { formatDuration } from '@/lib/format'
 import styles from './AdminDashboard.module.css'
+import { getStaffMembership } from '@/lib/staff'
+import { hasFeature } from '@/lib/plans'
 
 const PERIODS = [
   { id: 'today', label: "Aujourd'hui", compare: 'hier à la même heure' },
@@ -58,6 +60,20 @@ export default function AdminDashboard() {
   const [name, setName] = useState('')
   const [loading, setLoading] = useState(true)
   const [now, setNow] = useState(() => new Date())
+  // Starter : les chiffres du jour ; 7 et 30 jours à partir de Pro
+  const [plan, setPlan] = useState(null)
+
+  useEffect(() => {
+    const loadPlan = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      const membership = await getStaffMembership(supabase, user?.id)
+      if (!membership) return
+      const { data } = await supabase.from('organizations').select('plan').eq('id', membership.organization_id).maybeSingle()
+      setPlan(data?.plan || null)
+    }
+    loadPlan()
+  }, [supabase])
+  const fullStats = !plan || hasFeature(plan, 'fullStats')
 
   const fetchAll = useCallback(async () => {
     const current = new Date()
@@ -191,17 +207,22 @@ export default function AdminDashboard() {
           <h1>{greeting(now)}{name ? `, ${name}` : ''}</h1>
         </div>
         <div className={styles.periods} role="tablist" aria-label="Période">
-          {PERIODS.map(p => (
-            <button
-              key={p.id}
-              role="tab"
-              aria-selected={period === p.id}
-              className={`${styles.period} ${period === p.id ? styles.periodActive : ''}`}
-              onClick={() => setPeriod(p.id)}
-            >
-              {p.label}
-            </button>
-          ))}
+          {PERIODS.map(p => {
+            const locked = p.id !== 'today' && !fullStats
+            return (
+              <button
+                key={p.id}
+                role="tab"
+                aria-selected={period === p.id}
+                className={`${styles.period} ${period === p.id ? styles.periodActive : ''} ${locked ? styles.periodLocked : ''}`}
+                onClick={() => !locked && setPeriod(p.id)}
+                disabled={locked}
+                title={locked ? 'Statistiques sur 7 et 30 jours : offre Pro' : undefined}
+              >
+                {locked && <span aria-hidden="true">🔒 </span>}{p.label}
+              </button>
+            )
+          })}
         </div>
       </header>
 

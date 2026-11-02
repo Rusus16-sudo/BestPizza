@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createAdminClient, requireUser } from '@/utils/supabase/admin'
 import { resolveStorefront, DEFAULT_ORGANIZATION_SLUG } from '@/lib/storefront'
 import { onlinePaymentStatus } from '@/lib/payments'
+import { hasFeature } from '@/lib/plans'
 import { deliveryQuote } from '@/lib/delivery'
 import { joinAddress } from '@/lib/delivery-memory'
 import { promoApplies, isOfferValid } from '@/lib/pricing'
@@ -120,7 +121,7 @@ export async function POST(request) {
 
   // 2. Code promo (vérifié ici aussi)
   let offer = null
-  if (promoCode) {
+  if (promoCode && hasFeature(organization.plan, 'promos')) {
     const { data } = await db.from('offers').select('*')
       .eq('organization_id', organization.id).eq('code', String(promoCode).trim()).maybeSingle()
     if (data && isOfferValid(data)) offer = data

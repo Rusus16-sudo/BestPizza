@@ -1,0 +1,47 @@
+.lock {
+  max-width: 560px;
+  margin: 24px auto;
+  padding: 32px 28px;
+  border-radius: var(--radius-xl);
+  background:
+    radial-gradient(120% 120% at 100% 0%, rgba(217, 58, 31, 0.3) 0%, transparent 60%),
+    var(--color-ink);
+  color: white;
+  text-align: center;
+}
+
+.badge {
+  display: inline-flex;
+  width: 56px;
+  height: 56px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  font-size: 1.5rem;
+  margin-bottom: 14px;
+}
+
+.lock h2 {
+  font-size: 1.4rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.lock p {
+  margin: 10px auto 22px;
+  max-width: 36em;
+  color: rgba(255, 255, 255, 0.78);
+  line-height: 1.55;
+}
+
+.cta {
+  display: inline-flex;
+  align-items: center;
+  min-height: 48px;
+  padding: 0 24px;
+  border-radius: var(--radius-full);
+  background: var(--color-primary);
+  color: white;
+  font-weight: 800;
+}

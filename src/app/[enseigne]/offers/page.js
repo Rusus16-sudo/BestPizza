@@ -4,11 +4,14 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/utils/supabase/client'
 import { useStorefront } from '@/context/StorefrontContext'
+import { hasFeature } from '@/lib/plans'
 import styles from './Offers.module.css'
 
 export default function OffersPage() {
   const router = useRouter()
-  const { id: organizationId, href } = useStorefront()
+  const { id: organizationId, href, plan } = useStorefront()
+  // Les offres sont incluses à partir de Pro
+  const withPromos = hasFeature(plan, 'promos')
   const [copiedId, setCopiedId] = useState(null)
   const [offers, setOffers] = useState([])
   const [loading, setLoading] = useState(true)
@@ -22,7 +25,7 @@ export default function OffersPage() {
         .eq('organization_id', organizationId)
         .order('created_at', { ascending: false })
       
-      if (!error && data) {
+      if (!error && data && withPromos) {
         const now = new Date();
         const activeOffers = data.filter(o => !o.valid_until || new Date(o.valid_until) >= now);
         setOffers(activeOffers)
@@ -30,7 +33,7 @@ export default function OffersPage() {
       setLoading(false)
     }
     fetchOffers()
-  }, [organizationId])
+  }, [organizationId, withPromos])
 
   const handleCopy = (offer) => {
     navigator.clipboard.writeText(offer.code)

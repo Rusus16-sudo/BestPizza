@@ -161,7 +161,7 @@ export default function TrackingClient({ initialOrder, token, isLoggedIn }) {
           <p className={styles.issue} role="alert">⚠️ {order.issue}</p>
         )}
 
-        {order.status === 'en_route' && (
+        {order.status === 'en_route' && order.features?.liveMap && (
           <div className={styles.map}>
             <TrackingMap position={order.driver} destination={order.destination} />
             <p className={styles.mapNote}>
@@ -190,7 +190,7 @@ export default function TrackingClient({ initialOrder, token, isLoggedIn }) {
       )}
 
       {/* Après la livraison : son avis fait vivre la vitrine du restaurant */}
-      {order.status === 'livre' && (
+      {order.status === 'livre' && order.features?.reviews && (
         <section className={styles.review}>
           <span aria-hidden="true">⭐</span>
           <div>

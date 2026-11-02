@@ -10,12 +10,15 @@ import styles from './Product.module.css'
 import { defaultSelection, normalizeSelection, selectionLines, unitPriceFor } from '@/lib/options'
 import { isNewProduct } from '@/lib/product-badges'
 import { useStorefront, useLocalProduct } from '@/context/StorefrontContext'
+import { hasFeature } from '@/lib/plans'
 
 
 export default function ProductClient({ product: baseProduct }) {
   const router = useRouter()
   const { addToCart, totalItems } = useCart()
-  const { href, location, locations } = useStorefront()
+  const { href, location, locations, plan } = useStorefront()
+  // Les avis sont inclus à partir de Pro
+  const withReviews = hasFeature(plan, 'reviews')
   // Le plat au point de vente choisi : son prix, ou en rupture à cette adresse
   const product = useLocalProduct(baseProduct)
   const [quantity, setQuantity] = useState(1)
@@ -117,7 +120,7 @@ export default function ProductClient({ product: baseProduct }) {
           <h1>{product.title}</h1>
           <div className={styles.meta}>
             {isNewProduct(product) && <span className={styles.newTag}>Nouveau</span>}
-            {product.rating && (
+            {withReviews && product.rating && (
               <span className={styles.metaItem}>
                 <svg className={styles.star} viewBox="0 0 24 24" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>
                 <strong>{product.rating}</strong>
@@ -169,7 +172,7 @@ export default function ProductClient({ product: baseProduct }) {
           </section>
         ))}
 
-        <section className={styles.block} aria-labelledby="reviews-title">
+        {withReviews && <section className={styles.block} aria-labelledby="reviews-title">
           <h2 id="reviews-title">Avis clients</h2>
           {reviews.length > 0 ? (
             <ul className={styles.reviews}>
@@ -189,7 +192,7 @@ export default function ProductClient({ product: baseProduct }) {
           ) : (
             <p className={styles.muted}>Pas encore d’avis. Vous pourrez noter ce plat depuis vos commandes après la livraison.</p>
           )}
-        </section>
+        </section>}
 
         <div className={styles.buyBar}>
           <div className={styles.stepper} role="group" aria-label="Quantité">
