@@ -9,6 +9,7 @@ import AdminPageHeader from '../AdminPageHeader'
 import BrandMark from '@/components/BrandMark'
 import ShareKit from '@/components/ShareKit'
 import { PLAN_NAMES } from '@/lib/plans'
+import { onlinePaymentStatus } from '@/lib/payments'
 import styles from './RestaurantSettings.module.css'
 
 const MAX_LOGO = 3 * 1024 * 1024
@@ -201,6 +202,20 @@ export default function RestaurantSettings() {
               </button>
             )}
           </fieldset>
+
+          <section className={styles.card}>
+            <h2>Paiement</h2>
+            {{
+              enabled: <p className={styles.payment}>Vos clients paient à la livraison, ou en ligne par MTN MoMo et Orange Money.</p>,
+              soon: (
+                <p className={styles.payment}>
+                  <span className={styles.soon}>🔒 Bientôt disponible</span>
+                  Le paiement MTN MoMo et Orange Money arrive dans votre offre. En attendant, vos clients paient à la livraison.
+                </p>
+              ),
+              none: <p className={styles.payment}>Vos clients paient à la livraison. Le paiement MTN MoMo et Orange Money est prévu dans les offres Pro et Business.</p>,
+            }[onlinePaymentStatus(org)]}
+          </section>
         </form>
 
         <aside className={styles.side}>

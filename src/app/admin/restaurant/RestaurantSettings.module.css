@@ -220,6 +220,23 @@
   cursor: pointer;
 }
 
+/* Paiement */
+.payment {
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+}
+
+.soon {
+  display: inline-block;
+  margin: 0 8px 6px 0;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  background: var(--color-ink);
+  color: white;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
 /* Aperçu */
 .side {
   position: sticky;

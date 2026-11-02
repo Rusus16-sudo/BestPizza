@@ -15,6 +15,7 @@ import { describeOpening } from '@/lib/opening-hours'
 import { useOpening } from '@/components/OpeningBadge'
 import Select from '@/components/Select'
 import LocationChip from '@/components/LocationChip'
+import { onlinePaymentStatus } from '@/lib/payments'
 import styles from './Checkout.module.css'
 
 const PAYMENT_METHODS = [
@@ -26,6 +27,9 @@ export default function CheckoutPage() {
   const router = useRouter()
   const { cartItems, cartTotal, discountAmount, finalTotal, appliedPromo, clearCart, removeFromCart, isMounted } = useCart()
   const { slug, name: restaurantName, plan, location, href } = useStorefront()
+  // Paiement en ligne : ouvert, bientôt disponible (cadenas), ou pas dans l'offre (Starter)
+  const online = onlinePaymentStatus({ slug, plan })
+  const methods = PAYMENT_METHODS.filter(m => m.value !== 'MTN / Orange Money' || online !== 'none')
   const [instructions, setInstructions] = useState('')
   // L'adresse en deux temps : le quartier (ou le quartier desservi choisi), puis un repère
   const [quarter, setQuarter] = useState('')
@@ -271,22 +275,35 @@ export default function CheckoutPage() {
           <section className={styles.section} aria-labelledby="payment-title">
             <h2 id="payment-title">Paiement</h2>
             <div className={styles.payments} role="radiogroup" aria-labelledby="payment-title">
-              {PAYMENT_METHODS.map(m => (
-                <label key={m.value} className={`${styles.payment} ${paymentMethod === m.value ? styles.paymentActive : ''}`}>
-                  <input
-                    type="radio"
-                    name="payment"
-                    value={m.value}
-                    checked={paymentMethod === m.value}
-                    onChange={(e) => setPaymentMethod(e.target.value)}
-                  />
-                  <span className={styles.radio} aria-hidden="true" />
-                  <span className={styles.paymentText}>
-                    <strong>{m.title}</strong>
-                    <span>{m.hint}</span>
-                  </span>
-                </label>
-              ))}
+              {methods.map(m => {
+                const locked = m.value === 'MTN / Orange Money' && online === 'soon'
+                return (
+                  <label
+                    key={m.value}
+                    className={`${styles.payment} ${paymentMethod === m.value ? styles.paymentActive : ''} ${locked ? styles.paymentLocked : ''}`}
+                  >
+                    <input
+                      type="radio"
+                      name="payment"
+                      value={m.value}
+                      checked={paymentMethod === m.value}
+                      disabled={locked}
+                      onChange={(e) => setPaymentMethod(e.target.value)}
+                    />
+                    <span className={styles.radio} aria-hidden="true" />
+                    <span className={styles.paymentText}>
+                      <strong>{m.title}</strong>
+                      <span>{locked ? 'MTN MoMo et Orange Money, bientôt ici' : m.hint}</span>
+                    </span>
+                    {locked && (
+                      <span className={styles.soon}>
+                        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2" /><path d="M8 11V7a4 4 0 0 1 8 0v4" /></svg>
+                        Bientôt disponible
+                      </span>
+                    )}
+                  </label>
+                )
+              })}
             </div>
           </section>
 

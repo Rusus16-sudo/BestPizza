@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient, requireUser } from '@/utils/supabase/admin'
-import { resolveStorefront } from '@/lib/storefront'
+import { resolveStorefront, DEFAULT_ORGANIZATION_SLUG } from '@/lib/storefront'
+import { onlinePaymentStatus } from '@/lib/payments'
 import { deliveryQuote } from '@/lib/delivery'
 import { joinAddress } from '@/lib/delivery-memory'
 import { promoApplies, isOfferValid } from '@/lib/pricing'
@@ -58,6 +59,12 @@ export async function POST(request) {
   }
 
   const payOnline = paymentMethod === MOBILE_MONEY
+  // Le compte Notch Pay branché est celui de Best Pizza : jamais pour l'argent d'un autre restaurant
+  if (payOnline && onlinePaymentStatus({ slug: body.organization || DEFAULT_ORGANIZATION_SLUG, plan: null }) !== 'enabled') {
+    return NextResponse.json({
+      error: 'Le paiement Mobile Money arrive bientôt chez ce restaurant. Choisissez le paiement à la livraison.',
+    }, { status: 400 })
+  }
   if (payOnline && !isNotchPayConfigured()) {
     return NextResponse.json({
       error: "Le paiement Mobile Money n'est pas disponible pour le moment. Choisissez le paiement à la livraison.",

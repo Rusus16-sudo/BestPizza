@@ -171,6 +171,33 @@
   color: var(--color-text-secondary);
 }
 
+/* Paiement en ligne pas encore ouvert chez ce restaurant */
+.paymentLocked {
+  cursor: default;
+  background: var(--color-surface-muted);
+  border-style: dashed;
+}
+
+.paymentLocked .radio,
+.paymentLocked .paymentText {
+  opacity: 0.55;
+}
+
+.soon {
+  margin-left: auto;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border-radius: var(--radius-full);
+  background: var(--color-ink);
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
 /* ---------- Récapitulatif ---------- */
 .summary {
   display: flex;
