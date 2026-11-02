@@ -8,6 +8,7 @@ import ConfirmDialog from '@/components/ConfirmDialog'
 import PushOptIn from '@/components/PushOptIn'
 import { formatPrice } from '@/context/CartContext'
 import { parseAddress, isCash } from '@/lib/delivery-address'
+import { DELIVERY_ISSUES } from '@/lib/delivery-issues'
 import styles from './Delivery.module.css'
 
 // Position du livreur enregistrée au plus toutes les 15 s
@@ -22,6 +23,8 @@ export default function DeliveryPage() {
   const [driverPosition, setDriverPosition] = useState(null)
   const [busyId, setBusyId] = useState(null)
   const [confirmOrder, setConfirmOrder] = useState(null)
+  // La commande dont le livreur choisit le problème à signaler
+  const [issueFor, setIssueFor] = useState(null)
   const myOrdersRef = useRef([])
   const lastSentRef = useRef(0)
 
@@ -34,7 +37,7 @@ export default function DeliveryPage() {
       .from('orders')
       .select(`
         id, short_id, status, customer_name, delivery_address, total_amount, created_at, driver_id, payment_method, payment_status,
-        delivery_lat, delivery_lng,
+        delivery_lat, delivery_lng, delivery_issue,
         order_items ( product_name, quantity )
       `)
       .in('status', ['prete', 'en_route'])
@@ -128,6 +131,25 @@ export default function DeliveryPage() {
       toast.success(`Commande ${order.short_id} prise en charge`)
     }
     fetchOrders()
+  }
+
+  const reportIssue = async (order, issue) => {
+    setIssueFor(null)
+    setBusyId(order.id)
+    try {
+      const res = await fetch('/api/orders/issue', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId: order.id, issue }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(data.error || 'Le signalement n’a pas pu être envoyé.')
+      toast.success('Le gérant et le client sont prévenus')
+      fetchOrders()
+    } catch (err) {
+      toast.error(err.message)
+    }
+    setBusyId(null)
   }
 
   const markDelivered = async () => {
@@ -229,6 +251,10 @@ export default function DeliveryPage() {
                       </a>
                     </div>
 
+                    {order.delivery_issue && (
+                      <p className={styles.issueNote}>⚠️ Signalé : {DELIVERY_ISSUES[order.delivery_issue]?.label}. Le gérant est prévenu.</p>
+                    )}
+
                     <button
                       className={styles.primaryBtn}
                       onClick={() => setConfirmOrder(order)}
@@ -236,6 +262,19 @@ export default function DeliveryPage() {
                     >
                       {busyId === order.id ? 'Enregistrement…' : 'Commande livrée'}
                     </button>
+
+                    {issueFor === order.id ? (
+                      <div className={styles.issues} role="group" aria-label="Quel problème ?">
+                        {Object.entries(DELIVERY_ISSUES).map(([id, issue]) => (
+                          <button key={id} type="button" className={styles.issueBtn} onClick={() => reportIssue(order, id)}>{issue.label}</button>
+                        ))}
+                        <button type="button" className={styles.issueCancel} onClick={() => setIssueFor(null)}>Annuler</button>
+                      </div>
+                    ) : (
+                      <button type="button" className={styles.issueLink} onClick={() => setIssueFor(order.id)} disabled={busyId === order.id}>
+                        Signaler un problème
+                      </button>
+                    )}
                   </article>
                 )
               })}

@@ -204,3 +204,77 @@
     justify-content: space-between;
   }
 }
+
+/* Commandes qui demandent l'attention du gérant */
+.alert {
+  margin-bottom: 16px;
+  padding: 12px 16px;
+  border-radius: var(--radius-md);
+  background: rgba(232, 89, 12, 0.1);
+  border: 1px solid rgba(232, 89, 12, 0.3);
+  color: #a63e00;
+  font-weight: 700;
+}
+
+.rowUrgent {
+  background: rgba(232, 89, 12, 0.05);
+  box-shadow: inset 4px 0 0 #e8590c;
+}
+
+.elapsed {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-text-tertiary);
+}
+
+.elapsedLate {
+  color: #c2410c;
+  font-weight: 800;
+}
+
+.issue {
+  margin: 6px 0 2px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #a63e00;
+}
+
+.unassignBtn {
+  padding: 6px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  font-weight: 700;
+  font-size: 0.8rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.unassignBtn:hover {
+  border-color: var(--color-primary);
+}
+
+/* Filtre par point de vente */
+.locations {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.location {
+  padding: 7px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  background: var(--color-surface);
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.locationActive {
+  border-color: var(--color-ink);
+  background: var(--color-ink);
+  color: white;
+}

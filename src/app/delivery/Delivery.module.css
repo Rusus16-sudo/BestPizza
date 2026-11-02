@@ -226,3 +226,48 @@
 @keyframes pulse {
   50% { opacity: 0.5; }
 }
+
+/* Signaler un problème */
+.issueLink {
+  align-self: center;
+  margin-top: 4px;
+  border: none;
+  background: none;
+  color: var(--color-text-secondary);
+  font-weight: 700;
+  font-size: 0.9rem;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.issues {
+  display: grid;
+  gap: 8px;
+}
+
+.issueBtn {
+  min-height: 46px;
+  border: 1.5px solid #e8590c;
+  border-radius: var(--radius-md);
+  background: rgba(232, 89, 12, 0.06);
+  color: #a63e00;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.issueCancel {
+  border: none;
+  background: none;
+  color: var(--color-text-tertiary);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.issueNote {
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  background: rgba(232, 89, 12, 0.1);
+  color: #a63e00;
+  font-size: 0.88rem;
+  font-weight: 700;
+}

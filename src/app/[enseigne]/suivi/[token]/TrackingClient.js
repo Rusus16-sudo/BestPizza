@@ -157,6 +157,10 @@ export default function TrackingClient({ initialOrder, token, isLoggedIn }) {
           </>
         )}
 
+        {order.status === 'en_route' && order.issue && (
+          <p className={styles.issue} role="alert">⚠️ {order.issue}</p>
+        )}
+
         {order.status === 'en_route' && (
           <div className={styles.map}>
             <TrackingMap position={order.driver} destination={order.destination} />
@@ -185,7 +189,25 @@ export default function TrackingClient({ initialOrder, token, isLoggedIn }) {
         />
       )}
 
-      {!isLoggedIn && !order.hasAccount && (
+      {/* Après la livraison : son avis fait vivre la vitrine du restaurant */}
+      {order.status === 'livre' && (
+        <section className={styles.review}>
+          <span aria-hidden="true">⭐</span>
+          <div>
+            <strong>C’était bon ?</strong>
+            <span>
+              {isLoggedIn || order.hasAccount
+                ? `Notez vos plats en quelques secondes : votre avis aide ${order.restaurant?.name || 'le restaurant'}.`
+                : 'Créez votre compte en 30 secondes pour noter vos plats et retrouver vos commandes.'}
+            </span>
+          </div>
+          <Link href={isLoggedIn || order.hasAccount ? '/orders' : `/login?mode=signup&next=${encodeURIComponent('/orders')}`} className={styles.primaryBtn}>
+            Noter mes plats
+          </Link>
+        </section>
+      )}
+
+      {!isLoggedIn && !order.hasAccount && order.status !== 'livre' && (
         <section className={styles.signup}>
           <div>
             {/* Sans compte, le client suit déjà tout ici : le compte sert à garder ses commandes */}

@@ -1,4 +1,5 @@
 import { createAdminClient } from '@/utils/supabase/admin'
+import { DELIVERY_ISSUES } from '@/lib/delivery-issues'
 
 // Le jeton du lien de suivi : 32 caractères hexadécimaux (voir la migration 2.2)
 export const TRACKING_TOKEN = /^[0-9a-f]{32}$/
@@ -17,7 +18,7 @@ export async function getTrackedOrder(token) {
     .select(`
       id, short_id, order_number, status, payment_status, payment_method, total_amount, delivery_fee, delivery_zone,
       created_at, accepted_at, ready_at, picked_at, delivered_at, cancelled_at,
-      customer_name, user_id, organization_id, location_id, driver_id, delivery_lat, delivery_lng,
+      customer_name, user_id, organization_id, location_id, driver_id, delivery_lat, delivery_lng, delivery_issue,
       order_items ( product_name, quantity, price, size, options )
     `)
     .eq('tracking_token', token)
@@ -50,6 +51,8 @@ export async function getTrackedOrder(token) {
     pickedAt: order.picked_at,
     deliveredAt: order.delivered_at,
     cancelledAt: order.cancelled_at,
+    // Le problème signalé par le livreur, tel qu'on le dit au client
+    issue: DELIVERY_ISSUES[order.delivery_issue]?.customer || null,
     restaurantPhone: location?.phone || null,
     locationName: location?.name || null,
     driverName: driver?.first_name || null,
