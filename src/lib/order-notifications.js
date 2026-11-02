@@ -52,7 +52,7 @@ export function orderNotifications(type, order, previousStatus, { customerUrl = 
       notification: {
         ...delivery,
         title: `Prête à livrer : ${order.short_id || ''}`.trim(),
-        body: `🍕 ${quartier} · ${cash ? `${formatPrice(order.total_amount)} à encaisser` : 'Déjà payée'}`,
+        body: `📦 ${quartier} · ${cash ? `${formatPrice(order.total_amount)} à encaisser` : 'Déjà payée'}`,
       },
     })
   }

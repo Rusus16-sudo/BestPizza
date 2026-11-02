@@ -39,7 +39,10 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Requête invalide' }, { status: 400 })
   }
 
-  const { items, phone, address, paymentMethod, instructions, promoCode, name, zoneId } = body || {}
+  const { items, phone, address, paymentMethod, instructions, promoCode, name, zoneId, pin } = body || {}
+  // La position exacte du client, s'il l'a partagée (sinon le quartier et le repère suffisent)
+  const lat = Number(pin?.lat), lng = Number(pin?.lng)
+  const exact = Number.isFinite(lat) && Number.isFinite(lng) && Math.abs(lat) <= 90 && Math.abs(lng) <= 180 && (lat !== 0 || lng !== 0)
   const customerName = String(name || '').replace(/\|/g, ' ').trim().slice(0, 60)
 
   if (!Array.isArray(items) || items.length === 0 || items.length > 50) {
@@ -159,6 +162,8 @@ export async function POST(request) {
     .insert({
       organization_id: organization.id,
       location_id: location.id,
+      delivery_lat: exact ? lat : null,
+      delivery_lng: exact ? lng : null,
       // Le numéro (#1, #2…) est attribué par la base, dans l'ordre des commandes du restaurant
       short_id: null,
       user_id: user?.id ?? null,

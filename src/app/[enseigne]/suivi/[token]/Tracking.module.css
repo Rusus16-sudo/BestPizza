@@ -297,3 +297,71 @@
   font-size: 0.82rem;
   color: var(--color-text-tertiary);
 }
+
+/* Heure d'arrivée estimée */
+.eta {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+  padding: 14px 16px;
+  border-radius: var(--radius-md);
+  background: var(--color-primary-dim);
+}
+
+.eta span {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+}
+
+.eta strong {
+  font-family: var(--font-heading);
+  font-size: 1.4rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--color-primary-hover);
+}
+
+/* Heure de chaque étape */
+.stepTime {
+  margin-left: auto;
+  padding-top: 2px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--color-text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+
+.map {
+  margin-top: 18px;
+}
+
+.mapNote {
+  margin-top: 8px;
+  font-size: 0.82rem;
+  color: var(--color-text-tertiary);
+}
+
+/* Appeler le point de vente */
+.callBtn {
+  margin-top: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 0 18px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  font-weight: 800;
+  font-size: 0.95rem;
+  text-align: center;
+}
+
+.callBtn:hover {
+  border-color: var(--color-primary);
+}

@@ -10,6 +10,9 @@ import { formatPrice } from '@/context/CartContext'
 import { parseAddress, isCash } from '@/lib/delivery-address'
 import styles from './Delivery.module.css'
 
+// Position du livreur enregistrée au plus toutes les 15 s
+const SEND_EVERY_MS = 15000
+
 export default function DeliveryPage() {
   const [supabase] = useState(() => getBrowserClient())
   const [userId, setUserId] = useState(null)
@@ -20,7 +23,7 @@ export default function DeliveryPage() {
   const [busyId, setBusyId] = useState(null)
   const [confirmOrder, setConfirmOrder] = useState(null)
   const myOrdersRef = useRef([])
-  const channelsRef = useRef(new Map())
+  const lastSentRef = useRef(0)
 
   const fetchOrders = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser()
@@ -31,6 +34,7 @@ export default function DeliveryPage() {
       .from('orders')
       .select(`
         id, short_id, status, customer_name, delivery_address, total_amount, created_at, driver_id, payment_method, payment_status,
+        delivery_lat, delivery_lng,
         order_items ( product_name, quantity )
       `)
       .in('status', ['prete', 'en_route'])
@@ -59,42 +63,49 @@ export default function DeliveryPage() {
     }
   }, [supabase, fetchOrders])
 
-  // Position GPS partagée avec les clients de MES livraisons en cours,
-  // sur un canal ouvert une seule fois par commande.
+  const mine = orders.filter(o => o.status === 'en_route' && o.driver_id === userId)
+  const delivering = mine.length > 0
+
+  // Pendant une livraison seulement : la position GPS, enregistrée toutes les 15 s pour
+  // chacune de MES commandes en route. Le client la voit sur son suivi, même si mon
+  // téléphone perd la connexion un moment (il voit alors « il y a 2 min »).
   useEffect(() => {
-    if (!('geolocation' in navigator)) return
-    const channels = channelsRef.current
+    if (!delivering || !('geolocation' in navigator)) return
     const watchId = navigator.geolocation.watchPosition(
-      (position) => {
+      async (position) => {
         const pos = { lat: position.coords.latitude, lng: position.coords.longitude }
         setDriverPosition(pos)
-        const activeIds = new Set(myOrdersRef.current.map(o => o.id))
-
-        for (const [id, ch] of channels) {
-          if (!activeIds.has(id)) {
-            supabase.removeChannel(ch)
-            channels.delete(id)
-          }
-        }
-        for (const id of activeIds) {
-          let ch = channels.get(id)
-          if (!ch) {
-            ch = supabase.channel(`tracking_${id}`)
-            ch.subscribe()
-            channels.set(id, ch)
-          }
-          ch.send({ type: 'broadcast', event: 'location', payload: pos })
-        }
+        if (Date.now() - lastSentRef.current < SEND_EVERY_MS) return
+        lastSentRef.current = Date.now()
+        const rows = myOrdersRef.current.map(o => ({ order_id: o.id, driver_id: userId, ...pos, updated_at: new Date().toISOString() }))
+        if (rows.length === 0) return
+        const { error } = await supabase.from('driver_positions').upsert(rows)
+        if (error) console.error('Position du livreur:', error.message)
       },
       (error) => console.error('Erreur GPS:', error.message),
       { enableHighAccuracy: true, maximumAge: 10000 }
     )
-    return () => {
-      navigator.geolocation.clearWatch(watchId)
-      for (const ch of channels.values()) supabase.removeChannel(ch)
-      channels.clear()
+    return () => navigator.geolocation.clearWatch(watchId)
+  }, [supabase, delivering, userId])
+
+  // L'écran reste allumé pendant une livraison : un téléphone en veille n'envoie plus sa position
+  useEffect(() => {
+    if (!delivering || !('wakeLock' in navigator)) return
+    let lock = null
+    const acquire = async () => {
+      try {
+        lock = await navigator.wakeLock.request('screen')
+      } catch {}
     }
-  }, [supabase])
+    // Le navigateur la relâche quand on quitte l'onglet : on la reprend au retour
+    const onVisible = () => { if (document.visibilityState === 'visible') acquire() }
+    acquire()
+    document.addEventListener('visibilitychange', onVisible)
+    return () => {
+      document.removeEventListener('visibilitychange', onVisible)
+      lock?.release().catch(() => {})
+    }
+  }, [delivering])
 
   const takeOrder = async (order) => {
     setBusyId(order.id)
@@ -133,7 +144,6 @@ export default function DeliveryPage() {
     fetchOrders()
   }
 
-  const mine = orders.filter(o => o.status === 'en_route' && o.driver_id === userId)
   const available = orders.filter(o => o.status === 'prete' && !o.driver_id)
 
   const renderItems = (order) => (
@@ -172,8 +182,8 @@ export default function DeliveryPage() {
         ) : (
           <>
             <div className={styles.map}>
-              <TrackingMap position={driverPosition} />
-              <p className={styles.mapNote}>Votre position est partagée avec vos clients pendant la livraison.</p>
+              <TrackingMap position={driverPosition} destination={mine.length === 1 && mine[0].delivery_lat != null ? { lat: mine[0].delivery_lat, lng: mine[0].delivery_lng } : null} />
+              <p className={styles.mapNote}>Votre position est partagée avec vos clients pendant la livraison. Gardez cette page ouverte.</p>
             </div>
             <div className={styles.list}>
               {mine.map(order => {
@@ -206,7 +216,10 @@ export default function DeliveryPage() {
                         <span className={`${styles.secondaryBtn} ${styles.disabled}`}>Pas de numéro</span>
                       )}
                       <a
-                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(quartier)}`}
+                        href={order.delivery_lat != null
+                          // Le client a partagé sa position : l'itinéraire va jusqu'à sa porte
+                          ? `https://www.google.com/maps/dir/?api=1&destination=${order.delivery_lat},${order.delivery_lng}`
+                          : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(quartier)}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className={styles.secondaryBtn}

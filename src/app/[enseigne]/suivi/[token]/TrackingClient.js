@@ -8,22 +8,33 @@ import { useStorefront } from '@/context/StorefrontContext'
 import { formatPrice } from '@/lib/format'
 import { rememberOrder } from '@/lib/guest-orders'
 import PushOptIn from '@/components/PushOptIn'
-import ClientTrackingMap from '@/components/ClientTrackingMap'
+import TrackingMap from '@/components/TrackingMap'
+import { estimatedArrival } from '@/lib/eta'
 import styles from './Tracking.module.css'
 
 // Les étapes d'une commande, dans l'ordre où le client les vit
+// `at` : l'heure à laquelle l'étape a commencé
 const STEPS = [
-  { status: 'en_attente', label: 'Commande reçue', detail: 'Le restaurant l’a bien reçue.' },
-  { status: 'en_preparation', label: 'En préparation', detail: 'La cuisine s’en occupe.' },
-  { status: 'prete', label: 'Prête', detail: 'Un livreur va la récupérer.' },
-  { status: 'en_route', label: 'En route', detail: 'Le livreur arrive.' },
-  { status: 'livre', label: 'Livrée', detail: 'Bon appétit !' },
+  { status: 'en_attente', label: 'Commande reçue', detail: 'Le restaurant l’a bien reçue.', at: 'createdAt' },
+  { status: 'en_preparation', label: 'En préparation', detail: 'La cuisine s’en occupe.', at: 'acceptedAt' },
+  { status: 'prete', label: 'Prête', detail: 'Un livreur va la récupérer.', at: 'readyAt' },
+  { status: 'en_route', label: 'En route', detail: 'Le livreur arrive.', at: 'pickedAt' },
+  { status: 'livre', label: 'Livrée', detail: 'Bon appétit !', at: 'deliveredAt' },
 ]
 const FINAL = ['livre', 'annule']
 const REFRESH_MS = 15000
+// En route, la position du livreur est relue plus souvent
+const REFRESH_EN_ROUTE_MS = 8000
+
+const phoneHref = (phone) => `tel:${String(phone).replace(/[^\d+]/g, '')}`
 
 export default function TrackingClient({ initialOrder, token, isLoggedIn }) {
-  const { href } = useStorefront()
+  const { href, timezone } = useStorefront()
+  // « 20 h 15 », à l'heure du restaurant
+  const clock = useCallback((date) => (date
+    ? new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit', timeZone: timezone || 'Africa/Douala' }).format(new Date(date)).replace(':', ' h ')
+    : null), [timezone])
+  const [now, setNow] = useState(() => Date.now())
   const pathname = usePathname()
   const [order, setOrder] = useState(initialOrder)
   const [paying, setPaying] = useState(false)
@@ -43,7 +54,10 @@ export default function TrackingClient({ initialOrder, token, isLoggedIn }) {
   // Relue régulièrement tant qu'elle n'est pas terminée, et dès qu'on revient sur la page
   useEffect(() => {
     if (FINAL.includes(order.status)) return
-    const timer = setInterval(refresh, REFRESH_MS)
+    const timer = setInterval(() => {
+      refresh()
+      setNow(Date.now())
+    }, order.status === 'en_route' ? REFRESH_EN_ROUTE_MS : REFRESH_MS)
     const onVisible = () => { if (document.visibilityState === 'visible') refresh() }
     document.addEventListener('visibilitychange', onVisible)
     return () => {
@@ -75,6 +89,8 @@ export default function TrackingClient({ initialOrder, token, isLoggedIn }) {
   const cancelled = order.status === 'annule'
   const awaitingPayment = order.status === 'paiement'
   const current = STEPS.findIndex((s) => s.status === order.status)
+  const eta = estimatedArrival(order, now)
+  const seenMinutes = order.driver?.at ? Math.max(0, Math.round((now - new Date(order.driver.at).getTime()) / 60000)) : null
   const signupHref = `/login?mode=signup&next=${encodeURIComponent(pathname)}`
 
   return (
@@ -93,7 +109,7 @@ export default function TrackingClient({ initialOrder, token, isLoggedIn }) {
         {cancelled ? (
           <div className={styles.cancelled}>
             <strong>Commande annulée</strong>
-            <span>Si vous ne savez pas pourquoi, appelez le restaurant.</span>
+            <span>{order.cancelledAt ? `À ${clock(order.cancelledAt)}. ` : ''}Si vous ne savez pas pourquoi, appelez le restaurant.</span>
           </div>
         ) : awaitingPayment ? (
           <div className={styles.payment}>
@@ -104,6 +120,19 @@ export default function TrackingClient({ initialOrder, token, isLoggedIn }) {
             </button>
           </div>
         ) : (
+          <>
+          {eta && (
+            <div className={styles.eta}>
+              <span>Arrivée estimée</span>
+              <strong>vers {clock(eta)}</strong>
+            </div>
+          )}
+          {order.status === 'livre' && order.deliveredAt && (
+            <div className={styles.eta}>
+              <span>Livrée</span>
+              <strong>à {clock(order.deliveredAt)}</strong>
+            </div>
+          )}
           <ol className={styles.steps}>
             {STEPS.map((step, i) => {
               const state = i < current ? 'done' : i === current ? 'current' : 'todo'
@@ -116,15 +145,35 @@ export default function TrackingClient({ initialOrder, token, isLoggedIn }) {
                   </span>
                   <span className={styles.stepText}>
                     <strong>{step.label}</strong>
-                    {state === 'current' && <span>{step.detail}</span>}
+                    {state === 'current' && (
+                      <span>{step.status === 'en_route' && order.driverName ? `${order.driverName} arrive avec votre commande.` : step.detail}</span>
+                    )}
                   </span>
+                  {state !== 'todo' && order[step.at] && <time className={styles.stepTime}>{clock(order[step.at])}</time>}
                 </li>
               )
             })}
           </ol>
+          </>
         )}
 
-        {order.status === 'en_route' && <ClientTrackingMap orderId={order.id} />}
+        {order.status === 'en_route' && (
+          <div className={styles.map}>
+            <TrackingMap position={order.driver} destination={order.destination} />
+            <p className={styles.mapNote}>
+              {order.driver
+                ? seenMinutes < 1 ? 'Position du livreur à l’instant.' : `Position du livreur il y a ${seenMinutes} min.`
+                : 'La position du livreur s’affichera dès qu’il partagera sa localisation.'}
+            </p>
+          </div>
+        )}
+
+        {order.restaurantPhone && !['livre'].includes(order.status) && (
+          <a href={phoneHref(order.restaurantPhone)} className={styles.callBtn}>
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z" /></svg>
+            Appeler {order.locationName ? `${order.restaurant?.name} · ${order.locationName}` : 'le restaurant'}
+          </a>
+        )}
       </section>
 
       {!FINAL.includes(order.status) && (

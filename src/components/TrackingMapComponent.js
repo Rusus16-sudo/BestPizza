@@ -1,62 +1,53 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet'
+import { useEffect } from 'react'
+import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import L from 'leaflet'
 
-// Fix missing marker icons in leaflet
-delete L.Icon.Default.prototype._getIconUrl
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-})
-
-const scooterIcon = new L.Icon({
-  iconUrl: 'https://cdn-icons-png.flaticon.com/512/3753/3753230.png',
+// Repères dessinés par le site (pas d'image à télécharger ailleurs), à la couleur du restaurant
+const pin = (emoji, className) => L.divIcon({
+  className: '',
+  html: `<span class="tchopi-pin ${className}">${emoji}</span>`,
   iconSize: [40, 40],
   iconAnchor: [20, 20],
-  popupAnchor: [0, -20]
 })
+const DRIVER = pin('🛵', 'tchopi-pin-driver')
+const HOME = pin('🏠', 'tchopi-pin-home')
 
-function ChangeView({ center }) {
-  const map = useMap();
+// Douala, tant qu'aucune position n'est connue
+const FALLBACK = [4.0511, 9.7679]
+
+// Garde le livreur et la maison du client à l'écran
+function Frame({ points }) {
+  const map = useMap()
+  const key = points.map((p) => p.join(',')).join('|')
   useEffect(() => {
-    if (center && center[0] !== 0) {
-      map.flyTo(center, map.getZoom(), { animate: true, duration: 1 });
-    }
-  }, [center, map]);
-  return null;
+    if (points.length === 1) map.flyTo(points[0], Math.max(map.getZoom(), 15), { duration: 1 })
+    else if (points.length > 1) map.flyToBounds(points, { padding: [48, 48], maxZoom: 16, duration: 1 })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key, map])
+  return null
 }
 
-export default function TrackingMapComponent({ position }) {
-  const [mounted, setMounted] = useState(false)
+const toPoint = (p) => (p && Number.isFinite(p.lat) && Number.isFinite(p.lng) ? [p.lat, p.lng] : null)
 
-  useEffect(() => {
-    setMounted(true)
-  }, [])
-
-  if (!mounted) return <div style={{ height: '300px', background: '#f3f4f6', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Chargement de la carte...</div>
-
-  // Par défaut : centre de Douala
-  const validPosition = position && position.lat && position.lng ? [position.lat, position.lng] : [4.0511, 9.7679];
+/** `position` : le livreur ; `destination` : le client, s'il a partagé sa position. */
+export default function TrackingMapComponent({ position, destination }) {
+  const driver = toPoint(position)
+  const home = toPoint(destination)
+  const points = [driver, home].filter(Boolean)
 
   return (
-    <div style={{ height: '300px', width: '100%', borderRadius: '12px', overflow: 'hidden', border: '1px solid #e5e7eb', zIndex: 1, position: 'relative' }}>
-      <MapContainer center={validPosition} zoom={15} style={{ height: '100%', width: '100%' }}>
+    <div style={{ height: '300px', width: '100%', borderRadius: '12px', overflow: 'hidden', border: '1px solid var(--color-border)', zIndex: 1, position: 'relative' }}>
+      <MapContainer center={points[0] || FALLBACK} zoom={15} style={{ height: '100%', width: '100%' }}>
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-        {position && position.lat && position.lng && (
-          <Marker position={validPosition} icon={scooterIcon}>
-            <Popup>
-              Livreur
-            </Popup>
-          </Marker>
-        )}
-        <ChangeView center={validPosition} />
+        {home && <Marker position={home} icon={HOME} />}
+        {driver && <Marker position={driver} icon={DRIVER} />}
+        <Frame points={points} />
       </MapContainer>
     </div>
   )

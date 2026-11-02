@@ -17,14 +17,14 @@ const PERIODS = [
 
 const LIVE = [
   { status: 'en_attente', label: 'En attente', tone: 'wait' },
-  { status: 'en_preparation', label: 'Au four', tone: 'cook' },
+  { status: 'en_preparation', label: 'En préparation', tone: 'cook' },
   { status: 'prete', label: 'Prêtes', tone: 'ready' },
   { status: 'en_route', label: 'En route', tone: 'road' },
 ]
 
 const STATUS_LABEL = {
   paiement: 'Paiement en attente',
-  en_attente: 'En attente', en_preparation: 'Au four', prete: 'Prête',
+  en_attente: 'En attente', en_preparation: 'En préparation', prete: 'Prête',
   en_route: 'En route', livre: 'Livrée', annule: 'Annulée',
 }
 

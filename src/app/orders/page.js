@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import toast from 'react-hot-toast'
 import styles from './Orders.module.css'
 import { createClient } from '@/utils/supabase/client'
-import ClientTrackingMap from '@/components/ClientTrackingMap'
+import LiveDeliveryMap from '@/components/LiveDeliveryMap'
 import SkeletonList from '@/components/SkeletonList'
 import PushOptIn from '@/components/PushOptIn'
 import { useCart } from '@/context/CartContext'
@@ -77,6 +77,7 @@ export default function OrdersPage() {
           restaurant: o.restaurant?.name || 'Restaurant',
           storefront: o.restaurant?.slug || null,
           trackingUrl: o.restaurant ? `/${o.restaurant.slug}/suivi/${o.token}` : null,
+          trackingToken: o.token,
           guest: true,
           items: o.items.map(item => ({ name: item.name, quantity: item.quantity, price: item.price, size: item.size })),
         })))
@@ -400,7 +401,7 @@ export default function OrdersPage() {
                 </div>
 
                 {order.status === 'en_route' && (
-                  <ClientTrackingMap orderId={order.uuid} />
+                  <LiveDeliveryMap trackingToken={order.trackingToken} />
                 )}
 
                 <div className={styles.orderTotalRow}>

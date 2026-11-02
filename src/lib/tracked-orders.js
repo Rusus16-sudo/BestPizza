@@ -16,18 +16,23 @@ export async function getTrackedOrder(token) {
     .from('orders')
     .select(`
       id, short_id, order_number, status, payment_status, payment_method, total_amount, delivery_fee, delivery_zone,
-      created_at, customer_name, user_id, organization_id,
+      created_at, accepted_at, ready_at, picked_at, delivered_at, cancelled_at,
+      customer_name, user_id, organization_id, location_id, driver_id, delivery_lat, delivery_lng,
       order_items ( product_name, quantity, price, size, options )
     `)
     .eq('tracking_token', token)
     .maybeSingle()
   if (!order) return null
 
-  const { data: restaurant } = await db
-    .from('organizations')
-    .select('slug, name')
-    .eq('id', order.organization_id)
-    .maybeSingle()
+  const [{ data: restaurant }, { data: location }, { data: driver }, { data: position }] = await Promise.all([
+    db.from('organizations').select('slug, name').eq('id', order.organization_id).maybeSingle(),
+    // Le numéro à appeler : celui du point de vente qui prépare et livre
+    order.location_id ? db.from('locations').select('name, phone').eq('id', order.location_id).maybeSingle() : { data: null },
+    // Le livreur, par son prénom seulement
+    order.driver_id ? db.from('profiles').select('first_name').eq('id', order.driver_id).maybeSingle() : { data: null },
+    // Sa dernière position, pendant qu'il livre
+    order.status === 'en_route' ? db.from('driver_positions').select('lat, lng, updated_at').eq('order_id', order.id).maybeSingle() : { data: null },
+  ])
 
   return {
     id: order.id,
@@ -40,6 +45,16 @@ export async function getTrackedOrder(token) {
     deliveryFee: Number(order.delivery_fee) || 0,
     deliveryZone: order.delivery_zone,
     createdAt: order.created_at,
+    acceptedAt: order.accepted_at,
+    readyAt: order.ready_at,
+    pickedAt: order.picked_at,
+    deliveredAt: order.delivered_at,
+    cancelledAt: order.cancelled_at,
+    restaurantPhone: location?.phone || null,
+    locationName: location?.name || null,
+    driverName: driver?.first_name || null,
+    driver: position ? { lat: position.lat, lng: position.lng, at: position.updated_at } : null,
+    destination: order.delivery_lat != null && order.delivery_lng != null ? { lat: order.delivery_lat, lng: order.delivery_lng } : null,
     customerName: order.customer_name,
     hasAccount: Boolean(order.user_id),
     restaurant: restaurant || null,

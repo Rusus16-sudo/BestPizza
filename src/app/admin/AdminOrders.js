@@ -51,7 +51,8 @@ export default function AdminOrders() {
         driver:profiles!orders_driver_id_fkey ( email ),
         order_items ( product_name, quantity )
       `)
-      .gte('created_at', startOfToday().toISOString())
+      // Celles du jour, et celles encore en cours même passées avant minuit
+      .or(`created_at.gte.${startOfToday().toISOString()},status.in.(paiement,${ACTIVE.join(',')})`)
       .order('created_at', { ascending: false })
 
     if (error) {
@@ -86,7 +87,8 @@ export default function AdminOrders() {
     fetchOrders()
   }
 
-  const delivered = orders.filter(o => o.status === 'livre')
+  const today = startOfToday()
+  const delivered = orders.filter(o => o.status === 'livre' && new Date(o.created_at) >= today)
   const revenue = delivered.reduce((s, o) => s + Number(o.total_amount || 0), 0)
   const active = orders.filter(o => ACTIVE.includes(o.status))
   const visible = filter === 'active' ? active : orders.filter(o => o.status === filter)

@@ -14,7 +14,7 @@ import { signOut } from '@/lib/sign-out'
 
 const COLUMNS = [
   { status: 'en_attente', title: 'À préparer', action: 'Lancer la préparation', next: 'en_preparation' },
-  { status: 'en_preparation', title: 'Au four', action: 'Commande prête', next: 'prete' },
+  { status: 'en_preparation', title: 'En préparation', action: 'Commande prête', next: 'prete' },
   { status: 'prete', title: 'Prêtes, en attente du livreur', action: null, next: null },
 ]
 
@@ -281,7 +281,7 @@ export default function KitchenPage() {
                 <div className={styles.skeleton} />
               ) : list.length === 0 ? (
                 <p className={styles.empty}>
-                  {col.status === 'en_attente' ? 'Aucune nouvelle commande.' : col.status === 'en_preparation' ? 'Rien au four.' : 'Aucune commande en attente de livreur.'}
+                  {col.status === 'en_attente' ? 'Aucune nouvelle commande.' : col.status === 'en_preparation' ? 'Rien en préparation.' : 'Aucune commande en attente de livreur.'}
                 </p>
               ) : (
                 <div className={styles.cards}>

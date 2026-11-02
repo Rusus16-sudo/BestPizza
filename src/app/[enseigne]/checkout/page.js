@@ -34,6 +34,9 @@ export default function CheckoutPage() {
   // L'adresse en deux temps : le quartier (ou le quartier desservi choisi), puis un repère
   const [quarter, setQuarter] = useState('')
   const [landmark, setLandmark] = useState('')
+  // La position exacte du client, s'il la partage : le livreur va jusqu'à sa porte
+  const [pin, setPin] = useState(null)
+  const [locating, setLocating] = useState(false)
   const [pickedZoneId, setZoneId] = useState('')
   // Tant que le client n'a rien choisi, son quartier habituel est présélectionné s'il est desservi
   const rememberedZone = location?.zones?.find(z => quarter && z.name.toLowerCase() === quarter.trim().toLowerCase())
@@ -91,6 +94,25 @@ export default function CheckoutPage() {
     return Object.keys(next).length === 0
   }
 
+  // Le navigateur demande l'autorisation ; la position n'est envoyée qu'avec la commande
+  const sharePosition = () => {
+    if (!('geolocation' in navigator)) return toast.error('Votre téléphone ne permet pas de partager la position.')
+    setLocating(true)
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setPin({ lat: position.coords.latitude, lng: position.coords.longitude, accuracy: position.coords.accuracy })
+        setLocating(false)
+      },
+      (error) => {
+        setLocating(false)
+        toast.error(error.code === 1
+          ? 'Position refusée. Autorisez la localisation pour ce site, ou indiquez simplement un repère.'
+          : 'Position introuvable pour le moment. Indiquez un repère, le livreur vous appellera si besoin.')
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 }
+    )
+  }
+
   const handleCheckout = async (e) => {
     e.preventDefault()
     if (cartItems.length === 0 || isSubmitting) return
@@ -119,6 +141,7 @@ export default function CheckoutPage() {
           // Avec des quartiers desservis, le quartier vient de la liste : le serveur l'ajoute
           address: quote.usesZones ? landmark.trim() : joinAddress(quarter, landmark),
           zoneId: quote.zone?.id || null,
+          pin: pin ? { lat: pin.lat, lng: pin.lng } : null,
           paymentMethod,
           instructions,
           promoCode: appliedPromo?.code || null,
@@ -270,6 +293,25 @@ export default function CheckoutPage() {
                 ? <p id="address-error" className={styles.error}>{errors.address}</p>
                 : <p id="address-hint" className={styles.hint}>Ce qui aide le livreur à trouver la porte.</p>}
             </div>
+
+            {pin ? (
+              <div className={styles.pinDone}>
+                <span aria-hidden="true">📍</span>
+                <span>
+                  <strong>Votre position est partagée</strong>
+                  <small>Le livreur sera guidé jusqu’à vous{pin.accuracy ? ` (à ${Math.round(pin.accuracy)} m près)` : ''}.</small>
+                </span>
+                <button type="button" onClick={() => setPin(null)}>Retirer</button>
+              </div>
+            ) : (
+              <button type="button" className={styles.pinBtn} onClick={sharePosition} disabled={locating}>
+                <span aria-hidden="true">📍</span>
+                <span>
+                  <strong>{locating ? 'Recherche de votre position…' : 'Utiliser ma position'}</strong>
+                  <small>Recommandé : le livreur trouve votre porte sans chercher.</small>
+                </span>
+              </button>
+            )}
           </section>
 
           <section className={styles.section} aria-labelledby="payment-title">

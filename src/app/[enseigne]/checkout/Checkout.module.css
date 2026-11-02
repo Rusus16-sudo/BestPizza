@@ -421,3 +421,60 @@
 .locationChip {
   margin: -6px 0 16px;
 }
+
+/* Partager sa position exacte */
+.pinBtn,
+.pinDone {
+  width: 100%;
+  margin-top: 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: var(--radius-md);
+  text-align: left;
+}
+
+.pinBtn {
+  border: 1.5px dashed var(--color-primary);
+  background: var(--color-primary-dim);
+  color: var(--color-text-primary);
+  cursor: pointer;
+}
+
+.pinBtn:disabled {
+  opacity: 0.7;
+  cursor: default;
+}
+
+.pinDone {
+  border: 1.5px solid #0ca678;
+  background: rgba(12, 166, 120, 0.08);
+}
+
+.pinBtn > span:first-child,
+.pinDone > span:first-child {
+  font-size: 1.4rem;
+}
+
+.pinBtn > span:nth-child(2),
+.pinDone > span:nth-child(2) {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pinBtn small,
+.pinDone small {
+  font-size: 0.82rem;
+  color: var(--color-text-secondary);
+}
+
+.pinDone button {
+  border: none;
+  background: none;
+  color: var(--color-primary);
+  font-weight: 700;
+  cursor: pointer;
+}
