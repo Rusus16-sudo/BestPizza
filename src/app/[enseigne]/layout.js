@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
 import { loadStorefront } from '@/lib/storefront-data'
-import { brandColorVars, appIconUrl } from '@/lib/brand'
+import { brandColorVars, appIconUrl, initialsOf } from '@/lib/brand'
 import { StorefrontProvider } from '@/context/StorefrontContext'
 import styles from './Storefront.module.css'
 
@@ -26,6 +26,19 @@ export default async function StorefrontLayout({ children, params }) {
   const { enseigne } = await params
   const storefront = await loadStorefront(enseigne)
   if (!storefront) notFound()
+
+  // Abonnement fini depuis plus de 3 jours : la vitrine est en pause, rien n'est perdu
+  if (!storefront.open) {
+    return (
+      <main className={styles.paused} style={brandColorVars(storefront.primary_color)}>
+        {storefront.logo_url
+          ? <img src={storefront.logo_url} alt="" className={styles.pausedLogo} />
+          : <span className={styles.pausedLogo}>{initialsOf(storefront.name)}</span>}
+        <h1>{storefront.name}</h1>
+        <p>Ce restaurant ne prend pas de commandes en ligne pour le moment. Revenez bientôt !</p>
+      </main>
+    )
+  }
 
   return (
     <StorefrontProvider storefront={storefront}>

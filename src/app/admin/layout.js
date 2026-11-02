@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/utils/supabase/server'
 import { getStaffMembership, MANAGER_ROLES } from '@/lib/staff'
+import SubscriptionBanner from './SubscriptionBanner'
 
 // Toutes les pages /admin/* sont réservées aux gérants d'un établissement
 export default async function AdminLayout({ children }) {
@@ -21,5 +22,17 @@ export default async function AdminLayout({ children }) {
     )
   }
 
-  return children
+  // L'état de l'abonnement : un bandeau si l'essai se termine, est fini, ou si la vitrine est en pause
+  const { data: org } = await supabase
+    .from('organizations')
+    .select('plan_status, trial_ends_at, paid_until')
+    .eq('id', membership.organization_id)
+    .maybeSingle()
+
+  return (
+    <>
+      <SubscriptionBanner org={org} />
+      {children}
+    </>
+  )
 }

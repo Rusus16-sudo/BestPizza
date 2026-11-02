@@ -35,7 +35,7 @@ export async function updateSession(request) {
   // Protection des routes : ces espaces demandent une connexion
   // La commande (/best-pizza/checkout) et Mes commandes (/orders) sont ouvertes à tous :
   // on peut commander et suivre ses commandes sans compte
-  const protectedRoutes = ['/profile', '/delivery', '/kitchen', '/admin']
+  const protectedRoutes = ['/profile', '/delivery', '/kitchen', '/admin', '/tchopi']
   const isProtectedRoute = protectedRoutes.some(route => request.nextUrl.pathname.startsWith(route))
 
   if (!user && isProtectedRoute) {

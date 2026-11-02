@@ -246,7 +246,8 @@ export default function AdminClient({ section, initialStaff = [], team = { locat
       showToast(editingProduct ? 'Le plat a été modifié' : 'Le plat a été ajouté')
       router.refresh()
     } else {
-      toast.error('Erreur lors de la sauvegarde: ' + error.message)
+      // La limite de l'offre (Starter : 30 plats) arrive avec son propre message
+      toast.error(error.code === '42501' ? error.message : 'Erreur lors de la sauvegarde: ' + error.message)
     }
     setFormLoading(false)
   }

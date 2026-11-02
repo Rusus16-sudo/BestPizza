@@ -1,0 +1,303 @@
+.status {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 22px;
+  padding: 16px 18px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.status strong {
+  font-family: var(--font-heading);
+  font-size: 1.15rem;
+}
+
+.status span {
+  color: var(--color-text-secondary);
+}
+
+.ok {
+  border-color: rgba(12, 166, 120, 0.35);
+  background: rgba(12, 166, 120, 0.07);
+}
+
+.warn {
+  border-color: rgba(232, 89, 12, 0.35);
+  background: rgba(232, 89, 12, 0.08);
+}
+
+.danger {
+  border-color: rgba(201, 42, 42, 0.35);
+  background: rgba(201, 42, 42, 0.08);
+}
+
+.danger strong {
+  color: #b02525;
+}
+
+.checking {
+  font-weight: 700;
+  color: var(--color-primary) !important;
+}
+
+.readOnly {
+  margin-bottom: 16px;
+  padding: 12px 16px;
+  border-radius: var(--radius-md);
+  background: var(--color-surface-muted);
+  color: var(--color-text-secondary);
+  font-weight: 600;
+}
+
+/* Mensuel / annuel */
+.cycle {
+  display: inline-flex;
+  gap: 4px;
+  margin-bottom: 18px;
+  padding: 4px;
+  border-radius: var(--radius-full);
+  background: var(--color-surface-muted);
+}
+
+.cycleBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 18px;
+  border: none;
+  border-radius: var(--radius-full);
+  background: transparent;
+  font-weight: 800;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}
+
+.cycleBtn em {
+  font-style: normal;
+  font-size: 0.75rem;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  background: rgba(12, 166, 120, 0.15);
+  color: #087f5b;
+}
+
+.cycleOn {
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  box-shadow: var(--shadow-soft);
+}
+
+/* Les offres */
+.plans {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  align-items: stretch;
+}
+
+.plan {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 22px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-soft);
+}
+
+.recommended {
+  border: 2px solid var(--color-primary);
+  box-shadow: var(--shadow-glow);
+}
+
+.current::after {
+  content: 'Votre offre';
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  background: var(--color-ink);
+  color: white;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.badge {
+  position: absolute;
+  top: -12px;
+  left: 22px;
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  background: var(--color-primary);
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.plan h2 {
+  font-size: 1.3rem;
+  font-weight: 800;
+}
+
+.price {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.price strong {
+  font-family: var(--font-heading);
+  font-size: 1.7rem;
+  letter-spacing: -0.03em;
+}
+
+.price span {
+  color: var(--color-text-tertiary);
+  font-weight: 600;
+}
+
+.extra {
+  font-size: 0.82rem;
+  color: var(--color-text-secondary);
+}
+
+.plan ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+
+.plan li {
+  position: relative;
+  padding-left: 22px;
+  font-size: 0.92rem;
+  color: var(--color-text-secondary);
+}
+
+.plan li::before {
+  content: '✓';
+  position: absolute;
+  left: 0;
+  color: #0ca678;
+  font-weight: 800;
+}
+
+.payBtn {
+  min-height: 48px;
+  border: none;
+  border-radius: var(--radius-full);
+  background: var(--color-ink);
+  color: white;
+  font-family: var(--font-heading);
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.recommended .payBtn {
+  background: var(--color-primary);
+}
+
+.payBtn:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.payNote {
+  margin-top: 14px;
+  font-size: 0.85rem;
+  color: var(--color-text-tertiary);
+}
+
+/* Historique */
+.history {
+  margin-top: 28px;
+}
+
+.history h2 {
+  font-size: 1.1rem;
+  font-weight: 800;
+  margin-bottom: 10px;
+}
+
+.history ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  overflow: hidden;
+}
+
+.history li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto auto auto;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--color-border-light);
+  font-size: 0.9rem;
+}
+
+.history li:last-child {
+  border-bottom: none;
+}
+
+.payStatus {
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  font-size: 0.75rem;
+  font-weight: 800;
+  background: var(--color-surface-muted);
+}
+
+.pay_paid {
+  background: rgba(12, 166, 120, 0.12);
+  color: #087f5b;
+}
+
+.pay_pending {
+  background: rgba(232, 89, 12, 0.12);
+  color: #a63e00;
+}
+
+.linkBtn {
+  border: none;
+  background: none;
+  color: var(--color-primary);
+  font-weight: 800;
+  cursor: pointer;
+}
+
+@media (max-width: 900px) {
+  .plans {
+    grid-template-columns: 1fr;
+  }
+
+  .history li {
+    grid-template-columns: 1fr auto;
+  }
+}
+
+/* Starter : commandes du mois */
+.usage {
+  margin-bottom: 18px;
+  color: var(--color-text-secondary);
+}
+
+.usageOver {
+  padding: 12px 16px;
+  border-radius: var(--radius-md);
+  background: rgba(12, 166, 120, 0.08);
+  color: #087f5b;
+  font-weight: 600;
+}

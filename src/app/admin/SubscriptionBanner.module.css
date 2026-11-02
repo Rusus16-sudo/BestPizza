@@ -1,0 +1,30 @@
+.banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  padding: 10px var(--space-page);
+  font-weight: 700;
+  font-size: 0.92rem;
+  text-align: center;
+}
+
+.banner a {
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+  background: white;
+  color: var(--color-ink);
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.warn {
+  background: #e8590c;
+  color: white;
+}
+
+.danger {
+  background: #c92a2a;
+  color: white;
+}

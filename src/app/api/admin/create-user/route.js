@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient, requireStaff, MANAGER_ROLES, STAFF_ROLES } from '@/utils/supabase/admin'
 import { isOrgManager } from '@/lib/team'
+import { STARTER_MAX_DRIVERS } from '@/lib/plans'
 
 // Le gérant crée le compte d'un membre de SON équipe : cuisinier ou livreur, et, pour le
 // gérant de tout le restaurant en Business, le responsable d'un point de vente.
@@ -41,6 +42,18 @@ export async function POST(request) {
       if (!isOrgManager(membership)) return NextResponse.json({ error: 'Seul le gérant du restaurant ajoute un responsable.' }, { status: 403 })
       if (org?.plan !== 'business') return NextResponse.json({ error: 'Un responsable par point de vente est inclus dans l’offre Business.' }, { status: 403 })
       if (!location) return NextResponse.json({ error: 'Choisissez le point de vente de ce responsable.' }, { status: 400 })
+    }
+
+    // Starter : un seul livreur
+    if (role === 'livreur') {
+      const [{ data: org }, { count: drivers }] = await Promise.all([
+        supabaseAdmin.from('organizations').select('plan').eq('id', membership.organization_id).single(),
+        supabaseAdmin.from('memberships').select('*', { count: 'exact', head: true })
+          .eq('organization_id', membership.organization_id).eq('role', 'livreur').eq('is_active', true),
+      ])
+      if (org?.plan === 'starter' && drivers >= STARTER_MAX_DRIVERS) {
+        return NextResponse.json({ error: 'L’offre Starter permet 1 livreur. Passez à Pro pour en ajouter d’autres.' }, { status: 403 })
+      }
     }
 
     // 1. Créer le compte. Une adresse qui a déjà un compte est refusée : sinon un gérant

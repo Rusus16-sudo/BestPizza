@@ -1,4 +1,5 @@
 import { openingState, describeOpening } from '@/lib/opening-hours'
+import { subscriptionState } from '@/lib/subscription'
 
 // La vitrine qui reçoit une commande : quelle enseigne, quel point de vente.
 
@@ -15,12 +16,12 @@ export const DEFAULT_ORGANIZATION_SLUG = 'best-pizza'
 export async function resolveStorefront(db, organizationSlug, locationSlug) {
   const { data: organization } = await db
     .from('organizations')
-    .select('id, slug, name, plan, plan_status, timezone')
+    .select('id, slug, name, plan, plan_status, trial_ends_at, paid_until, timezone')
     .eq('slug', organizationSlug || DEFAULT_ORGANIZATION_SLUG)
     .maybeSingle()
 
   if (!organization) return { error: 'Restaurant introuvable.', status: 404 }
-  if (organization.plan_status === 'suspended') {
+  if (organization.plan_status === 'suspended' || !subscriptionState(organization).open) {
     return { error: 'Ce restaurant ne prend pas de commandes pour le moment.', status: 409 }
   }
 

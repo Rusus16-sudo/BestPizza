@@ -1,5 +1,7 @@
 import { cache } from 'react'
 import { createClient } from '@/utils/supabase/server'
+import { createAdminClient } from '@/utils/supabase/admin'
+import { subscriptionState } from '@/lib/subscription'
 
 const SLUG = /^[a-z0-9]+(-[a-z0-9]+)*$/
 
@@ -36,8 +38,17 @@ export const loadStorefront = cache(async (slug) => {
     ])
     : [{ data: [] }, { data: [] }]
 
+  // L'abonnement, lu côté serveur seulement : ces dates ne sont pas publiques
+  const { data: billing } = await createAdminClient()
+    .from('organizations')
+    .select('plan_status, trial_ends_at, paid_until')
+    .eq('id', storefront.id)
+    .maybeSingle()
+
   return {
     ...storefront,
+    // Faux quand l'essai ou l'abonnement est fini depuis plus de 3 jours : la vitrine est en pause
+    open: subscriptionState(billing)?.open !== false,
     locations: (locations || []).map((l) => ({
       ...l,
       zones: (zones || []).filter((z) => z.location_id === l.id),

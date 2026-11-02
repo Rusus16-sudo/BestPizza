@@ -33,6 +33,7 @@ relancé sans risque : il ne recrée pas ce qui existe déjà.
 | 19 | `migrations/20261028_tchopi_13_points_de_vente.sql` | Tchopi : le nombre de points de vente suit l’offre (1 en Starter et Pro, sans limite en Business) |
 | 20 | `migrations/20261102_tchopi_14_suivi_livraison.sql` | Tchopi : heure de chaque étape, position exacte du client, dernière position du livreur |
 | 21 | `migrations/20261102_tchopi_15_problemes_livraison.sql` | Tchopi : le livreur signale un problème (client injoignable…) ; position effacée quand la commande n’est plus en route |
+| 22 | `migrations/20261102_tchopi_16_abonnements.sql` | Tchopi : abonnements (payé jusqu’au, paiements SasPay), administrateurs de Tchopi, 30 plats en Starter |
 
 Après l'étape 7, `node scripts/test-isolation.js` vérifie qu'aucun établissement ne voit
 les données d'un autre (il crée deux faux restaurants, sans envoyer d'email, puis les efface).
