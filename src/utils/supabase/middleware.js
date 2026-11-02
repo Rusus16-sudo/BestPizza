@@ -35,8 +35,9 @@ export async function updateSession(request) {
   // Protection des routes : ces espaces demandent une connexion
   // La commande (/best-pizza/checkout) et Mes commandes (/orders) sont ouvertes à tous :
   // on peut commander et suivre ses commandes sans compte
+  // Le segment entier : /tchopi est l'espace Tchopi, /tchopi-grill la vitrine d'un restaurant
   const protectedRoutes = ['/profile', '/delivery', '/kitchen', '/admin', '/tchopi']
-  const isProtectedRoute = protectedRoutes.some(route => request.nextUrl.pathname.startsWith(route))
+  const isProtectedRoute = protectedRoutes.some(route => request.nextUrl.pathname === route || request.nextUrl.pathname.startsWith(`${route}/`))
 
   if (!user && isProtectedRoute) {
     const url = request.nextUrl.clone()
