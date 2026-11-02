@@ -1,0 +1,194 @@
+/* La livraison en direct de l'accueil : 12 s en boucle, le livreur (SVG) et la carte (CSS)
+   partent ensemble au chargement de la page. Repères de la boucle :
+   0 → 17 % reçue · 17 → 33 % en cuisine · 33 → 42 % prête · 42 → 92 % en route · 92 → 100 % livrée */
+
+.stage {
+  position: relative;
+  width: 100%;
+}
+
+.map {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 32px;
+  box-shadow: 0 1px 0 rgba(31, 29, 27, 0.06), 0 30px 70px -30px rgba(31, 29, 27, 0.45);
+}
+
+.water {
+  font-family: var(--font-heading);
+  font-size: 15px;
+  font-weight: 700;
+  font-style: italic;
+  fill: #7fa2a8;
+}
+
+.landmark rect {
+  fill: #fff;
+  stroke: rgba(31, 29, 27, 0.12);
+}
+
+.landmark text {
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 700;
+  fill: #1f1d1b;
+}
+
+.emoji {
+  font-size: 20px;
+  text-anchor: middle;
+}
+
+.riderStill {
+  display: none;
+}
+
+/* La carte de suivi, posée sur la carte */
+.card {
+  position: absolute;
+  left: -28px;
+  bottom: -26px;
+  width: min(340px, 86%);
+  padding: 16px 18px 14px;
+  border-radius: 22px;
+  background: #fff;
+  box-shadow: 0 24px 48px -16px rgba(31, 29, 27, 0.35), 0 0 0 1px rgba(31, 29, 27, 0.06);
+}
+
+.cardTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.order {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #6b655f;
+}
+
+.eta,
+.status {
+  position: relative;
+  display: grid;
+}
+
+/* Les textes se succèdent au même endroit */
+.eta > span,
+.status > span {
+  grid-area: 1 / 1;
+  opacity: 0;
+}
+
+.eta > span {
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 0.95rem;
+  color: #bf2f16;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.eta .e5 {
+  color: #1f6f4a;
+}
+
+.status {
+  margin: 10px 0 12px;
+  min-height: 1.35em;
+}
+
+.status > span {
+  font-family: var(--font-heading);
+  font-size: 1.12rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: #1f1d1b;
+}
+
+.s1 { animation: k-s1 12s linear infinite both; }
+.s2 { animation: k-s2 12s linear infinite both; }
+.s3 { animation: k-s3 12s linear infinite both; }
+.s4 { animation: k-s4 12s linear infinite both; }
+.s5 { animation: k-s5 12s linear infinite both; color: #1f6f4a !important; }
+.e1 { animation: k-e1 12s linear infinite both; }
+.e2 { animation: k-e2 12s linear infinite both; }
+.e3 { animation: k-e3 12s linear infinite both; }
+.e4 { animation: k-e4 12s linear infinite both; }
+.e5 { animation: k-e5 12s linear infinite both; }
+
+@keyframes k-s1 { 0%, 16% { opacity: 1; } 17%, 100% { opacity: 0; } }
+@keyframes k-s2 { 0%, 16% { opacity: 0; } 17%, 32% { opacity: 1; } 33%, 100% { opacity: 0; } }
+@keyframes k-s3 { 0%, 32% { opacity: 0; } 33%, 41% { opacity: 1; } 42%, 100% { opacity: 0; } }
+@keyframes k-s4 { 0%, 41% { opacity: 0; } 42%, 91% { opacity: 1; } 92%, 100% { opacity: 0; } }
+@keyframes k-s5 { 0%, 91% { opacity: 0; } 92%, 100% { opacity: 1; } }
+@keyframes k-e1 { 0%, 41% { opacity: 1; } 42%, 100% { opacity: 0; } }
+@keyframes k-e2 { 0%, 41% { opacity: 0; } 42%, 59% { opacity: 1; } 60%, 100% { opacity: 0; } }
+@keyframes k-e3 { 0%, 59% { opacity: 0; } 60%, 75% { opacity: 1; } 76%, 100% { opacity: 0; } }
+@keyframes k-e4 { 0%, 75% { opacity: 0; } 76%, 91% { opacity: 1; } 92%, 100% { opacity: 0; } }
+@keyframes k-e5 { 0%, 91% { opacity: 0; } 92%, 100% { opacity: 1; } }
+
+.progress {
+  height: 6px;
+  border-radius: 6px;
+  background: #efebe3;
+  overflow: hidden;
+}
+
+.progress span {
+  display: block;
+  height: 100%;
+  border-radius: 6px;
+  background: #f2b707;
+  animation: progress 12s linear infinite both;
+}
+
+@keyframes progress {
+  0% { width: 8%; }
+  16% { width: 8%; }
+  17% { width: 26%; }
+  32% { width: 26%; }
+  33% { width: 44%; }
+  42% { width: 50%; }
+  91% { width: 94%; background: #f2b707; }
+  92%, 100% { width: 100%; background: #1f6f4a; }
+}
+
+/* Sans animation : le livreur arrêté en route, le suivi figé sur « en route » */
+@media (prefers-reduced-motion: reduce) {
+  .rider,
+  .trail {
+    display: none;
+  }
+
+  .riderStill {
+    display: inline;
+  }
+
+  .eta > span,
+  .status > span,
+  .progress span {
+    animation: none !important;
+  }
+
+  .s4,
+  .e2 {
+    opacity: 1 !important;
+  }
+
+  .progress span {
+    width: 70%;
+  }
+}
+
+@media (max-width: 960px) {
+  .card {
+    position: relative;
+    left: auto;
+    bottom: auto;
+    width: auto;
+    margin: -48px 14px 0;
+  }
+}
