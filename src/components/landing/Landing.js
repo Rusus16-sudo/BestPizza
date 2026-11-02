@@ -4,6 +4,7 @@ import LandingFooter from './LandingFooter'
 import HeroDelivery from './HeroDelivery'
 import PricingPlans from './PricingPlans'
 import Faq from './Faq'
+import Reveal from './Reveal'
 import styles from './Landing.module.css'
 
 // Les messages que reçoit un restaurant sans suivi, un soir de rush
@@ -39,7 +40,10 @@ export default function Landing({ account = null }) {
       <main>
         <section className={styles.hero}>
           <div className={styles.heroText}>
-            <h1>Le client voit où est sa commande. Vous, vous cuisinez.</h1>
+            <h1>
+              <span className={styles.line}>Le client voit où est sa commande.</span>{' '}
+              <span className={styles.line}>Vous, vous cuisinez.</span>
+            </h1>
             <p className={styles.lead}>
               Tchopi donne à votre restaurant sa propre app de commande : un lien à partager,
               la cuisine et les livreurs connectés, et le suivi en direct jusqu’à la porte du client.
@@ -54,13 +58,16 @@ export default function Landing({ account = null }) {
         </section>
 
         {/* Le problème, tel que le restaurant le vit */}
-        <section className={styles.chat}>
+        <Reveal as="section" className={styles.chat}>
           <div className={styles.chatPhone} aria-label="Messages d’un client sans suivi de commande">
             <p className={styles.chatHead}><span aria-hidden="true">A</span>Awa, Bonapriso</p>
-            {MESSAGES.map((m) => (
-              <p key={m.time} className={styles.bubble}>
-                {m.text}<time>{m.time}</time>
-              </p>
+            {MESSAGES.map((m, i) => (
+              <div key={m.time} className={styles.slot} style={{ '--d': `${0.9 + i * 1.5}s` }}>
+                <span className={styles.typing} aria-hidden="true"><i /><i /><i /></span>
+                <p className={styles.bubble}>
+                  {m.text}<time>{m.time}</time>
+                </p>
+              </div>
             ))}
           </div>
           <div className={styles.chatText}>
@@ -74,13 +81,13 @@ export default function Landing({ account = null }) {
               l’étape, l’heure d’arrivée et son livreur sur la carte.
             </p>
           </div>
-        </section>
+        </Reveal>
 
         {/* De la commande à la porte : un vrai enchaînement, d'où les numéros */}
-        <section id="fonctionnalites" className={styles.flowSection}>
+        <Reveal as="section" id="fonctionnalites" className={styles.flowSection} threshold={0.25}>
           <h2 className={styles.title}>De la commande à la porte, chacun voit ce qu’il doit faire</h2>
           <ol className={styles.flow}>
-            <li>
+            <li style={{ '--i': 0 }}>
               <h3><span>1</span>Awa commande</h3>
               <p>Depuis votre lien, sans compte, sans rien installer.</p>
               <div className={`${styles.mock} ${styles.mockOrder}`} aria-hidden="true">
@@ -90,7 +97,7 @@ export default function Landing({ account = null }) {
                 <div className={styles.mockButton}>Commander · 9 500 F</div>
               </div>
             </li>
-            <li>
+            <li style={{ '--i': 1 }}>
               <h3><span>2</span>La cuisine sonne</h3>
               <p>La commande s’affiche avec les choix d’Awa et le temps écoulé.</p>
               <div className={`${styles.mock} ${styles.mockKitchen}`} aria-hidden="true">
@@ -99,7 +106,7 @@ export default function Landing({ account = null }) {
                 <div className={styles.ticketTime}>depuis 2 min</div>
               </div>
             </li>
-            <li>
+            <li style={{ '--i': 2 }}>
               <h3><span>3</span>Paul la prend</h3>
               <p>Itinéraire jusqu’au point exact d’Awa, montant à encaisser, appel en un geste.</p>
               <div className={`${styles.mock} ${styles.mockDriver}`} aria-hidden="true">
@@ -108,7 +115,7 @@ export default function Landing({ account = null }) {
                 <div className={styles.driverActions}><span>Appeler</span><span>Itinéraire</span></div>
               </div>
             </li>
-            <li>
+            <li style={{ '--i': 3 }}>
               <h3><span>4</span>Awa suit Paul</h3>
               <p>Chaque étape, l’heure d’arrivée, et une notification même app fermée.</p>
               <div className={`${styles.mock} ${styles.mockTrack}`} aria-hidden="true">
@@ -118,12 +125,12 @@ export default function Landing({ account = null }) {
               </div>
             </li>
           </ol>
-        </section>
+        </Reveal>
 
-        {/* Le lien du restaurant, à ses couleurs */}
-        <section className={styles.linkSection}>
+        {/* Le lien du restaurant, à ses couleurs : « chez-mama » se tape tout seul */}
+        <Reveal as="section" className={styles.linkSection} threshold={0.4}>
           <p className={styles.bigLink} aria-label="tchopi.cm/chez-mama">
-            <span className={styles.domain}>tchopi.cm/</span><wbr /><span>chez-mama</span>
+            <span className={styles.domain}>tchopi.cm/</span><wbr /><span className={styles.slug}>chez-mama</span><span className={styles.caret} aria-hidden="true" />
           </p>
           <div className={styles.linkBody}>
             <div className={styles.linkText}>
@@ -136,7 +143,7 @@ export default function Landing({ account = null }) {
             </div>
             <div className={styles.shops} aria-hidden="true">
               {SHOPS.map((s) => (
-                <div key={s.name} className={styles.shop} style={{ '--shop': s.color }}>
+                <div key={s.name} className={styles.shop} style={{ '--shop': s.color, '--i': SHOPS.indexOf(s) }}>
                   <div className={styles.shopBar}><i>{s.name.split(/\s+/).map((w) => w[0]).slice(0, 2).join('')}</i>{s.name}</div>
                   <div className={styles.shopHero}>{s.name},<br />livré chez vous.</div>
                   <div className={styles.shopDish}><span>{s.dish}</span><b>+</b></div>
@@ -145,7 +152,7 @@ export default function Landing({ account = null }) {
               <p className={styles.shopsNote}>Exemples de vitrines</p>
             </div>
           </div>
-        </section>
+        </Reveal>
 
         {/* Le reste, en simple liste */}
         <section className={styles.moreSection}>

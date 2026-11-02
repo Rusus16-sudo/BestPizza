@@ -280,6 +280,11 @@
 }
 
 .flow h3 {
+  /* Le trajet passe derrière le titre, pas à travers */
+  position: relative;
+  width: fit-content;
+  padding-right: 12px;
+  background: var(--ink);
   display: flex;
   align-items: center;
   gap: 12px;
@@ -1080,4 +1085,179 @@
   .footerInner {
     flex-direction: column;
   }
+}
+
+/* ---------- Mouvement ----------
+   L'accueil entre en scène au chargement ; les sections suivantes jouent leur animation
+   une fois, quand elles arrivent à l'écran (data-reveal, voir Reveal.js). Rien ne bouge
+   si les animations sont désactivées. */
+@media (prefers-reduced-motion: no-preference) {
+  /* Le titre monte ligne après ligne, puis le texte et les boutons */
+  .line {
+    display: inline-block;
+    animation: rise 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .line + .line {
+    animation-delay: 0.18s;
+  }
+
+  .lead,
+  .heroActions,
+  .reassure {
+    animation: rise 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .lead { animation-delay: 0.32s; }
+  .heroActions { animation-delay: 0.42s; }
+  .reassure { animation-delay: 0.5s; }
+
+  /* Les messages : « en train d'écrire », puis le message */
+  [data-reveal='ready'] .typing,
+  [data-reveal='ready'] .bubble {
+    opacity: 0;
+  }
+
+  [data-reveal='shown'] .typing {
+    animation: k-typing 1s calc(var(--d) - 1s) both;
+  }
+
+  [data-reveal='shown'] .bubble {
+    animation: bubble-in 0.45s var(--d) cubic-bezier(0.34, 1.4, 0.64, 1) both;
+  }
+
+  [data-reveal='ready'] .chatText > * {
+    opacity: 0;
+  }
+
+  [data-reveal='shown'] .chatText > * {
+    animation: rise 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  [data-reveal='shown'] .chatText > :nth-child(2) { animation-delay: 0.15s; }
+  [data-reveal='shown'] .chatText > :nth-child(3) { animation-delay: 4.6s; }
+
+  /* Le trajet jaune se dessine, et les étapes arrivent l'une après l'autre */
+  [data-reveal='ready'] .flow::before {
+    transform: scaleX(0);
+  }
+
+  [data-reveal='shown'] .flow::before {
+    transform-origin: left;
+    animation: draw 1.6s 0.2s cubic-bezier(0.65, 0, 0.35, 1) both;
+  }
+
+  [data-reveal='ready'] .flow li {
+    opacity: 0;
+  }
+
+  [data-reveal='shown'] .flow li {
+    animation: rise 0.7s calc(0.2s + var(--i) * 0.4s) cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  [data-reveal='shown'] .flow h3 span {
+    animation: pop-in 0.5s calc(0.3s + var(--i) * 0.4s) cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+
+  /* « chez-mama » se tape, lettre après lettre */
+  [data-reveal='ready'] .slug {
+    clip-path: inset(0 100% 0 0);
+  }
+
+  [data-reveal='shown'] .slug {
+    animation: type 1.1s 0.35s steps(9, end) both;
+  }
+
+  [data-reveal='shown'] .caret {
+    animation: blink 0.9s 1.45s step-end 3 both;
+  }
+
+  [data-reveal='ready'] .shop {
+    opacity: 0;
+  }
+
+  [data-reveal='shown'] .shop {
+    animation: rise 0.7s calc(1.4s + var(--i) * 0.15s) cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+}
+
+/* Le curseur de saisie après le lien : visible le temps de la frappe */
+.caret {
+  display: inline-block;
+  width: 0.06em;
+  height: 0.8em;
+  margin-left: 0.04em;
+  vertical-align: -0.04em;
+  background: var(--tomato);
+  opacity: 0;
+}
+
+/* « En train d'écrire » et le message occupent la même place : pas de saut */
+.slot {
+  display: grid;
+}
+
+.slot > * {
+  grid-area: 1 / 1;
+  justify-self: start;
+}
+
+.typing {
+  align-self: start;
+  justify-self: start;
+  display: inline-flex;
+  gap: 4px;
+  padding: 12px 14px;
+  border-radius: 4px 18px 18px 18px;
+  background: #fff;
+  opacity: 0;
+}
+
+.typing i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #a39b90;
+  animation: dot 1s ease-in-out infinite;
+}
+
+.typing i:nth-child(2) { animation-delay: 0.15s; }
+.typing i:nth-child(3) { animation-delay: 0.3s; }
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(26px); }
+}
+
+@keyframes bubble-in {
+  from { opacity: 0; transform: translateY(10px) scale(0.92); transform-origin: left top; }
+}
+
+@keyframes k-typing {
+  0% { opacity: 0; }
+  15%, 85% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes dot {
+  0%, 100% { transform: translateY(0); opacity: 0.5; }
+  50% { transform: translateY(-3px); opacity: 1; }
+}
+
+@keyframes draw {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+@keyframes pop-in {
+  from { transform: scale(0.4); }
+}
+
+@keyframes type {
+  from { clip-path: inset(0 100% 0 0); }
+  to { clip-path: inset(0 0 0 0); }
+}
+
+@keyframes blink {
+  0% { opacity: 1; }
+  50% { opacity: 0; }
 }
