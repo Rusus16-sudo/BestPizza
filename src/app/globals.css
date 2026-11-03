@@ -1,34 +1,36 @@
 @import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Figtree:wght@400;500;600;700&display=swap');
 
 :root {
-  /* Palette — tirée des photos : tomate, ardoise, basilic, croûte dorée */
-  --color-primary: #d93a1f;          /* Tomate */
-  --color-primary-rgb: 217, 58, 31;
-  --color-primary-hover: #bf2f16;
-  --color-primary-dark: #bf2f16;
-  --color-primary-dim: rgba(217, 58, 31, 0.08);
+  /* Palette de Tchopi, tirée de son logo : tomate, ambre (l'épingle), encre, craie.
+     Chaque vitrine remplace --color-primary par la couleur de son restaurant. */
+  --color-primary: #d2361b;          /* Tomate */
+  --color-primary-rgb: 210, 54, 27;
+  --color-primary-hover: #b52c15;
+  --color-primary-dark: #b52c15;
+  --color-primary-dim: rgba(210, 54, 27, 0.08);
 
-  --color-ink: #1f1d1b;              /* Ardoise */
+  --color-ink: #221e1a;              /* Encre */
+  --color-amber: #f2b10a;            /* Ambre : le trajet, l'épingle */
   --color-basil: #2e7d4a;
   --color-basil-dim: rgba(46, 125, 74, 0.1);
-  --color-crust: #e9a23b;
+  --color-crust: #f2b10a;
 
   /* Fonds & surfaces */
-  --color-bg-base: #f6f6f4;
-  --color-background: #f6f6f4;
+  --color-bg-base: #f4f4ef;
+  --color-background: #f4f4ef;
   --color-surface: #ffffff;
   --color-surface-solid: #ffffff;
-  --color-surface-hover: #efefec;
-  --color-surface-muted: #efefec;
+  --color-surface-hover: #ecebe5;
+  --color-surface-muted: #ecebe5;
 
   /* Texte (contrastes AA sur blanc et sur le fond) */
-  --color-text-primary: #1f1d1b;
+  --color-text-primary: #221e1a;
   --color-text-secondary: #5f5a55;
   --color-text-tertiary: #767069;
 
   /* Bordures */
-  --color-border: #e6e4e0;
-  --color-border-light: #efeeeb;
+  --color-border: #e4e2dc;
+  --color-border-light: #edece7;
 
   /* Typographie */
   --font-heading: 'Bricolage Grotesque', system-ui, sans-serif;
@@ -45,7 +47,7 @@
   --shadow-soft: 0 1px 2px rgba(31, 29, 27, 0.04), 0 2px 8px rgba(31, 29, 27, 0.04);
   --shadow-card: 0 2px 4px rgba(31, 29, 27, 0.04), 0 8px 24px rgba(31, 29, 27, 0.06);
   --shadow-medium: 0 12px 40px rgba(31, 29, 27, 0.12);
-  --shadow-glow: 0 8px 24px rgba(217, 58, 31, 0.28);
+  --shadow-glow: 0 8px 24px rgba(210, 54, 27, 0.28);
 
   /* Espacements */
   --space-page: 20px;

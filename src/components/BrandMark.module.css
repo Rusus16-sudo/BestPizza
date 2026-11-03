@@ -38,3 +38,12 @@
 
 .lg .mark { width: 34px; height: 34px; }
 .lg .name { font-size: 1.45rem; }
+
+/* Le logo de Tchopi (symbole et nom, dans une seule image) */
+.platform {
+  display: block;
+  width: auto;
+}
+
+.md .platform { height: 26px; }
+.lg .platform { height: 32px; }

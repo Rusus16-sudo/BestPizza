@@ -47,8 +47,8 @@ export default function HeroDelivery() {
         </g>
 
         {/* Le trajet : en pointillés, puis en jaune taxi à mesure que le livreur avance */}
-        <path id="tchopi-route" d={ROUTE} fill="none" stroke="#1f1d1b" strokeOpacity=".25" strokeWidth="4" strokeDasharray="2 9" strokeLinecap="round" />
-        <path className={styles.trail} d={ROUTE} pathLength="1" fill="none" stroke="#f2b707" strokeWidth="9" strokeLinecap="round" strokeLinejoin="round" strokeDasharray="1 1">
+        <path id="tchopi-route" d={ROUTE} fill="none" stroke="#221e1a" strokeOpacity=".25" strokeWidth="4" strokeDasharray="2 9" strokeLinecap="round" />
+        <path className={styles.trail} d={ROUTE} pathLength="1" fill="none" stroke="#f2b10a" strokeWidth="9" strokeLinecap="round" strokeLinejoin="round" strokeDasharray="1 1">
           <animate attributeName="stroke-dashoffset" values="1;1;0;0" keyTimes="0;.28;.92;1" dur="12s" repeatCount="indefinite" />
         </path>
 
@@ -64,7 +64,7 @@ export default function HeroDelivery() {
 
         {/* Le restaurant et la maison du client */}
         <g transform="translate(118 132)">
-          <circle r="22" fill="#d93a1f" stroke="#fff" strokeWidth="4" />
+          <circle r="22" fill="#d2361b" stroke="#fff" strokeWidth="4" />
           <text className={styles.emoji} y="7">🍲</text>
           <g className={styles.landmark} style={{ animationDelay: '0.55s' }} transform="translate(-58 -46)">
             <rect x="-4" y="-16" width="96" height="24" rx="12" />
@@ -72,7 +72,7 @@ export default function HeroDelivery() {
           </g>
         </g>
         <g transform="translate(560 426)">
-          <circle r="22" fill="#1f1d1b" stroke="#fff" strokeWidth="4" />
+          <circle r="22" fill="#221e1a" stroke="#fff" strokeWidth="4" />
           <text className={styles.emoji} y="7">🏠</text>
         </g>
 
@@ -80,8 +80,8 @@ export default function HeroDelivery() {
         {/* Il arrive au restaurant quand la commande est prête, puis part */}
         <g className={styles.rider} opacity="0">
           <animate attributeName="opacity" values="0;0;1;1;0" keyTimes="0;.2;.23;.99;1" dur="12s" repeatCount="indefinite" />
-          <circle className={styles.pulse} r="24" fill="#f2b707" />
-          <circle r="24" fill="#f2b707" stroke="#fff" strokeWidth="4" />
+          <circle className={styles.pulse} r="24" fill="#f2b10a" />
+          <circle r="24" fill="#f2b10a" stroke="#fff" strokeWidth="4" />
           <text className={styles.emoji} y="7">🛵</text>
           <animateMotion dur="12s" repeatCount="indefinite" keyPoints="0;0;1;1" keyTimes="0;.28;.92;1" calcMode="linear">
             <mpath href="#tchopi-route" />
@@ -89,7 +89,7 @@ export default function HeroDelivery() {
         </g>
         {/* Sans animation : arrêté en route */}
         <g className={styles.riderStill} transform="translate(386 246)">
-          <circle r="24" fill="#f2b707" stroke="#fff" strokeWidth="4" />
+          <circle r="24" fill="#f2b10a" stroke="#fff" strokeWidth="4" />
           <text className={styles.emoji} y="7">🛵</text>
         </g>
       </svg>

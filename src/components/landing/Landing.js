@@ -26,7 +26,7 @@ const MORE = [
 
 // Une même vitrine, aux couleurs de trois restaurants
 const SHOPS = [
-  { name: 'Chez Mama', color: '#d93a1f', dish: 'Poulet DG' },
+  { name: 'Chez Mama', color: '#d2361b', dish: 'Poulet DG' },
   { name: 'Le Soya d’Or', color: '#1f6f4a', dish: 'Soya de bœuf' },
   { name: 'Bao Pizza', color: '#7048e8', dish: 'Pizza reine' },
 ]

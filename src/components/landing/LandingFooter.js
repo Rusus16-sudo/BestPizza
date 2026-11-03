@@ -9,7 +9,7 @@ export default function LandingFooter() {
     <footer className={styles.footer}>
       <div className={styles.footerInner}>
         <div>
-          <BrandMark />
+          <BrandMark tone="light" />
           <p>L’app de commande et de livraison des restaurants, pensée pour le Cameroun.</p>
         </div>
         <nav aria-label="Liens">

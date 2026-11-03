@@ -4,22 +4,26 @@ import styles from './BrandMark.module.css'
 const PLATFORM = 'Tchopi'
 
 // Logo et nom : le logo du restaurant, sinon ses initiales sur sa couleur.
-// La part de pizza est celle de Tchopi, hors d'une vitrine : jamais celle d'un restaurant.
-export default function BrandMark({ size = 'md', name = PLATFORM, logoUrl = null }) {
+// Hors d'une vitrine, le logo de Tchopi (`tone="light"` : version claire, pour les fonds sombres).
+export default function BrandMark({ size = 'md', name = PLATFORM, logoUrl = null, tone = 'dark' }) {
+  if (name === PLATFORM && !logoUrl) {
+    return (
+      <span className={`${styles.brand} ${styles[size]}`}>
+        <img
+          className={styles.platform}
+          src={tone === 'light' ? '/brand/tchopi-logo-clair.png' : '/brand/tchopi-logo.png'}
+          alt="Tchopi"
+        />
+      </span>
+    )
+  }
+
   return (
     <span className={`${styles.brand} ${styles[size]}`}>
       {logoUrl ? (
         <img className={styles.mark} src={logoUrl} alt="" />
-      ) : name !== PLATFORM ? (
-        <span className={`${styles.mark} ${styles.initials}`} aria-hidden="true">{initialsOf(name)}</span>
       ) : (
-        <svg className={styles.mark} viewBox="0 0 32 32" aria-hidden="true">
-          <path d="M16 3C9.4 3 3.9 6.9 2 12.6L16 29l14-16.4C28.1 6.9 22.6 3 16 3Z" fill="var(--color-crust)" />
-          <path d="M16 7.2c-5 0-9.3 2.7-11 6.7L16 26.6l11-12.7c-1.7-4-6-6.7-11-6.7Z" fill="var(--color-primary)" />
-          <circle cx="12" cy="13" r="2" fill="#fff" opacity=".9" />
-          <circle cx="19.5" cy="12" r="1.6" fill="#fff" opacity=".9" />
-          <circle cx="16" cy="19" r="1.8" fill="#fff" opacity=".9" />
-        </svg>
+        <span className={`${styles.mark} ${styles.initials}`} aria-hidden="true">{initialsOf(name)}</span>
       )}
       <span className={styles.name}>{name}</span>
     </span>

@@ -71,7 +71,7 @@ export default function LoginClient({ initialMode = 'login', next = '' }) {
       {forRestaurant ? (
         <aside className={`${styles.visual} ${styles.visualPro}`}>
           <div className={styles.visualContent}>
-            <BrandMark size="lg" />
+            <BrandMark size="lg" tone="light" />
             <p className={styles.tagline}>Votre restaurant en ligne,<br />en quelques minutes.</p>
             <ul className={styles.perks}>
               {RESTAURANT_PERKS.map((perk) => (
@@ -89,7 +89,7 @@ export default function LoginClient({ initialMode = 'login', next = '' }) {
         <aside className={styles.visual}>
           <img src="/promo-pizza.png" alt="" className={styles.photo} />
           <div className={styles.visualContent}>
-            <BrandMark size="lg" />
+            <BrandMark size="lg" tone="light" />
             <p className={styles.tagline}>Vos restaurants,<br />livrés chez vous.</p>
           </div>
         </aside>

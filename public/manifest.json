@@ -4,8 +4,8 @@
   "description": "Commandez chez vos restaurants et suivez votre livraison",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#d93a1f",
+  "background_color": "#f4f4ef",
+  "theme_color": "#d2361b",
   "icons": [
     {
       "src": "/icon-192x192.png",
@@ -15,7 +15,8 @@
     {
       "src": "/icon-512x512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }
